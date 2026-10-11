@@ -1,0 +1,7 @@
+# Merge manually into the intended Codex configuration after filling real paths.
+# The project does not modify your global Codex configuration.
+[mcp_servers.codex-agent-teams]
+command = "/absolute/path/to/node"
+args = ["/absolute/path/to/codex-agent-teams/src/cli.js", "mcp", "--config", "/absolute/path/to/teams.local.json"]
+startup_timeout_sec = 20
+tool_timeout_sec = 45

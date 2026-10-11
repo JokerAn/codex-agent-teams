@@ -1,0 +1,5 @@
+node_modules/
+.codex-teams/
+teams.local.json
+*.log
+.DS_Store

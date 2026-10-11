@@ -1,0 +1,12 @@
+{
+  "workspace": "/absolute/path/to/your/repository",
+  "codexBin": "codex",
+  "maxConcurrency": 2,
+  "taskTimeoutMs": 600000,
+  "profiles": {
+    "expert": {
+      "model": "REPLACE_WITH_AN_AVAILABLE_STRONG_MODEL",
+      "effort": "high"
+    }
+  }
+}

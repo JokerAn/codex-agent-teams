@@ -1,0 +1,6 @@
+{
+  "name": "codex-agent-teams",
+  "version": "0.1.0",
+  "description": "Quality-first read-only task delegation with explicit contracts and captain review",
+  "skills": "./skills/"
+}
