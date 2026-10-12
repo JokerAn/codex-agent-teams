@@ -46,7 +46,9 @@ try {
   });
   // Observe rejection even if thread/start itself fails first.
   void startup.catch(() => {});
-  const started = await client.request('thread/start', { cwd: workspace, sandbox: 'read-only', approvalPolicy: 'never', ephemeral: true, config: { 'features.plugins': true } });
+  // The outer host must allow user requests to exercise elicitation; no turn is
+  // started, and member threads still enforce approvalPolicy=never themselves.
+  const started = await client.request('thread/start', { cwd: workspace, sandbox: 'read-only', approvalPolicy: 'on-request', ephemeral: true, config: { 'features.plugins': true } });
   const ready = await startup;
   const skills = await client.request('skills/list', { cwds: [workspace], forceReload: true });
   const team = skills.data.flatMap(entry => entry.skills ?? []).find(skill => skill.name === 'codex-agent-teams:team');
@@ -54,7 +56,7 @@ try {
   assert.equal(ready.threadId, started.thread.id);
   const inventory = await client.request('mcpServerStatus/list', { threadId: started.thread.id, limit: 100 });
   const mcp = inventory.data.find(entry => entry.name === 'codex-agent-teams');
-  assert.deepEqual(Object.keys(mcp?.tools ?? {}).sort(), ['teams_cancel', 'teams_create', 'teams_integrate', 'teams_review', 'teams_start', 'teams_status', 'teams_wait']);
+  assert.deepEqual(Object.keys(mcp?.tools ?? {}).sort(), ['teams_cancel', 'teams_create', 'teams_integrate', 'teams_models', 'teams_review', 'teams_start', 'teams_status', 'teams_wait']);
   const call = (tool, args) => client.request('mcpServer/tool/call', { threadId: started.thread.id, server: 'codex-agent-teams', tool, arguments: args });
   const initialStatus = await call('teams_status', { overview: true });
   assert.ok(!initialStatus.isError);
@@ -64,11 +66,36 @@ try {
   assert.ok(initial.viewer.sourceRoot.startsWith(installed.installedPath + '/'));
   assert.equal(initial.counts.total, 0);
   assert.equal(existsSync(join(workspace, '.codex-teams')), false, 'Status discovery must not acquire owner');
-  const created = await call('teams_create', { objective: 'Inspect isolated plugin installation', acceptance: ['Cite evidence'] });
+  const models = await call('teams_models', {});
+  assert.ok(!models.isError, JSON.stringify(models.content));
+  const catalog = JSON.parse(models.content[0].text);
+  assert.ok(catalog.models.length > 0);
+  assert.equal(catalog.confirmationRequired, true);
+  assert.equal(existsSync(join(workspace, '.codex-teams')), false, 'Model discovery must not acquire owner');
+  let formObserved = false;
+  const receive = client.receive.bind(client);
+  client.receive = frame => {
+    if (frame.method !== 'mcpServer/elicitation/request') return receive(frame);
+    assert.equal(frame.params.mode, 'form');
+    assert.ok(frame.params.requestedSchema.properties.expert.enum.length > 0);
+    assert.equal(frame.params.requestedSchema.properties.confirm.default, false);
+    formObserved = true;
+    // Controlled protocol cancellation; never simulate human acceptance here.
+    client.send({ id: frame.id, result: { action: 'cancel' } });
+  };
+  const declined = await call('teams_models', { confirm: true });
+  assert.ok(!declined.isError, JSON.stringify(declined.content));
+  const confirmationAction = JSON.parse(declined.content[0].text).status;
+  assert.ok(['cancel', 'decline'].includes(confirmationAction), `Unexpected confirmation outcome: ${confirmationAction}`);
+  assert.equal(formObserved, true);
+  const created = await call('teams_create', { expectedWorkspace: workspace, objective: 'Inspect isolated plugin installation', acceptance: ['Cite evidence'] });
   assert.ok(!created.isError, JSON.stringify(created.content));
   const task = JSON.parse(created.content[0].text);
+  const unconfirmed = await call('teams_start', { taskId: task.id });
+  assert.equal(unconfirmed.isError, true);
+  assert.match(unconfirmed.content[0].text, /User model confirmation/);
   const activeInventory = await client.request('mcpServerStatus/list', { threadId: started.thread.id, limit: 100 });
-  assert.equal(Object.keys(activeInventory.data.find(entry => entry.name === 'codex-agent-teams')?.tools ?? {}).length, 7);
+  assert.equal(Object.keys(activeInventory.data.find(entry => entry.name === 'codex-agent-teams')?.tools ?? {}).length, 8);
   const status = await call('teams_status', { taskId: task.id });
   assert.equal(JSON.parse(status.content[0].text).status, 'pending');
   const activeStatus = await call('teams_status', { overview: true });
@@ -77,7 +104,7 @@ try {
   assert.equal(active.runtime.version, packageInfo.version);
   assert.equal(active.counts.pending, 1);
   assert.ok(active.runtime.sourceRoot.startsWith(installed.installedPath + '/'));
-  const rejected = await call('teams_create', { objective: 'Modify files', acceptance: ['Write'], mode: 'workspace-write' });
+  const rejected = await call('teams_create', { expectedWorkspace: workspace, objective: 'Modify files', acceptance: ['Write'], mode: 'workspace-write' });
   assert.equal(rejected.isError, true);
   const cancelled = await call('teams_cancel', { taskId: task.id });
   assert.equal(JSON.parse(cancelled.content[0].text).status, 'cancelled');
@@ -85,6 +112,7 @@ try {
   result = { server, marketplace: marketplace.marketplaceName, installedInTemporaryHome: true,
     cachedPackageIndependent: true, cachedSkillDiscovered: true, inventoryWhileRuntimeActive: true, startupStatus: ready.status, tools: Object.keys(mcp.tools).sort(),
     statusBeforeOwner: true, observedPluginVersion: initial.viewer.version, observedRuntimeVersion: active.runtime.version,
+    modelCatalogRead: true, formRequestObserved: formObserved, confirmationAction, cancelledFormBlocksStart: true,
     contractCreated: true, incompleteWriteContractRejected: true, taskCancelled: true, inferenceStarted: false,
     userConfigChanged: false };
 } finally {

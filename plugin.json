@@ -1,6 +1,6 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "codex-agent-teams",
-  "version": "0.2.2",
+  "version": "0.4.0",
   "description": "Quality-first task delegation with isolated edits, verification, independent expert review and explicit integration"
 }

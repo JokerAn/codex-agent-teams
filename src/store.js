@@ -46,7 +46,17 @@ export class TaskStore {
           task.status = task.status === 'integrating' ? 'integration_failed' : 'interrupted';
           if (task.status === 'integration_failed' && attempt?.integration) { attempt.integration.status = 'recovery_required'; attempt.integration.error = 'Integration interrupted; inspect source changes and logs. Never automatically reapply.'; }
           task.error = 'Previous runtime exited; no automatic replay. Retry explicitly after checking prior work.';
-          if (attempt) { attempt.status = task.status; attempt.endedAt = new Date().toISOString(); }
+          if (attempt) {
+            // Recovery observes a stopped execution; it cannot know when it
+            // stopped, and must not overwrite an already recorded member end.
+            attempt.status = task.status;
+            attempt.recoveryObservedAt = new Date().toISOString();
+            attempt.phase = task.status;
+            const phases = attempt.phases ??= [];
+            if (phases.length && !phases.at(-1).endedAt) phases.at(-1).interrupted = true;
+            phases.push({ phase: task.status, observedAt: attempt.recoveryObservedAt });
+            if (task.status === 'integration_failed' && attempt.integration) attempt.integration.recoveryObservedAt = attempt.recoveryObservedAt;
+          }
           this.save(task, 'recovered-interruption', false);
         }
         for (const workspace of this.listWorkspaces()) {
@@ -54,7 +64,7 @@ export class TaskStore {
           for (const check of workspace.verifications ?? []) {
             if (check.status !== 'running' && check.cleanupConfirmed !== false) continue;
             if (processAlive(check.childPid, true)) throw new Error(`Verification ${check.id} may have a live process group (${check.childPid}); confirm exit before recovery.`);
-            if (check.status === 'running') { check.status = 'interrupted'; check.error = 'Previous runtime exited; verification was not completed. No automatic replay.'; check.endedAt = new Date().toISOString(); }
+            if (check.status === 'running') { check.status = 'interrupted'; check.error = 'Previous runtime exited; verification was not completed. No automatic replay.'; check.recoveryObservedAt = new Date().toISOString(); }
             check.cleanupConfirmed = Boolean(check.childPid);
             recovered = true;
           }
@@ -77,6 +87,17 @@ export class TaskStore {
   assertOwner() {
     const row = this.db.prepare('SELECT value FROM meta WHERE key=?').get('owner');
     if (!row || JSON.parse(row.value).token !== this.owner) throw new Error('Runtime no longer owns state');
+  }
+  modelPreference() {
+    const row = this.db.prepare('SELECT value FROM meta WHERE key=?').get('modelPreference');
+    return row ? JSON.parse(row.value) : null;
+  }
+  saveModelPreference(value) {
+    this.transaction(() => {
+      this.assertOwner();
+      if (value) this.db.prepare('INSERT OR REPLACE INTO meta VALUES (?,?)').run('modelPreference', JSON.stringify(value));
+      else this.db.prepare('DELETE FROM meta WHERE key=?').run('modelPreference');
+    });
   }
   get(id) {
     const row = this.db.prepare('SELECT data FROM tasks WHERE id=?').get(id);

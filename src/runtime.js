@@ -4,37 +4,70 @@ import { existsSync, lstatSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { processAlive } from './store.js';
 import { runVerification, verificationSchema, verifyLogEvidence } from './verification.js';
-import { taskSchema, reviewSchema, validateResult } from './contracts.js';
+import { taskSchema, reviewSchema, validateResult, modelRolesSchema } from './contracts.js';
 import { selectProfile, taskPrompt } from './policy.js';
-import { GitWorkspace, prepareWorkspaceSchema, inspectWorkspaceSchema, removeWorkspaceSchema } from './workspace.js';
+import { GitWorkspace, prepareWorkspaceSchema, inspectWorkspaceSchema, removeWorkspaceSchema, workspaceIdentity, assertWorkspace } from './workspace.js';
+import { inspectExecution, executionFailure } from './preflight.js';
+import { modelPolicyVersion, validateModelSelection } from './models.js';
 
 export class TaskRuntime {
-  constructor(store, backend, config) {
+  constructor(store, backend, config, { requireModelConfirmation = false } = {}) {
     this.store = store;
     this.backend = backend;
     this.config = config;
     this.active = new Map();
     this.closing = false;
+    this.requireModelConfirmation = requireModelConfirmation;
+    this.modelConfirmation = null;
+  }
+  confirmModels(profiles, source, { remember = false } = {}) {
+    if (this.closing || this.active.size || this.verification) throw new Error('Wait for active execution to exit before changing model selection.');
+    if (!['mcp-elicitation', 'interactive-terminal'].includes(source)) throw new Error('Model selection requires direct user confirmation.');
+    const selected = modelRolesSchema.parse(profiles);
+    const confirmation = { profiles: selected, source, confirmedAt: new Date().toISOString(), scope: remember ? 'workspace' : 'runtime-session',
+      policyVersion: modelPolicyVersion, target: workspaceIdentity(this.config.workspace) };
+    this.store.saveModelPreference(remember ? confirmation : null);
+    this.config = { ...this.config, profiles: selected };
+    this.modelConfirmation = confirmation;
+    return structuredClone(this.modelConfirmation);
+  }
+  restoreModels(selection, catalog) {
+    if (this.closing || this.active.size || this.verification) throw new Error('Wait for active execution to exit before restoring models.');
+    this.modelConfirmation = validateModelSelection(selection, catalog, workspaceIdentity(this.config.workspace));
+    this.config = { ...this.config, profiles: this.modelConfirmation.profiles };
+    return structuredClone(this.modelConfirmation);
+  }
+  forgetModels() {
+    if (this.closing || this.active.size || this.verification) throw new Error('Wait for active execution to exit before forgetting models.');
+    this.store.saveModelPreference(null);
+    this.modelConfirmation = null;
   }
   create(input) {
     if (this.closing) throw new Error('Runtime is closing');
     const contract = taskSchema.parse(input);
+    const target = workspaceIdentity(this.config.workspace);
+    if (contract.expectedWorkspace) assertWorkspace(contract.expectedWorkspace, target);
     if (new Set(contract.dependencies).size !== contract.dependencies.length) throw new Error('Duplicate dependencies');
     // Dependencies can only reference existing immutable contracts: cycles cannot be introduced.
     for (const id of contract.dependencies) this.store.get(id);
-    selectProfile(contract, this.config);
+    if (!this.requireModelConfirmation || this.modelConfirmation) selectProfile(contract, this.config);
     if (new Set(contract.acceptance).size !== contract.acceptance.length) throw new Error('Duplicate acceptance criteria');
-    const task = { ...contract, id: randomUUID(), status: 'pending', attempts: [], createdAt: new Date().toISOString() };
+    const task = { ...contract, target, id: randomUUID(), status: 'pending', attempts: [], createdAt: new Date().toISOString() };
     return this.store.save(task, 'created');
   }
   status(id) { return id ? this.store.get(id) : this.store.list(); }
   start(id, { retry = false, reason = '' } = {}) {
     if (this.closing) throw new Error('Runtime is closing');
+    if (this.requireModelConfirmation && !this.modelConfirmation) throw new Error('User model confirmation required. Call teams_models with confirm=true before starting members.');
     if (this.verification) throw new Error('Wait for command verification to exit before starting members');
     for (const task of this.store.list()) { const attempt = task.attempts.at(-1); if (attempt?.cleanupConfirmed === false) throw new Error('Previous member/reviewer exit is unconfirmed; reopen after checking its process group'); }
     for (const workspace of this.store.listWorkspaces()) this.assertVerificationExited(workspace);
     if (this.active.size >= this.config.maxConcurrency) throw new Error('Concurrency limit reached; collect current work first.');
     const task = this.store.get(id);
+    const target = workspaceIdentity(this.config.workspace);
+    if (task.target) assertWorkspace(task.target, target);
+    else throw new Error('Legacy task has no bound target workspace; create a new task.');
+    if (this.modelConfirmation) assertWorkspace(this.modelConfirmation.target, target);
     if ((task.executionPlan && this.active.size) || [...this.active.values()].some(entry => entry.workspaceBound)) throw new Error('Verified-worktree tasks run exclusively until member and command exit');
     const canRetry = ['failed', 'blocked', 'interrupted', 'cancelled'].includes(task.status);
     if (task.status !== 'pending' && !(canRetry && retry && reason.trim())) throw new Error('Task is not pending, or explicit retry reason is missing.');
@@ -45,17 +78,18 @@ export class TaskRuntime {
     if (dependencies.some(dep => dep.status !== 'succeeded')) throw new Error('Dependencies must pass review before execution.');
     // A rejected/failed cheaper run never silently repeats on a cheaper route.
     const selection = selectProfile(retry ? { ...task, profile: 'expert' } : task, this.config);
-    const attempt = { id: randomUUID(), status: 'running', startedAt: new Date().toISOString(), selection, reason };
+    const attempt = { id: randomUUID(), status: 'running', startedAt: new Date().toISOString(), selection, reason,
+      reviewerSelection: { ...this.config.profiles.expert }, ...(this.modelConfirmation ? { modelConfirmation: structuredClone(this.modelConfirmation) } : {}) };
     markPhase(attempt, task.executionPlan ? 'preparing' : 'member', attempt.startedAt);
     task.attempts.push(attempt);
     task.status = 'running';
-    delete task.result; delete task.review; delete task.error; delete task.execution;
+    delete task.result; delete task.review; delete task.error; delete task.execution; delete task.failure;
     this.store.save(task, 'started');
     const controller = new AbortController();
     const entry = { controller, attemptId: attempt.id, workspaceBound: Boolean(task.executionPlan), done: null };
     this.active.set(id, entry);
     entry.done = this.execute(task, attempt, dependencies, controller).finally(() => this.active.delete(id));
-    return { taskId: id, attemptId: attempt.id, status: 'running', selection };
+    return { taskId: id, attemptId: attempt.id, status: 'running', selection, target };
   }
   async execute(task, attempt, dependencies, controller) {
     const deadline = Date.now() + this.config.taskTimeoutMs;
@@ -81,6 +115,8 @@ export class TaskRuntime {
       if (task.executionPlan) {
         workspace = this.prepareWorkspaceRecord({ dirtyPolicy: task.executionPlan.dirtyPolicy }, { taskId: task.id, attemptId: attempt.id });
         progress({ workspaceInputDigest: new GitWorkspace(this.config.workspace).inspect(workspace).contentDigest });
+        phase('preflight');
+        progress({ preflight: inspectExecution(task.executionPlan, workspace.worktreePath) });
       }
       live();
       phase('member');
@@ -115,12 +151,12 @@ export class TaskRuntime {
             instruction: 'Inspect actual files and patch against every criterion. Do not run commands that modify files. Report concrete defects or missing evidence honestly.' });
           if (packet.length > 120000) throw new Error('Review packet exceeds 120000 characters; narrow the change');
           phase('independent_review');
-          progress({ machineReview: { status: 'running', selection: this.config.profiles.expert } });
+          progress({ machineReview: { status: 'running', selection: attempt.reviewerSelection } });
           const reviewed = await this.backend.run({ cwd: workspace.worktreePath, mode: 'read-only', role: 'review',
-            selection: this.config.profiles.expert, acceptance: task.acceptance, prompt: packet, signal: controller.signal,
+            selection: attempt.reviewerSelection, acceptance: task.acceptance, prompt: packet, signal: controller.signal,
             onProgress: update => { const previous = this.store.get(task.id).attempts.at(-1).machineReview; progress({ machineReview: { ...previous, ...update } }); } });
           live();
-          if (reviewed.actualModel !== this.config.profiles.expert.model) throw new Error('Independent review model changed unexpectedly');
+          if (reviewed.actualModel !== attempt.reviewerSelection.model) throw new Error('Independent review model changed unexpectedly');
           if (reviewed.threadId && reviewed.threadId === execution.threadId) throw new Error('Independent review must use a fresh thread');
           const reviewResult = validateResult(reviewed.result, task);
           const passed = !reviewResult.blockers.length && reviewResult.criteria.every(criterion => criterion.satisfied);
@@ -135,6 +171,7 @@ export class TaskRuntime {
         result, execution: { ...execution, result: undefined } });
     } catch (error) {
       this.finish(task.id, attempt.id, controller.signal.aborted ? 'cancelled' : 'failed', { error: error.message,
+        failure: executionFailure(error, this.store.get(task.id).attempts.at(-1).phase),
         ...(result ? { result, execution: { ...execution, result: undefined } } : {}) });
     } finally { clearTimeout(timer); }
   }
@@ -177,7 +214,7 @@ export class TaskRuntime {
     if (workspace.status !== 'ready' || current.contentDigest !== verification.outputDigest) throw new Error('Verified workspace changed or was removed; cancel and retry with a fresh attempt');
     verifyLogEvidence(verification, join(manager.managed, 'verifications', verification.id));
     if (task.mode === 'workspace-write') {
-      if (attempt.machineReview?.status !== 'passed' || attempt.machineReview.candidateDigest !== attempt.candidate.digest || attempt.machineReview.actualModel !== this.config.profiles.expert.model) throw new Error('Current independent expert review is required');
+      if (attempt.machineReview?.status !== 'passed' || attempt.machineReview.candidateDigest !== attempt.candidate.digest || attempt.machineReview.actualModel !== (attempt.reviewerSelection ?? this.config.profiles.expert).model) throw new Error('Current independent expert review is required');
       manager.candidateEvidence(workspace, attempt.candidate);
     }
     return { workspace, verification, manager };
@@ -186,6 +223,7 @@ export class TaskRuntime {
     if (this.closing) throw new Error('Runtime is closing');
     this.assertWorkspaceIdle();
     const task = this.store.get(id), attempt = task.attempts.at(-1);
+    if (task.target) assertWorkspace(task.target, workspaceIdentity(this.config.workspace));
     if (task.mode !== 'workspace-write' || task.status !== 'awaiting_integration' || attempt?.id !== attemptId) throw new Error('Integration requires the current captain-approved write attempt');
     const { workspace, manager } = this.checkAttemptEvidence(task);
     if (manager.source().digest !== workspace.baseline.sourceDigest) throw new Error('Source workspace changed since baseline; integration refused');

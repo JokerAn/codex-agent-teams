@@ -30,6 +30,14 @@ test('configuration paths resolve from the config file, independent of launch cw
   assert.equal(loaded.codexBin, join(root, 'bin/codex'));
 });
 
+test('build binary override is captured in the package without rewriting user config', t => {
+  const { configPath, out } = fixture(t), before = readFileSync(configPath);
+  const packed = packPlugin({ configPath, out, codexBin: process.execPath });
+  assert.equal(json(packed.configPath).codexBin, process.execPath);
+  assert.deepEqual(readFileSync(configPath), before);
+  assert.throws(() => packPlugin({ configPath, out: out + '-invalid', codexBin: 'codex' }), /absolute path/);
+});
+
 test('prepared package includes production dependencies, supports cache relocation and serves real SDK MCP', async t => {
   const { root, workspace, configPath, out } = fixture(t);
   const packed = packPlugin({ configPath, out });
@@ -59,13 +67,13 @@ test('prepared package includes production dependencies, supports cache relocati
     assert.equal(identity.distribution, 'packaged');
     assert.equal(identity.build.sourceDigest, build.sourceDigest);
     assert.equal(identity.sourceRoot.replace(/\/$/, ''), target.pluginRoot);
-    assert.equal((await client.listTools()).tools.length, 7);
-    const created = await client.callTool({ name: 'teams_create', arguments: { objective: 'Inspect relocated package', acceptance: ['Cite source'] } });
+    assert.equal((await client.listTools()).tools.length, 8);
+    const created = await client.callTool({ name: 'teams_create', arguments: { expectedWorkspace: workspace, objective: 'Inspect relocated package', acceptance: ['Cite source'] } });
     assert.ok(!created.isError);
     const task = JSON.parse(created.content[0].text);
     const status = await client.callTool({ name: 'teams_status', arguments: { taskId: task.id } });
     assert.equal(JSON.parse(status.content[0].text).status, 'pending');
-    const rejected = await client.callTool({ name: 'teams_create', arguments: { objective: 'Write source', acceptance: ['Write'], mode: 'workspace-write' } });
+    const rejected = await client.callTool({ name: 'teams_create', arguments: { expectedWorkspace: workspace, objective: 'Write source', acceptance: ['Write'], mode: 'workspace-write' } });
     assert.equal(rejected.isError, true);
     const cancelled = await client.callTool({ name: 'teams_cancel', arguments: { taskId: task.id } });
     assert.equal(JSON.parse(cancelled.content[0].text).status, 'cancelled');

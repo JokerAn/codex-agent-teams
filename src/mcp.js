@@ -4,8 +4,10 @@ import { McpServer } from '@modelcontextprotocol/server';
 import { StdioServerTransport } from '@modelcontextprotocol/server/stdio';
 import { z } from 'zod';
 import { taskSchema, reviewSchema } from './contracts.js';
+import { modelSelectionForm, acceptedModelRoles, validateModelSelection } from './models.js';
+import { workspaceIdentity } from './workspace.js';
 
-export function createMcpServer(runtime, { observe } = {}) {
+export function createMcpServer(runtime, { observe, discoverModels } = {}) {
   const getRuntime = () => typeof runtime === 'function' ? runtime() : runtime;
   const server = new McpServer({ name: 'codex-agent-teams', version: packageInfo.version });
   const id = z.string().min(1);
@@ -13,19 +15,66 @@ export function createMcpServer(runtime, { observe } = {}) {
     server.registerTool(name, {
       description, inputSchema: schema,
       annotations: { readOnlyHint: readOnly, destructiveHint: destructive, openWorldHint: !readOnly },
-    }, async args => {
+    }, async (args, ctx) => {
       try {
-        const value = await handler(args);
+        const value = await handler(args, ctx);
         return { content: [{ type: 'text', text: JSON.stringify(value) }] };
       } catch (error) {
         return { isError: true, content: [{ type: 'text', text: error.message }] };
       }
     });
   };
-  tool('teams_create', 'Create one immutable task contract. Write mode requires expert, allowedPaths and verification; member writes only its worktree and source integration remains explicit. Accuracy and completion efficiency first. No model call yet. Dependencies must already exist. Optional execution captures a fresh Git worktree per attempt and runs the explicitly authorized verification command after member exit; member mode is explicitly specified by contract.', taskSchema, args => getRuntime().create(args));
-  tool('teams_start', 'Start a fresh Codex member for an authorized task. Consumes model quota. Use explicit retry plus new reason after failure; retry uses expert. No recursive delegation.', z.strictObject({
+  let confirming = false, confirmedSelection = null;
+  const selectionFor = catalog => {
+    const saved = observe?.().modelPreference;
+    const candidate = confirmedSelection ?? (saved?.scope === 'workspace' ? saved : null);
+    if (!candidate) return { selection: null, confirmationRequired: true, confirmationIssue: null };
+    try { return { selection: validateModelSelection(candidate, catalog, workspaceIdentity(catalog.workspace)), confirmationRequired: false, confirmationIssue: null }; }
+    catch (error) { return { selection: null, confirmationRequired: true, confirmationIssue: error.message }; }
+  };
+  tool('teams_models', 'Read live models and exact target without inference. confirm=true asks the HOST USER to choose roles and optionally remember this workspace. Never supply answers. forget=true revokes saved and session selections. Before every start, saved choices are revalidated; unsupported/cancelled forms never grant approval.', z.strictObject({ confirm: z.boolean().default(false), forget: z.boolean().default(false) }), async ({ confirm, forget }, ctx) => {
+    if (!discoverModels) throw new Error('Host model discovery is unavailable.');
+    if (confirming) throw new Error('Model confirmation is already in progress.');
+    if (confirm && forget) throw new Error('Choose confirm or forget, not both.');
+    if (forget) {
+      getRuntime().forgetModels(); confirmedSelection = null;
+      return { status: 'forgotten', confirmationRequired: true, inferenceStarted: false };
+    }
+    if (!confirm) {
+      const catalog = await discoverModels();
+      return { ...catalog, target: workspaceIdentity(catalog.workspace), ...selectionFor(catalog) };
+    }
+    confirming = true;
+    try {
+      const catalog = await discoverModels(), target = workspaceIdentity(catalog.workspace);
+      const capabilities = server.server.getClientCapabilities()?.elicitation;
+      if (!capabilities || (!capabilities.form && Object.keys(capabilities).length)) throw new Error('Host does not support MCP form confirmation. Use the interactive CLI start/run; no models selected and no inference started.');
+      const current = getRuntime();
+      if (current.active.size || current.verification) throw new Error('Wait for active execution to exit before changing models.');
+      const response = await ctx.mcpReq.elicitInput(modelSelectionForm(catalog, catalog.workspace));
+      if (response.action !== 'accept') return { status: response.action, selectionChanged: false, ...selectionFor(catalog), inferenceStarted: false,
+        note: '未确认新分工。若没有看到表单，宿主可能直接拒绝；可使用交互式 CLI start/run。不得代替用户接受。' };
+      const refreshed = await discoverModels();
+      if (JSON.stringify(target) !== JSON.stringify(workspaceIdentity(refreshed.workspace))) throw new Error('Target workspace changed during confirmation; confirm again.');
+      const profiles = acceptedModelRoles(response.content, refreshed);
+      confirmedSelection = current.confirmModels(profiles, 'mcp-elicitation', { remember: response.content.remember === true });
+      return { status: 'confirmed', selection: confirmedSelection, workspace: catalog.workspace, inferenceStarted: false };
+    } finally { confirming = false; }
+  });
+  tool('teams_create', 'Create an immutable contract. REQUIRED expectedWorkspace is the absolute intended checkout path; mismatch is rejected. Set it from the task context, not blindly from plugin config. auto uses simple only for explicitly simple non-review work. Write tasks require allowedPaths and verification; optional preflight declares requiredFiles/nodeModules. No inference.', taskSchema.safeExtend({ expectedWorkspace: z.string().min(1) }), args => getRuntime().create(args));
+  tool('teams_start', 'Start only after user model confirmation, or an explicitly remembered valid workspace selection. Rechecks live models and target. Consumes quota. Retries require a new reason and use expert.', z.strictObject({
     taskId: id, retry: z.boolean().default(false), reason: z.string().default(''),
-  }), ({ taskId, ...options }) => getRuntime().start(taskId, options), false, true);
+  }), async ({ taskId, ...options }) => {
+    if (confirming) throw new Error('Wait for model confirmation to finish.');
+    const catalog = await discoverModels();
+    // A form may have opened while model discovery was in flight.
+    if (confirming) throw new Error('Wait for model confirmation to finish.');
+    const state = selectionFor(catalog);
+    if (!state.selection) throw new Error(`User model confirmation required. ${state.confirmationIssue ?? 'Call teams_models with confirm=true before starting members.'}`);
+    const current = getRuntime();
+    if (!current.modelConfirmation) current.restoreModels(state.selection, catalog);
+    return current.start(taskId, options);
+  }, false, true);
   tool('teams_status', 'Read task result or compact list. overview=true shows plugin version/source, recorded runtime identity, task phases, elapsed time and evidence summaries without starting members. Share meaningful changes with the user; a report is pending until reviewed. Avoid repetitive polling.', z.strictObject({ taskId: id.optional(), overview: z.boolean().default(false), limit: z.number().int().min(1).max(100).default(20) }), ({ taskId, overview, limit }) => {
     const snapshot = observe ? observe(taskId) : { tasks: taskId ? [getRuntime().status(taskId)] : getRuntime().status(), workspaces: getRuntime().workspaceStatus(), owner: null, stateExists: true };
     if (overview) return statusOverview(snapshot, { limit });

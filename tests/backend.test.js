@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { AppServerClient, CodexBackend, memberOverrides } from '../src/app-server.js';
 import { processAlive } from '../src/store.js';
+import { setup, contract } from './helpers.js';
 
 const fixture = fileURLToPath(new URL('./fixtures/fake-app-server.js', import.meta.url));
 const backend = mode => new CodexBackend({ binary: process.execPath, args: [fixture, mode], requestTimeoutMs: 1000 });
@@ -183,4 +184,52 @@ test('a legal boundary-sized frame followed by another frame in the same chunk i
   assert.deepEqual(notifications,['fixture/boundary','fixture/next']);
   assert.equal(client.frameBufferBytes,0);
   assert.equal(client.frameBuffer,'');
+});
+
+for (const entry of ['run', 'probe']) {
+  for (const mode of ['unsafe', 'normal']) {
+    test(`${entry} preserves ${mode === 'unsafe' ? 'both execution and cleanup failures' : 'cleanup-only failure'} without reporting exit`, async t => {
+      const stop = AppServerClient.prototype.stop, clients = [], updates = [];
+      const cleanupError = new Error('fixture cleanup exit unconfirmed');
+      t.mock.method(AppServerClient.prototype, 'stop', async function () { clients.push(this); throw cleanupError; });
+      try {
+        const action = entry === 'run'
+          ? backend(mode).run({ ...request(new AbortController().signal), onProgress: update => updates.push(update) })
+          : backend(mode).probe(process.cwd(), { checkThread: true });
+        await assert.rejects(action, error => {
+          if (mode === 'unsafe') {
+            assert.ok(error instanceof AggregateError);
+            assert.match(error.message, /did not confirm.*cleanup exit unconfirmed/);
+            assert.match(error.cause.message, /did not confirm/);
+            assert.deepEqual(error.errors, [error.cause, cleanupError]);
+          } else assert.equal(error, cleanupError);
+          return true;
+        });
+        assert.equal(updates.some(update => update.memberLaunch === 'exited'), false);
+        assert.equal(clients.length, 1);
+        assert.equal(processAlive(clients[0].child.pid, true), true);
+      } finally {
+        for (const client of clients) await stop.call(client);
+      }
+    });
+  }
+}
+
+test('runtime persists both failure messages and refuses retries while cleanup is unconfirmed', async t => {
+  const stop = AppServerClient.prototype.stop, clients = [];
+  t.mock.method(AppServerClient.prototype, 'stop', async function () { clients.push(this); throw new Error('fixture cleanup exit unconfirmed'); });
+  const { runtime, store } = setup(t, backend('unsafe'), { taskTimeoutMs: 5000 });
+  try {
+    const task = runtime.create(contract);
+    runtime.start(task.id);
+    const failed = await runtime.wait(task.id);
+    assert.equal(failed.status, 'failed');
+    assert.match(failed.error, /did not confirm.*cleanup exit unconfirmed/);
+    assert.equal(store.get(task.id).attempts[0].error, failed.error);
+    assert.equal(failed.attempts[0].cleanupConfirmed, false);
+    assert.throws(() => runtime.start(task.id, { retry: true, reason: 'new evidence' }), /exit is unconfirmed/);
+    assert.throws(() => runtime.start(runtime.create(contract).id), /exit is unconfirmed/);
+  } finally {
+    for (const client of clients) await stop.call(client);
+  }
 });

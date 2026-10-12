@@ -1,6 +1,62 @@
 # 当前状态
 
-日期：2026-10-12（Asia/Shanghai）。版本：0.2.2。**本机可用：交付闭环与正确性修补保留，新增可感知反馈、只读状态观察和本地 HTML 页面。**
+日期：2026-10-12（Asia/Shanghai）。源码版本：0.3.0。**本机回归通过：新增真实模型发现、用户确认和简单/复杂任务分工，保留此前交付闭环与修补。当前会话尚未重装新包。**
+
+## 0.3.0 build 在普通终端找不到 Codex CLI 的修补（2026-10-12）
+
+- 用户实报 `npm run build` 在打包后出现 `spawn codex ENOENT`。本机配置保存裸命令 codex，桌面 CLI 实际位于 `/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex`；普通终端缺少对应 PATH。
+- 新增不依赖 npm 的构建路径解析：安装依赖前检查 CLI，优先显式参数/配置与 PATH，默认 codex 缺失时检查 macOS 标准桌面应用路径；支持 `--binary`。无效显式路径不静默替换，缺 CLI 提前报错。
+- build 的初始化探测、doctor 和包内配置统一使用解析后的绝对路径；已有本机配置原样保留，避免仅修 build 后插件缓存仍依赖终端 PATH。没有改动 Codex 全局配置、模型分工或用户暂存区。
+- 实际从 PATH 移除 Codex，仅保留 Node 与系统命令，运行完整 `npm run build` 成功，真实宿主插件/模型/只读权限检查通过且无推理。产物 `dist/marketplace-v0.3.0-1791797729656/`；核对包内绝对路径及原本机配置不变。
+- `node --test tests/build.test.js tests/plugin.test.js`：9/9，通过，覆盖 PATH 优先、桌面回退、无效/自定义路径、安装前失败、包内路径保存及原配置保留。`git diff --check` 通过；本次没有重跑全量或远程 CI。后续直接重跑 build 即可，安装需使用本次成功输出的新目录。
+
+## 0.3.0 用户确认模型分工（2026-10-12）
+
+- 用户明确要求读取 Codex 模型选项、增加用户确认，队长采用高级模型、简单任务可使用轻量模型、复杂任务仍能指定高级模型。依据该授权更新 PRINCIPLES.md；不会把用户确认当成模型质量/费用评测证据。
+- 官方 App Server `model/list` 分页读取可见模型、显示名和支持的推理强度；`config/read` 仅返回有效模型与推理强度。未展示密钥/完整配置，目录默认项与有效配置分开。本机实际发现 5 个模型标识，目录默认 group/group，有效配置 krill/gpt-6-astra/high；不将任意一项当成当前聊天实际模型的证明。
+- 新增第八个 MCP 工具 `teams_models`：默认只读发现，confirm=true 使用官方 SDK elicitation 向宿主用户请求表单，选择 expert 和可选 simple 模型/强度，并勾选确认。工具参数不能指定模型或代填批准。接收后刷新目录校验，模型消失或组合无效不应用。
+- 确认仅保存在当前运行时内存中；同一运行时任务共享选择，重启重新确认。未确认、正在确认、无表单支持时拒绝启动成员。首次取消不授权；取消修改保留旧分工。执行中禁止切换。CLI 新增 models 只读列表，start/run 在交互终端逐步选择并输入 yes；无非交互同意开关。底层 TaskRuntime 的受控测试与显式模型 smoke 仍可独立调用，公开 MCP/CLI 启动入口强制确认。
+- 合同默认 profile=auto，新增 complexity=simple 与 profile=simple；仅明确 simple 的非 review 任务使用已确认 simple，bounded/uncertain/complex/review 使用 expert，profile=expert 可强制高级模型。简单写任务允许轻量 writer，但独立 reviewer 和显式重试仍为 expert。每 attempt 保存确认来源、时间、分工快照、选择理由及 reviewerSelection；策略变更不改旧 attempt 的验收依据。
+- 队长仍由宿主选择，插件不改变或认证当前聊天模型。用户还未提交本机的生产 expert/simple 选择；测试的自动表单响应是受控 fixture，不记录成真实用户批准。实际宿主 smoke 只回复取消，不消耗模型推理额度。
+- 官方依据：Context7 的 OpenAI Codex App Server 与 MCP TypeScript SDK v2.3.1 文档；本机导出的 schema 确认 model/list、config/read 和 elicitation 请求/响应。没有新增依赖、后台服务或前端框架；新增 models.js，一个核心模块（共 13 个）和一个 MCP 工具（共 8 个）。版本元数据统一 0.3.0。
+- 定向初轮 82/82 通过。全量首轮暴露旧 CLI 测试仍假定非交互可启动；改为验证拒绝非交互并模拟交互终端后，第二轮发现测试用 node -e 的 argv 偏移错误，修正测试驱动；定向 CLI 1/1 通过。最终 `npm run test:coverage` 163/163，0 fail/cancelled/skipped，46.70 秒；源码行 96.62%、分支 86.67%、函数 94.12%；models.js 行 100%、分支 84.85%。前两轮失败日志保留，不改写为通过。
+- 回归包含：用户 accept/decline/cancel/未勾选、参数不能伪造批准、不支持表单、运行时重启失效、等待表单时拒绝并发启动、确认期间模型移除、隐藏模型/分页/配置脱敏、简单/复杂/强制expert路由、重试升级、轻量 writer 与 expert reviewer 完整写/验证/集成链、切换分工后旧 reviewer 证据保持有效，以及交互 CLI 闭环。
+- 实际宿主 Codex Desktop 0.162.0-alpha.17.2：外层 approval_policy=never 时直接返回 decline，未观察到表单；不能当作用户取消或 UI 成功。改用允许交互的 on-request 临时外层会话后实际收到表单请求，回复 cancel 后 teams_start 明确拒绝。成员的 approval=never 与沙箱门禁保持原样，未改用户正式配置。
+- 最终 `dist/marketplace-v0.3.0/`：13 核心文件、skill、PRINCIPLES 与 package 字节核对，build 摘要重算通过；真实 doctor 无推理通过；临时 CODEX_HOME 安装并删除源包后缓存独立运行，viewer/runtime 均 0.3.0，八工具、模型发现、表单转发/取消、owner退出检查通过。
+- 本机证据 `.codex-teams/upgrade-0.3.0/` 保存模型列表、定向/全量日志（包括失败轮）、pack/doctor 和宿主 smoke 各轮回执。本轮由主 Agent 实现与验证，没有启动付费子成员审查；未跑远程 CI、真实模型分工写任务或桌面点击验收，未提交、推送或重装正式缓存。
+- 下一步：按 README 重装新包并在允许用户交互的宿主中实际选择角色，确认桌面展示体验；再据真实使用反馈决定是否需要跨运行时保存偏好。未默认认定任何候选是“小模型”，未替用户选择。
+
+## 0.2.3 错误证据与恢复时间修补（2026-10-12）
+
+- 用户授权实施上一轮建议的两个边界小修补。主 Agent 实现，Agent Teams expert 独立只读审查；原有 build 入口及评估文档改动保留。目录匹配、执行环境预检、结构化错误分类与质量/效率评测仍为后续。
+- App Server run/probe 在执行与清理同时失败时抛 AggregateError，保留 cause/errors，并在 message 同时保留两项信息，现有 runtime/attempt 错误记录和重试摘要能够保留两项原因。仅清理失败仍抛错，不报告 memberLaunch=exited，退出未确认仍阻止重派；没有改变权限或重试策略。
+- store 恢复保留已有 endedAt，另记 recoveryObservedAt；缺少结束证据的成员、集成和验证命令不再用恢复时刻伪造结束时间。阶段终态记录 observedAt，未完成的旧阶段标 interrupted；HTML 明确区分恢复观察与未知结束。
+- 新增 6 个用例：run/probe 的双重失败/仅清理失败四种组合，runtime 持久化双重错误并拒绝重试/新任务，以及固定时钟恢复矩阵；原真实 Git 应用后进程退出案例增加结束时间保留断言。故障通过受控协议及 stop 桩注入，不宣称真实宿主已发生同类异常。
+- 定向 `node --test tests/backend.test.js tests/status.test.js tests/write.test.js`：70/70，通过，36.02 秒。最终 `npm run test:coverage`：156/156，0 fail/cancelled/skipped，41.94 秒；源码行 96.62%、分支 86.45%、函数 94.21%；app-server/store/status 行覆盖均 100%。
+- package/lock 根包和两个 plugin manifest 同步 0.2.3，无新增依赖、工具、核心模块或数据库 schema 版本。README 安装/重装示例更新，ROADMAP 记录小修补。
+- 新包 `dist/marketplace-v0.2.3/`，12 个核心源码、技能和 package 元数据与当前源码一致，build 摘要重算通过。实际宿主 doctor 插件发现、模型/effort、readOnly/network=false/approval=never 检查通过，无推理。
+- 临时 CODEX_HOME 的真实安装/缓存 smoke 通过：删除源包后缓存仍可运行，viewer/runtime 均 0.2.3，七工具、创建/取消、owner 退出确认通过。实测宿主为 Codex Desktop 0.162.0-alpha.17.2 / macOS arm64；没有修改用户正式配置。
+- 独立审查任务 `43bed8a7-114c-4c9b-9f52-1f739767abde`，attempt `0264a15a-c553-4e43-b6be-fc9ad5dbe6ac`，`group/group / high`，成员执行 126.700 秒，退出确认；静态未发现阻塞，队长对三项原标准结合上述真实测试逐项复核后 succeeded。插件贡献为独立审查，代码与命令由主 Agent 完成。host totalTokens=154309、inputTokens=152059（含 cachedInputTokens=93568）、outputTokens=2250；缓存不重复相加，未计算费用或节省。
+- 最终文档链接与 `git diff --check` 通过。独立审查之后运行代码及测试未再改动。
+- 本机证据：`.codex-teams/upgrade-0.2.3/`，保存 targeted.log、coverage.log、pack.json、doctor.json、plugin-smoke.json。未重跑真实模型 writer/reviewer 写任务或远程 CI，未提交、推送或重装正式缓存。新包可按 README 安装。
+
+## 0.2.2 后续升级评估（2026-10-12）
+
+- 用户要求借助 codex-agent-teams 评估升级方向。本轮只更新评估/状态文档，原有一键 build 未提交改动保留；具体代码依据、最小实现与验收见 [UPGRADE-REVIEW-0.2.2.md](UPGRADE-REVIEW-0.2.2.md)。
+- 当前会话实际 MCP viewer 和启动后的 runtime 均为 0.2.2，来源为正式插件缓存，build.createdAt 为 `2026-10-12T05:28:37.493Z`。此前“仍在使用旧缓存、待重装”的记录保留为历史，不适用于本次会话；本轮没有代执行重装。
+- 专项成员提出两个边界，队长分别用当前源码与内存桩独立复现：app-server 清理异常覆盖主错误；store 在集成恢复时覆盖已有 endedAt，使固定时钟案例的执行耗时从 60 秒变为 7200 秒。属于受控复现，不是实际宿主组合故障或磁盘崩溃实测；修补尚未实施。
+- 升级顺序：先修上述两项，再做目标工作区展示与匹配防护、成员启动前环境预检、结构化错误与恢复指引；随后建立同条件质量/效率对照，并补一键 build 的自动回归与快速失败。
+- 团队任务 `fc597599-778f-4e64-84c0-30cc0306f5da`，attempt `4aad8564-3f8c-4770-bc06-e13e7db40cf7`，`group/group / high`，成员执行 594.042 秒，退出确认；经队长逐项复核后 succeeded，仅表示分析报告通过。host totalTokens=758535、inputTokens=743857（含 cachedInputTokens=564864）、outputTokens=14678；不重复加缓存，不计算费用或节省。
+- 已检查当前源码、相关测试与历史验证记录；没有重跑全量测试、远程 CI、真实模型写任务或付费批量评测。现有 150/150 与远程四组通过仍为之前记录，本轮不重新认证。
+- 文档链接、空白及 git diff --check 通过。下一步建议先交付两个边界修补与定向回归；环境预检由真实失败任务驱动，不要求所有修复任务基线测试先通过，不隐式安装依赖。完整方案是建议，尚未实现。
+
+## 一条命令准备安装包（2026-10-12）
+
+- 新增 `npm run build`：自动安装锁定依赖，首次从宿主默认模型（要求支持 high）和当前项目生成本机配置，已有配置复用，调用原 pack 与 doctor/probe 完成封装和无推理权限检查，打印桌面市场表单填写内容。没有编译步骤或新依赖。
+- 重复构建保留旧目录，自动选择带时间戳的新目录；支持显式 config/out 与 TEAMS_CONFIG。不会自动安装到用户 Codex 配置。
+- 实际从无 node_modules、无 teams.local.json、无 dist 的状态运行成功；默认模型为 `group/group / high`，目标为本项目。再次构建也通过真实宿主的插件/模型/只读线程检查，生成独立新包，无模型推理。
+- 插件定向回归最终 6/6 通过；显式不存在配置在安装依赖前失败。首次回归误与 npm ci 并行，依赖目录重建导致 2 项失败；待安装完成后串行重跑全部通过，不将首次失败记为通过。
+- 本机初次包为 `dist/marketplace-v0.2.2`；未代操作桌面安装，未运行全量测试或真实模型任务。下一步在 Codex 添加该本地市场并安装插件；不同工作区或模型可修改本机配置后重新 build。
 
 
 ## 首次远程 CI 与兼容修补（2026-10-12）
@@ -176,4 +232,4 @@
 
 ## 下一步
 
-0.2.2 可感知反馈与本地状态页已完成本机验收，新包可按 README 重装。远程四组 CI 已实际通过。下一步按 README 重装正式缓存并观察使用反馈，以真实任务推进环境预检、错误分类和 P2 质量/效率评测。保持小型单链路，不扩展常驻网页服务或后台协调。
+0.3.0 模型发现、用户确认和简单/复杂任务分工已完成本机回归与临时宿主协议验证。新包按 README 重装后由用户实际选择模型；当前会话尚未切换。远程四组 CI 通过属于 0.2.2 历史，0.3.0 未运行远程 CI。后续继续完善目标工作区匹配、环境预检、错误分类与质量/效率评测，保持小型单链路。

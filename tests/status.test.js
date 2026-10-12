@@ -167,3 +167,54 @@ test('missing owner warns about stale activity without recovering or suggesting 
   assert.equal(active.tasks[1].integrationElapsedMs,10000);
   assert.deepEqual(tasks.map(task=>task.status),['running','integrating']);
 });
+
+test('recovery preserves execution endpoints and records observation separately from unknown stop times', t => {
+  const f = fixture(t), store = new TaskStore(f.path);
+  const startedAt = '2026-10-12T00:00:00.000Z', endedAt = '2026-10-12T00:01:00.000Z';
+  const observedAt = '2026-10-12T02:00:00.000Z';
+  for (const status of ['running', 'integrating']) {
+    for (const knownEnd of [false, true]) {
+      const phase = status === 'running' ? 'member' : 'integration_verification';
+      store.save({ id: `${status}-${knownEnd}`, objective: 'recovery fixture', status, dependencies: [], attempts: [{
+        id: 'a', status, startedAt, ...(knownEnd ? { endedAt } : {}), phase,
+        phases: [{ phase: 'preparing', startedAt, endedAt }, { phase, startedAt: endedAt }],
+        ...(status === 'integrating' ? { integration: { status: 'verifying', startedAt: endedAt } } : {}),
+      }] }, 'fixture');
+    }
+  }
+  store.saveWorkspace({ id: 'w', status: 'ready', verifications: [{ id: 'v', status: 'running', startedAt }] }, 'fixture');
+  store.close();
+  t.mock.timers.enable({ apis: ['Date'], now: Date.parse(observedAt) });
+  const recovered = new TaskStore(f.path);
+  try {
+    for (const task of recovered.list()) {
+      const attempt = task.attempts[0], knownEnd = task.id.endsWith('-true');
+      const view = taskView(task);
+      assert.equal(view.elapsedMs, knownEnd ? 60000 : null);
+      assert.equal(attempt.endedAt, knownEnd ? endedAt : undefined);
+      assert.equal(attempt.recoveryObservedAt, observedAt);
+      assert.equal(attempt.phase, task.status);
+      assert.equal(attempt.phases[0].endedAt, endedAt);
+      assert.equal(attempt.phases[1].endedAt, undefined);
+      assert.equal(attempt.phases[1].interrupted, true);
+      assert.deepEqual(attempt.phases[2], { phase: task.status, observedAt });
+      assert.equal(view.integrationElapsedMs, null);
+      if (attempt.integration) {
+        assert.equal(attempt.integration.endedAt, undefined);
+        assert.equal(attempt.integration.recoveryObservedAt, observedAt);
+        assert.equal(attempt.integration.status, 'recovery_required');
+      }
+    }
+    const check = recovered.getWorkspace('w').verifications[0];
+    assert.equal(check.status, 'interrupted');
+    assert.equal(check.endedAt, undefined);
+    assert.equal(check.recoveryObservedAt, observedAt);
+    assert.equal(check.cleanupConfirmed, false);
+    const html = renderHtml(overview(readSnapshot(f.root)));
+    assert.match(html, /恢复观察：2026-10-12T02:00:00.000Z/);
+    assert.match(html, /中断，结束时间未知/);
+  } finally { recovered.close(); }
+  const reopened = new TaskStore(f.path);
+  try { assert.equal(reopened.get('integrating-true').attempts[0].phases.length, 3); }
+  finally { reopened.close(); }
+});

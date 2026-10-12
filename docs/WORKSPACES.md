@@ -111,7 +111,7 @@ running/awaiting_review/awaiting_integration/integrating 的当前 attempt 绑�
 
 ## 写任务与显式集成
 
-mode=workspace-write 要求 expert、verification 和 allowedPaths。allowedPaths 为精确文件/目录前缀，不允许 .git/.codex-teams/越界路径。宿主沙箱限制写 worktree，运行时审计包括被忽略的新文件，范围违规、改 HEAD/原 source 或空 patch 都拒绝继续。命令可生成忽略缓存；不属于 input 指纹，清理时仍保留到显式 discard。
+mode=workspace-write 要求 verification 和 allowedPaths；可用 expert 或用户已确认的 auto/simple 分工，明确简单任务可由轻量模型修改，独立审查和重试仍使用 expert。allowedPaths 为精确文件/目录前缀，不允许 .git/.codex-teams/越界路径。宿主沙箱限制写 worktree，运行时审计包括被忽略的新文件，范围违规、改 HEAD/原 source 或空 patch 都拒绝继续。命令可生成忽略缓存；不属于 input 指纹，清理时仍保留到显式 discard。
 
 候选以 Git tree、原始 binary patch、文件内容 digest 和路径清单保存。patch 不超过 1 MiB，review packet 不超过 120000 字符；超出要求缩小改动。命令通过后新的 expert/read-only thread 独立检查，模型回显和新 thread id 受核对。报告 blocker 或不满足任一 criterion 拒绝；失败原因和 review 证据供新 attempt 参考。
 

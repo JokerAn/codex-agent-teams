@@ -1,6 +1,12 @@
 /** Cost never causes an implicit model downgrade. Qualification is operator-supplied evidence. */
 export function selectProfile(task, config) {
-  if (task.profile === 'expert') return { ...config.profiles.expert, reason: 'quality-first default' };
+  const simple = task.complexity === 'simple' && task.kind !== 'review';
+  if (task.profile === 'simple') {
+    if (!simple || !config.profiles.simple) throw new Error('Simple model requires a simple non-review task and user-confirmed model selection.');
+    return { ...config.profiles.simple, profile: 'simple', reason: 'user-selected simple model for an explicitly simple task' };
+  }
+  if (task.profile === 'auto' && simple && config.profiles.simple) return selectProfile({ ...task, profile: 'simple' }, config);
+  if (task.profile === 'expert' || task.profile === 'auto') return { ...config.profiles.expert, profile: 'expert', reason: task.profile === 'expert' ? 'explicit expert selection' : 'complex, uncertain, review or no simple model selected' };
   const candidate = config.profiles.qualified;
   if (!candidate || !candidate.evaluationReference || task.complexity !== 'bounded' || !candidate.kinds.includes(task.kind)) {
     throw new Error('Qualified model is not eligible: use expert or configure evaluation-backed eligibility.');

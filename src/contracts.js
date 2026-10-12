@@ -1,10 +1,12 @@
 import { z } from 'zod';
 import { inspectWorkspaceSchema } from './workspace.js';
 import { verificationSchema } from './verification.js';
+import { preflightSchema } from './preflight.js';
 
 const text = z.string().trim().min(1);
 const kind = z.enum(['lookup', 'analysis', 'review', 'implementation']);
 const profile = z.strictObject({ model: text, effort: text.optional() });
+export const modelRolesSchema = z.strictObject({ expert: profile, simple: profile.optional() });
 export const configSchema = z.strictObject({
   workspace: text,
   codexBin: text.default('codex'),
@@ -12,6 +14,7 @@ export const configSchema = z.strictObject({
   taskTimeoutMs: z.number().int().min(1000).max(3600000).default(600000),
   profiles: z.strictObject({
     expert: profile,
+    simple: profile.optional(),
     qualified: profile.extend({
       kinds: z.array(kind).min(1),
       evaluationReference: text,
@@ -21,16 +24,17 @@ export const configSchema = z.strictObject({
 
 export const taskSchema = z.strictObject({
   objective: text.max(8000),
+  expectedWorkspace: text.optional(),
   kind: kind.default('analysis'),
-  complexity: z.enum(['bounded', 'uncertain', 'complex']).default('uncertain'),
+  complexity: z.enum(['simple', 'bounded', 'uncertain', 'complex']).default('uncertain'),
   acceptance: z.array(text.max(2000)).min(1).max(20),
   context: z.array(text.max(8000)).max(30).default([]),
   dependencies: z.array(text).max(20).default([]),
-  profile: z.enum(['expert', 'qualified']).default('expert'),
+  profile: z.enum(['auto', 'expert', 'simple', 'qualified']).default('auto'),
   mode: z.enum(['read-only', 'workspace-write']).default('read-only'),
-  executionPlan: z.strictObject({ dirtyPolicy: z.enum(['reject', 'snapshot']).default('reject'), verification: verificationSchema, allowedPaths: inspectWorkspaceSchema.shape.allowedPaths }).optional(),
+  executionPlan: z.strictObject({ dirtyPolicy: z.enum(['reject', 'snapshot']).default('reject'), verification: verificationSchema, preflight: preflightSchema.optional(), allowedPaths: inspectWorkspaceSchema.shape.allowedPaths }).optional(),
 }).superRefine((task, ctx) => {
-  if (task.mode === 'workspace-write' && (!task.executionPlan?.allowedPaths?.length || task.profile !== 'expert')) ctx.addIssue({ code: 'custom', message: 'Write tasks require expert, executionPlan.verification and allowedPaths' });
+  if (task.mode === 'workspace-write' && (!task.executionPlan?.allowedPaths?.length || task.profile === 'qualified')) ctx.addIssue({ code: 'custom', message: 'Write tasks require auto/expert/simple, executionPlan.verification and allowedPaths' });
 });
 
 const criterion = z.strictObject({

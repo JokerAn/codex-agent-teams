@@ -1,0 +1,8 @@
+{
+  "objective": "读取根 package.json，列出其中声明的测试命令，不执行命令",
+  "kind": "lookup",
+  "complexity": "simple",
+  "profile": "auto",
+  "acceptance": ["逐字引用存在的测试 script 及 package.json 中的位置；不存在时明确说明"],
+  "context": ["只读取指定文件，不安装依赖，不修改文件，不访问外部服务"]
+}

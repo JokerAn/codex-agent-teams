@@ -158,17 +158,32 @@ async function startMemberThread(client, cwd, selection, signal, { mode = 'read-
   return started;
 }
 
+async function stopPreservingFailure(client, failure) {
+  try { await client.stop(); }
+  catch (cleanupError) {
+    if (!failure) throw cleanupError;
+    // Keep both messages in the runtime's persisted error string as well as the
+    // original errors for callers. Cleanup failure must still reject success.
+    throw new AggregateError([failure.error, cleanupError],
+      `${failure.error?.message ?? String(failure.error)}; App Server cleanup failed: ${cleanupError.message}`,
+      { cause: failure.error });
+  }
+}
+
 export class CodexBackend {
   constructor(options = {}) { this.options = options; }
-  async probe(cwd = process.cwd(), { checkThread = false, profiles, plugin } = {}) {
+  async probe(cwd = process.cwd(), { checkThread = false, profiles, plugin, modelSettings = false } = {}) {
     const client = new AppServerClient({ ...this.options, cwd });
+    let failure;
     try {
       const server = await client.initialize(undefined, { experimentalApi: Boolean(plugin) });
+      // Return only model preferences, never configuration layers or credentials.
+      const settings = modelSettings ? (await client.request('config/read', { includeLayers: false, cwd })).config : null;
       const models = [];
       let cursor;
       do {
-        const page = await client.request('model/list', { ...(cursor ? { cursor } : {}), limit: 100 });
-        models.push(...page.data.map(m => ({ model: m.model, default: m.isDefault, efforts: m.supportedReasoningEfforts.map(e => e.reasoningEffort) })));
+        const page = await client.request('model/list', { ...(cursor ? { cursor } : {}), limit: 100, includeHidden: false });
+        models.push(...page.data.filter(m => !m.hidden).map(m => ({ model: m.model, displayName: m.displayName ?? m.model, default: m.isDefault, defaultEffort: m.defaultReasoningEffort ?? null, efforts: m.supportedReasoningEfforts.map(e => e.reasoningEffort) })));
         cursor = page.nextCursor;
       } while (cursor);
       const profileChecks = [];
@@ -193,13 +208,16 @@ export class CodexBackend {
         const started = await startMemberThread(client, cwd, { model });
         threadCheck = { created: Boolean(started.thread.id), model: started.model, sandbox: started.sandbox, approvalPolicy: started.approvalPolicy };
       }
-      return { server, models, ...(profiles ? { profileChecks } : {}), ...(pluginCheck ? { pluginCheck } : {}), ...(threadCheck ? { threadCheck } : {}), inferenceStarted: false };
-    } finally { await client.stop(); }
+      return { server, models, ...(modelSettings ? { configuredModel: typeof settings?.model === 'string' ? settings.model : null, configuredEffort: typeof settings?.model_reasoning_effort === 'string' ? settings.model_reasoning_effort : null } : {}), ...(profiles ? { profileChecks } : {}), ...(pluginCheck ? { pluginCheck } : {}), ...(threadCheck ? { threadCheck } : {}), inferenceStarted: false };
+    } catch (error) {
+      failure = { error };
+      throw error;
+    } finally { await stopPreservingFailure(client, failure); }
   }
   async run({ cwd, selection, acceptance, prompt, signal, mode = 'read-only', role = 'member', onProgress = () => {} }) {
     onProgress({ memberLaunch: 'starting' });
     const client = new AppServerClient({ ...this.options, cwd });
-    let threadId, turnId, usage = null, finalTurn, fatal, wake;
+    let threadId, turnId, usage = null, finalTurn, fatal, wake, failure;
     const messages = new Map();
     const completions = new Map();
     const notifyWaiter = () => { if (wake) wake(); };
@@ -240,6 +258,9 @@ export class CodexBackend {
       const text = finalMessage?.text ?? messages.get(turnId);
       if (!text) throw new Error('Completed turn has no final structured result');
       return { result: JSON.parse(text), usage, threadId, turnId, actualModel: started.model ?? null };
+    } catch (error) {
+      failure = { error };
+      throw error;
     } finally {
       signal.removeEventListener('abort', abort);
       if (signal.aborted && threadId && turnId && !client.failure) {
@@ -247,7 +268,7 @@ export class CodexBackend {
         client.requestTimeoutMs = 1000;
         await client.request('turn/interrupt', { threadId, turnId }).catch(() => {});
       }
-      await client.stop();
+      await stopPreservingFailure(client, failure);
       onProgress({ memberLaunch: 'exited' });
     }
   }

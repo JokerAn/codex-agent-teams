@@ -15,8 +15,12 @@ const contained = (root, path) => {
 };
 
 /** Prepare a machine-local package. No install, network access, or model call. */
-export function packPlugin({ configPath, out = resolve('dist/local-marketplace') }) {
+export function packPlugin({ configPath, out = resolve('dist/local-marketplace'), codexBin }) {
   const config = loadConfig(configPath);
+  if (codexBin !== undefined) {
+    if (typeof codexBin !== 'string' || !isAbsolute(codexBin)) throw new Error('Codex binary override must be an absolute path');
+    config.codexBin = codexBin;
+  }
   const root = realpathSync(projectRoot);
   out = resolve(out);
   if (existsSync(out)) throw new Error(`Output already exists; choose a new --out directory: ${out}`);

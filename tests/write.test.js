@@ -69,15 +69,18 @@ test('write -> real verification -> fresh expert review -> captain -> explicit i
   assert.deepEqual(f.roles.map(role => [role.role, role.mode]), [['member', 'workspace-write'], ['review', 'read-only']]);
   assert.notEqual(f.roles[0].cwd, f.repo); assert.equal(f.roles[0].cwd, f.roles[1].cwd);
   assert.match(readFileSync(join(f.repo, 'sum.js'), 'utf8'), /a - b/);
-  assert.deepEqual(task.attempts[0].phases.map(phase => phase.phase), ['preparing','member','auditing','verification','independent_review','awaiting_review']);
+  assert.deepEqual(task.attempts[0].phases.map(phase => phase.phase), ['preparing','preflight','member','auditing','verification','independent_review','awaiting_review']);
   const attempt = task.attempts[0]; assert.equal(attempt.machineReview.status, 'passed');
   assert.equal(attempt.machineReview.actualModel, 'test-model'); assert.ok(existsSync(attempt.candidate.patchPath));
   const dependent = f.runtime.create({ objective: 'Read integrated sum', acceptance: ['cite sum'], dependencies: [task.id] });
   assert.throws(() => f.runtime.start(dependent.id), /Dependencies/);
+  // A new user choice cannot retroactively change this attempt's reviewer.
+  f.runtime.confirmModels({ expert: { model: 'new-expert' } }, 'mcp-elicitation');
   const reviewed = approve(f.runtime, task);
   assert.equal(reviewed.status, 'awaiting_integration'); assert.throws(() => f.runtime.start(dependent.id), /Dependencies/);
   assert.throws(() => f.runtime.integrate(task.id, 'old-attempt'), /current captain-approved/);
   await f.reopen();
+  f.runtime.confirmModels({ expert: { model: 'another-expert' } }, 'mcp-elicitation');
   const integrated = await integrate(f, reviewed);
   assert.equal(integrated.status, 'succeeded', integrated.error); assert.equal(integrated.attempts[0].integration.status, 'passed');
   assert.deepEqual(integrated.attempts[0].phases.slice(-4).map(phase => phase.phase), ['awaiting_integration','applying','integration_verification','succeeded']);
@@ -154,6 +157,10 @@ const runtime=new TaskRuntime(new TaskStore(${JSON.stringify(join(f.repo, '.code
   const crashed = spawnSync(process.execPath, ['--input-type=module', '-e', code], { encoding: 'utf8', timeout: 10000 }); assert.equal(crashed.status, 7, crashed.stderr);
   await f.reopen(); const recovered = f.runtime.status(task.id);
   assert.equal(recovered.status, 'integration_failed'); assert.equal(recovered.attempts[0].integration.status, 'recovery_required');
+  assert.equal(recovered.attempts[0].endedAt, task.attempts[0].endedAt);
+  assert.ok(recovered.attempts[0].recoveryObservedAt);
+  assert.equal(recovered.attempts[0].integration.endedAt, undefined);
+  assert.equal(recovered.attempts[0].phase, 'integration_failed');
   assert.match(readFileSync(join(f.repo, 'sum.js'), 'utf8'), /a \+ b/);
   assert.throws(() => f.runtime.integrate(task.id, task.attempts[0].id), /current captain-approved/);
   f.runtime.removeWorkspace(task.attempts[0].workspaceId, { discard: true });
@@ -190,15 +197,23 @@ test('MCP write contract -> asynchronous integration stays available through the
   const fixturePath = new URL('./fixtures/fake-app-server.js', import.meta.url).href;
   writeFileSync(binary, `#!/usr/bin/env node\nprocess.argv[2]='write-runtime';await import(${JSON.stringify(fixturePath)});\n`, { mode: 0o755 });
   const config = join(f.root, 'config.json'); writeFileSync(config, JSON.stringify({ ...f.config, codexBin: binary }));
-  const client = new Client({ name: 'write-tools', version: '0.1.0' });
+  const client = new Client({ name: 'write-tools', version: '0.1.0' }, { capabilities: { elicitation: { form: {} } } });
+  client.setRequestHandler('elicitation/create', async () => ({ action: 'accept', content: {
+    expert: JSON.stringify({ model: 'test-model', effort: 'high' }),
+    simple: JSON.stringify({ model: 'configured-model', effort: 'high' }), confirm: true,
+  } }));
   t.after(() => client.close());
   await client.connect(new StdioClientTransport({ command: process.execPath, args: [resolve('src/cli.js'), 'mcp', '--config', config], stderr: 'pipe' }));
   const call = async (name, args) => { const response = await client.callTool({ name, arguments: args }); assert.ok(!response.isError, JSON.stringify(response.content)); return JSON.parse(response.content[0].text); };
-  const tools = (await client.listTools()).tools; assert.equal(tools.length, 7);
+  const tools = (await client.listTools()).tools; assert.equal(tools.length, 8);
   assert.equal(tools.find(tool => tool.name === 'teams_integrate').annotations.destructiveHint, true);
-  const task = await call('teams_create', input()); await call('teams_start', { taskId: task.id });
+  await call('teams_models', { confirm: true });
+  const task = await call('teams_create', { expectedWorkspace: f.repo, ...input(), complexity: 'simple' }); await call('teams_start', { taskId: task.id });
   const ready = await call('teams_wait', { taskId: task.id, timeoutMs: 30000 }); assert.equal(ready.status, 'awaiting_review', ready.error);
   const attempt = ready.attempts[0];
+  assert.equal(attempt.actualModel, 'configured-model');
+  assert.equal(attempt.machineReview.actualModel, 'test-model');
+  assert.equal(attempt.modelConfirmation.source, 'mcp-elicitation');
   assert.notEqual(attempt.threadId, attempt.machineReview.threadId);
   const approved = await call('teams_review', { taskId: task.id, attemptId: attempt.id, verdict: 'pass', evidence: [{ criterion: acceptance[0], evidence: 'Controlled fixture patch and independent fixture report + real sum tests checked' }] });
   assert.equal(approved.status, 'awaiting_integration');

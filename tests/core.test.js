@@ -30,7 +30,7 @@ test('no implicit downgrade; qualified profile needs task-specific eligibility',
   const { runtime } = setup(t);
   assert.throws(() => runtime.create({ ...contract, profile: 'qualified', complexity: 'bounded' }), /not eligible/);
   const defaultTask = runtime.create(contract);
-  assert.equal(defaultTask.profile, 'expert');
+  assert.equal(defaultTask.profile, 'auto');
 });
 
 test('qualified rejection retries on expert and old attempt cannot write back', async t => {

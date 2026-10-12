@@ -5,12 +5,14 @@ import { join } from 'node:path';
 import { pluginIdentity, readSnapshot, overview, renderText, renderHtml } from './status.js';
 import { loadConfig } from './config.js';
 import { CodexBackend } from './app-server.js';
+import { confirmModelsInTerminal, validateModelSelection } from './models.js';
+import { workspaceIdentity, assertWorkspace } from './workspace.js';
 
 try {
   const { values, positionals } = parseArgs({
     allowPositionals: true,
     options: {
-      config: { type: 'string' }, task: { type: 'string' }, binary: { type: 'string' },
+      workspace: { type: 'string' }, forget: { type: 'boolean' }, config: { type: 'string' }, task: { type: 'string' }, binary: { type: 'string' },
       out: { type: 'string' }, plugin: { type: 'string' }, help: { type: 'boolean' },
       reason: { type: 'string' }, retry: { type: 'boolean' }, attempt: { type: 'string' }, spec: { type: 'string' }, id: { type: 'string' }, dirty: { type: 'string' }, allow: { type: 'string', multiple: true }, discard: { type: 'boolean' },
       'check-thread': { type: 'boolean' },
@@ -23,6 +25,10 @@ try {
 
 node src/cli.js doctor [--config <file>] [--binary codex] [--check-thread]
                                          Check host and configured profiles; no inference
+node src/cli.js models --config <file>    List Codex model choices and target; no inference
+node src/cli.js models --config <file> --forget
+                                         Revoke saved/session model choices
+--workspace <absolute path>              Expected target for run/start (default: current directory)
 node src/cli.js pack --config <file> [--out <new directory>]
                                          Prepare machine-local plugin; does not install
 node src/cli.js doctor --plugin <prepared directory> [--check-thread]
@@ -48,6 +54,10 @@ node src/cli.js run --config <file> --task <json>
   } else if (command === 'pack') {
     const { packPlugin } = await import('./plugin.js');
     console.log(JSON.stringify(packPlugin({ configPath: values.config ?? process.env.TEAMS_CONFIG, out: values.out }), null, 2));
+  } else if (command === 'models' && !values.forget) {
+    const config = loadConfig(values.config ?? process.env.TEAMS_CONFIG);
+    const { models, configuredModel, configuredEffort } = await new CodexBackend({ binary: config.codexBin }).probe(config.workspace, { modelSettings: true });
+    console.log(JSON.stringify({ workspace: config.workspace, target: workspaceIdentity(config.workspace), models, configuredModel, configuredEffort, inferenceStarted: false }, null, 2));
   } else if (command === 'doctor') {
     const plugin = values.plugin ? (await import('./plugin.js')).pluginTarget(values.plugin) : undefined;
     const configPath = values.config ?? process.env.TEAMS_CONFIG ?? plugin?.configPath;
@@ -68,15 +78,19 @@ node src/cli.js run --config <file> --task <json>
         console.log(JSON.stringify({ path: values.html, capturedAt: report.capturedAt, viewer: report.viewer, runtime: report.runtime }, null, 2));
       } else console.log(values.human ? renderText(report) : JSON.stringify(report, null, 2));
     } else console.log(JSON.stringify(values.id ? snapshot.tasks[0] : snapshot.tasks, null, 2));
-  } else if (['mcp', 'run', 'workspace', 'review', 'integrate', 'start', 'cancel'].includes(command)) {
+  } else if (['mcp', 'run', 'workspace', 'review', 'integrate', 'start', 'cancel', 'models'].includes(command)) {
     if (process.env.CODEX_TEAMS_MEMBER === '1') throw new Error('Members cannot start another team runtime');
     const config = loadConfig(values.config ?? process.env.TEAMS_CONFIG);
     const { TaskStore } = await import('./store.js');
     const { TaskRuntime } = await import('./runtime.js');
-    const createRuntime = () => new TaskRuntime(new TaskStore(join(config.workspace, '.codex-teams', 'state.sqlite'), pluginIdentity()), new CodexBackend({ binary: config.codexBin }), config);
+    const discoverModels = async () => {
+      const { models, configuredModel, configuredEffort } = await new CodexBackend({ binary: config.codexBin }).probe(config.workspace, { modelSettings: true });
+      return { workspace: config.workspace, models, configuredModel, configuredEffort, inferenceStarted: false };
+    };
+    const createRuntime = () => new TaskRuntime(new TaskStore(join(config.workspace, '.codex-teams', 'state.sqlite'), pluginIdentity()), new CodexBackend({ binary: config.codexBin }), config, { requireModelConfirmation: true });
     if (command === 'mcp') {
       const { serve } = await import('./mcp.js');
-      await serve(createRuntime, { observe: taskId => readSnapshot(config.workspace, taskId) });
+      await serve(createRuntime, { observe: taskId => readSnapshot(config.workspace, taskId), discoverModels });
     } else {
       const runtime = createRuntime();
       if (command === 'workspace') {
@@ -102,7 +116,30 @@ node src/cli.js run --config <file> --task <json>
         const stop = () => { void runtime.close().catch(() => {}); };
         process.once('SIGINT', stop); process.once('SIGTERM', stop);
         try {
-          if (command === 'cancel') {
+          if (command === 'models') {
+            runtime.forgetModels();
+            console.log(JSON.stringify({ status: 'forgotten', confirmationRequired: true, inferenceStarted: false }));
+          }
+          if (['start', 'run'].includes(command)) {
+            const target = workspaceIdentity(config.workspace);
+            assertWorkspace(values.workspace ?? process.cwd(), target);
+            const catalog = await discoverModels(), saved = runtime.store.modelPreference();
+            if (saved?.scope === 'workspace') {
+              try { runtime.restoreModels(saved, catalog); }
+              catch (error) { console.error(`已保存分工不可复用：${error.message}`); }
+            }
+            if (!runtime.modelConfirmation) {
+              const selection = await confirmModelsInTerminal(catalog, config.workspace);
+              const refreshed = await discoverModels();
+              assertWorkspace(target, workspaceIdentity(config.workspace));
+              // Validate the latest catalog before persisting user input.
+              const { acceptedModelRoles } = await import('./models.js');
+              acceptedModelRoles({ expert: JSON.stringify(selection.profiles.expert), simple: selection.profiles.simple ? JSON.stringify(selection.profiles.simple) : 'none', confirm: true }, refreshed);
+              runtime.confirmModels(selection.profiles, 'interactive-terminal', { remember: selection.remember });
+            }
+            validateModelSelection(runtime.modelConfirmation, catalog, target);
+          }
+          if (command === 'models') { /* Revocation already completed. */ } else if (command === 'cancel') {
             if (!values.id) throw new Error('cancel requires --id');
             console.log(JSON.stringify(await runtime.cancel(values.id), null, 2));
           } else if (command === 'start') {
@@ -122,7 +159,8 @@ node src/cli.js run --config <file> --task <json>
             if (result.status !== 'succeeded') process.exitCode = 1;
           } else {
             if (!values.task) throw new Error('run requires --task <json file>');
-            const task = runtime.create(JSON.parse(readFileSync(values.task, 'utf8')));
+            const input = JSON.parse(readFileSync(values.task, 'utf8'));
+            const task = runtime.create({ ...input, expectedWorkspace: input.expectedWorkspace ?? values.workspace ?? process.cwd() });
             runtime.start(task.id);
             const result = await runtime.wait(task.id, config.taskTimeoutMs + 10000);
             console.log(JSON.stringify(result, null, 2));

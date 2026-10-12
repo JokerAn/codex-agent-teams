@@ -5,7 +5,7 @@ import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { z } from 'zod';
 
 export const prepareWorkspaceSchema = z.strictObject({ dirtyPolicy: z.enum(['reject', 'snapshot']).default('reject') });
-const scopedPath = z.string().min(1).refine(path => !path.includes('\0') && !path.split('/').some(part => ['.git', '.codex-teams'].includes(part)) && !isAbsolute(path) && !path.includes('\\') && !path.split('/').some(part => ['..', '.', ''].includes(part)), 'Use a repository-relative file or directory without dot segments');
+export const scopedPath = z.string().min(1).refine(path => !path.includes('\0') && !path.split('/').some(part => ['.git', '.codex-teams'].includes(part)) && !isAbsolute(path) && !path.includes('\\') && !path.split('/').some(part => ['..', '.', ''].includes(part)), 'Use a repository-relative file or directory without dot segments');
 export const inspectWorkspaceSchema = z.strictObject({ allowedPaths: z.array(scopedPath).min(1).max(100).optional() });
 export const removeWorkspaceSchema = z.strictObject({ discard: z.boolean().default(false) });
 const idSchema = z.uuid();
@@ -21,12 +21,31 @@ function git(root, args, { env = {}, input, optional = false } = {}) {
   const inherited = Object.fromEntries(Object.entries(process.env).filter(([name]) => !name.startsWith('GIT_')));
   try {
     return execFileSync('git', ['--no-optional-locks', '-c', 'core.hooksPath=/dev/null', '-c', 'commit.gpgsign=false', '-c', 'core.fsmonitor=false', '-C', root, ...args], {
-      env: { ...inherited, ...env }, input, timeout: 15000, maxBuffer: 16 * 1024 * 1024, stdio: ['pipe', 'pipe', 'pipe'],
+      env: { ...inherited, ...env, LC_ALL: 'C', LANG: 'C' }, input, timeout: 15000, maxBuffer: 16 * 1024 * 1024, stdio: ['pipe', 'pipe', 'pipe'],
     });
   } catch (error) {
     if (optional && error.status === 1) return null;
     throw new Error(`Git ${args[0]} failed: ${String(error.stderr ?? error.message).slice(-1600)}`);
   }
+}
+/** Stable checkout identity; HEAD changes do not change the authorized target. */
+export function workspaceIdentity(workspace) {
+  const root = realpathSync(workspace), stat = lstatSync(root);
+  if (!stat.isDirectory()) throw new Error('Workspace must be a directory');
+  let gitDir = null, commonDir = null;
+  try {
+    gitDir = realpathSync(line(git(root, ['rev-parse', '--absolute-git-dir'])));
+    commonDir = realpathSync(line(git(root, ['rev-parse', '--path-format=absolute', '--git-common-dir'])));
+  } catch (error) {
+    if (!error.message.includes('not a git repository')) throw error;
+  }
+  return { root, device: stat.dev, inode: stat.ino, gitDir, commonDir,
+    gitDevice: gitDir ? lstatSync(gitDir).dev : null, gitInode: gitDir ? lstatSync(gitDir).ino : null };
+}
+export function assertWorkspace(expected, actual) {
+  if (typeof expected === 'string') {
+    if (!isAbsolute(expected) || realpathSync(expected) !== actual.root) throw new Error(`Target workspace mismatch: expected ${expected}; configured ${actual.root}`);
+  } else if (JSON.stringify(expected) !== JSON.stringify(actual)) throw new Error('Target workspace identity changed; create a new task and confirm the target');
 }
 function safeDirectory(path) {
   if (existsSync(path) && (!lstatSync(path).isDirectory() || lstatSync(path).isSymbolicLink())) throw new Error(`Managed directory must not be a symlink: ${path}`);

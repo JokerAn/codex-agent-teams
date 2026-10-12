@@ -4,11 +4,11 @@
 
 当前 Codex 会话是 captain，负责授权目标、验收和显式集成。代码负责合同、持久状态、执行与证据；不驻留后台自动规划器。Node.js 24+ 原生 ESM，无编译步骤，Zod 校验边界，内置 SQLite，官方 MCP SDK。
 
-核心有 12 个源文件。contracts/policy 管合同和显式上下文；runtime/store 拥有状态；app-server 封装官方 App Server；workspace/verification 负责 Git 与一个真实命令；MCP/CLI 两个入口，plugin 只封装本机产物；status 提供无 owner 的状态观察、显示摘要与本地 HTML 快照。没有前端框架、第三方进程框架或独立验证队列。
+核心有 13 个源文件。contracts/policy 管合同和显式上下文；runtime/store 拥有状态；app-server 封装官方 App Server；workspace/verification 负责 Git 与一个真实命令；MCP/CLI 两个入口，plugin 只封装本机产物；status 提供无 owner 的状态观察、显示摘要与本地 HTML 快照。models 提供用户模型选择表单与交互终端确认。没有前端框架、第三方进程框架或独立验证队列。
 
 ## 合同与执行
 
-任务合同不可变，依赖只能引用已创建任务。默认 expert；qualified 需要任务类型评测资格和 operator evidence。写任务必须 expert、workspace-write、verification 与非空 allowedPaths。任何一次模型执行都是全新 thread，不复制父聊天。
+任务合同不可变，依赖只能引用已创建任务。默认 auto；明确 simple 的非 review 任务可使用用户确认的 simple 模型，其他任务使用 expert，profile=expert 可覆盖选择。qualified 保留旧评测资格要求；公开入口的用户确认只启用 expert/simple 分工。写任务必须 workspace-write、verification 与非空 allowedPaths，独立审查与重试始终使用已确认的 expert。任何一次模型执行都是全新 thread，不复制父聊天。
 
 普通只读任务默认并发 2/最大 4。executionPlan 任务独占成员/验证阶段。每次 attempt 捕获 HEAD、source/index 指纹与实际文件基线，临时 index 不写回原 index；显式 snapshot 支持当前脏文件最终内容。worktree 使用 detached HEAD 和专属 ref，忽略依赖/状态库不复制。
 
@@ -16,7 +16,7 @@
 
 写成员只改独立 worktree。读取结果后核对结构化 acceptance 原文、进程组退出、source/HEAD 与路径范围，捕获原始 Git binary patch 和文件指纹。命令按照 command+args spawn，stdout/stderr bytes 有合计上限；超时/取消先 TERM 后 KILL，close 与 group 消失共同确认退出。macOS EPERM 时按 ps 复核成员 fallback；恢复时不 kill 旧 PID。
 
-命令通过且输入未变后，写任务在新只读 thread 中使用 profiles.expert 独立审查 patch、实际文件与日志。review model 不得变更，也不能复用 writer thread。所有 acceptance 满足、无 blocker、review 后 patch 未变，才进入 awaiting_review。机器结果不代替 captain。
+命令通过且输入未变后，写任务在新只读 thread 中使用 attempt 启动时保存的 expert 模型独立审查 patch、实际文件与日志。review model 不得变更，也不能复用 writer thread。所有 acceptance 满足、无 blocker、review 后 patch 未变，才进入 awaiting_review。机器结果不代替 captain。
 
 ## 状态与复核
 
@@ -71,3 +71,19 @@ runtime 在同一 attempt 内保存 phase/phases：准备、成员、审计、�
 status.js 通过 readOnly SQLite + 只读事务获得任务、工作区和 owner 同一快照；从未运行的工作区不创建数据库。owner 摘要只返回 PID 存在性、版本和来源，剔除 token；查看工具 identity 与 owner identity 分开。只读查看不执行项目命令，不争抢现有 owner。MCP 保持七个工具，teams_status 新增 overview/limit 可选参数，原详情/列表兼容。
 
 pack 写入无配置内容的 build-info.json；版本、打包时间、核心源码/技能/包元数据摘要随缓存搬迁保留。HTML 以转义文本显示仓库数据，页面无外部依赖或网络请求，搜索/筛选只处理当前快照。导出为显式的新文件，不开启服务，也不承诺宿主自动注入可视化界面。聊天提示由 team 技能的前台反馈约定执行，不能保证父聊天唤醒或宿主原生进度 UI。
+
+## 用户确认模型分工（0.3.0）
+
+MCP 新增 teams_models，CLI 新增 models；官方 App Server model/list 提供当前可见模型/强度，config/read 只提取模型和强度字段。目录默认项与有效配置分开，未推测强弱或价格。MCP 通过官方 SDK elicitation 请求宿主用户表单，不接受工具参数中的模型选择或批准字段；CLI start/run 通过交互终端确认，无 --yes 入口。公开入口未确认时不启动成员；底层 TaskRuntime 的受控测试/显式模型 smoke 可独立使用构造选项。
+
+确认仅在本次运行时内存中有效，重启后需要重新确认。确认快照和选择理由随 attempt 留证，写任务 reviewerSelection 固定于 attempt，后续改变选择不改变旧验收依据。重试仍需明确理由并使用当前用户确认的 expert。表单等待期间拒绝启动，提交后重新检查目录中的模型/effort 对；取消、无表单支持或无有效候选不授予授权。用户可以选择不使用 simple。
+
+真实本机宿主 on-request 外层会话可转发表单请求，approval_policy=never 时观察到直接 decline、没有表单转发；这是宿主交互策略边界，不修改成员 approval=never。当前聊天队长模型由宿主选择，插件既不切换也不认证其能力。UI 具体样式与桌面点击验收独立于协议/SDK 测试。
+
+## 0.4.0 目标、确认及预检
+
+workspace 提供 checkout 身份，包含真实根目录、设备/inode、Git 目录身份及 commonDir；同一仓库的不同 worktree 分别绑定。新任务保存 target，公开创建入口核对 expectedWorkspace；旧无绑定任务禁止重新启动，不追溯修改历史。
+
+models 保留真人确认来源/时间，新增策略版本与目标绑定。用户主动 remember 时由唯一 owner 在既有 SQLite meta 存 modelPreference；readSnapshot 只读观察，不为列模型获取 owner。启动入口重新发现模型并校验确认，runtime 持有恢复后的选择；forget 或新的仅本次确认清除持久偏好。没有数据库 schema 升级、额外工具或运行依赖。
+
+新增 preflight 模块：worktree 准备后解析验证程序和显式依赖，不运行代码或基线测试，不自动安装。失败记录结构化 code/phase/nextAction，原始 error 和进程退出门禁保留。Node 包检查采用 require 条件，不是通用构建环境证明；预检通过不改变真实命令/审查/源复验要求。

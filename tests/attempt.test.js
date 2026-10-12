@@ -219,9 +219,25 @@ test('controlled App Server protocol fixture and CLI complete a bound attempt wi
   writeFileSync(binary, `#!/usr/bin/env node\nprocess.argv[2]='normal';await import(${JSON.stringify(new URL('./fixtures/fake-app-server.js', import.meta.url).href)});\n`, { mode: 0o755 });
   const config = join(f.root, 'config.json'), file = join(f.root, 'task.json');
   writeFileSync(config, JSON.stringify({ ...f.config, codexBin: binary })); writeFileSync(file, JSON.stringify(contract()));
-  const cli = spawnSync(process.execPath, [resolve('src/cli.js'), 'run', '--config', config, '--task', file], { encoding: 'utf8', timeout: 10000 });
-  assert.equal(cli.status, 0, cli.stderr);
-  assert.equal(JSON.parse(cli.stdout).status, 'awaiting_review');
+  const args = [resolve('src/cli.js'), 'run', '--config', config, '--task', file, '--workspace', f.repo];
+  const unattended = spawnSync(process.execPath, args, { encoding: 'utf8', timeout: 10000 });
+  assert.equal(unattended.status, 1); assert.match(unattended.stderr, /interactive terminal/);
+  // Controlled terminal input with a fake backend: no human approval or paid
+  // model is claimed. Exercise the real CLI prompts rather than a --yes bypass.
+  const code = `process.stdin.isTTY=true;process.stderr.isTTY=true;process.argv=${JSON.stringify(args)};await import(${JSON.stringify(new URL('../src/cli.js', import.meta.url).href)});`;
+  const cli = spawn(process.execPath, ['--input-type=module', '-e', code], { stdio: 'pipe', timeout: 15000 });
+  let stdout = '', stderr = '', step = 0;
+  const prompts = [['强模型编号：', '1\n'], ['简单任务模型编号（0 = 全部使用强模型）：', '0\n'], ['记住此工作区分工，允许重启复用？输入 yes，其他仅本次：', 'no\n'], ['确认此分工？输入 yes：', 'yes\n']];
+  cli.stdout.on('data', chunk => { stdout += chunk; });
+  cli.stderr.on('data', chunk => {
+    stderr += chunk;
+    if (step < prompts.length && stderr.includes(prompts[step][0])) cli.stdin.write(prompts[step++][1]);
+  });
+  const [exitCode] = await once(cli, 'close');
+  assert.equal(exitCode, 0, stderr); assert.equal(step, 4);
+  const result = JSON.parse(stdout);
+  assert.equal(result.status, 'awaiting_review');
+  assert.equal(result.attempts[0].modelConfirmation.source, 'interactive-terminal');
   await f.reopen();
   const last = f.runtime.status().at(-1); await f.runtime.cancel(last.id); f.runtime.removeWorkspace(last.attempts[0].workspaceId);
 });
