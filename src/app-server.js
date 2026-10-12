@@ -1,18 +1,22 @@
 import { spawn } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 import { outputSchemaFor } from './contracts.js';
-import { MEMBER_INSTRUCTIONS } from './policy.js';
+import { realpathSync } from 'node:fs';
+import { setTimeout as delay } from 'node:timers/promises';
+import { processAlive } from './store.js';
+import { signalGroup } from './verification.js';
+import { MEMBER_INSTRUCTIONS, WRITE_INSTRUCTIONS, REVIEW_INSTRUCTIONS } from './policy.js';
 
 /** App Server's line-delimited protocol (not MCP). One client owns one process group. */
 export class AppServerClient extends EventEmitter {
-  constructor({ binary = 'codex', args = ['app-server', '--stdio'], cwd = process.cwd(), requestTimeoutMs = 15000 } = {}) {
+  constructor({ binary = 'codex', args = ['app-server', '--stdio'], cwd = process.cwd(), requestTimeoutMs = 15000, env = {} } = {}) {
     super();
     if (process.platform === 'win32') throw new Error('P0 process cleanup is validated on macOS/Linux only');
     this.pending = new Map();
     this.nextId = 1;
     this.requestTimeoutMs = requestTimeoutMs;
     this.stderr = '';
-    this.child = spawn(binary, args, { cwd, stdio: ['pipe', 'pipe', 'pipe'], detached: true, shell: false, env: { ...process.env, CODEX_TEAMS_MEMBER: '1' } });
+    this.child = spawn(binary, args, { cwd, stdio: ['pipe', 'pipe', 'pipe'], detached: true, shell: false, env: { ...process.env, CODEX_TEAMS_MEMBER: '1', ...env } });
     this.closed = new Promise(resolve => { this.resolveClosed = resolve; });
     this.child.on('error', error => { this.fail(error); this.resolveClosed(); });
     this.child.on('close', (code, signal) => {
@@ -54,7 +58,7 @@ export class AppServerClient extends EventEmitter {
       if (['item/commandExecution/requestApproval', 'item/fileChange/requestApproval'].includes(frame.method)) {
         this.send({ id: frame.id, result: { decision: 'cancel' } });
       } else {
-        this.send({ id: frame.id, error: { code: -32601, message: 'Interactive requests are unsupported in read-only P0' } });
+        this.send({ id: frame.id, error: { code: -32601, message: 'Interactive requests are unsupported by this runtime' } });
       }
       this.fail(new Error(`Member needs interaction: ${frame.method}`));
     } else if (frame.id !== undefined) {
@@ -77,8 +81,8 @@ export class AppServerClient extends EventEmitter {
       try { this.send({ id, method, params }); } catch (error) { settle(reject, error); }
     });
   }
-  async initialize(signal) {
-    const info = await this.request('initialize', { clientInfo: { name: 'codex_agent_teams', version: '0.1.0' } }, signal);
+  async initialize(signal, { experimentalApi = false } = {}) {
+    const info = await this.request('initialize', { clientInfo: { name: 'codex_agent_teams', version: '0.2.0' }, ...(experimentalApi ? { capabilities: { experimentalApi: true } } : {}) }, signal);
     this.send({ method: 'initialized', params: {} });
     return info;
   }
@@ -87,17 +91,14 @@ export class AppServerClient extends EventEmitter {
     this.stopPromise = (async () => {
       this.stopping = true;
       for (const p of [...this.pending.values()]) p.reject(new Error('App Server stopped'));
-      const killGroup = signal => {
-        if (!this.child.pid) return;
-        try { process.kill(-this.child.pid, signal); } catch (error) { if (error.code !== 'ESRCH') throw error; }
-      };
-      killGroup('SIGTERM');
-      let timer;
-      try { await Promise.race([this.closed, new Promise(resolve => { timer = setTimeout(resolve, 1000); })]); }
-      finally { clearTimeout(timer); }
-      // Also stop descendants if the parent exited before them.
-      killGroup('SIGKILL');
-      await this.closed;
+      const pid = this.child.pid;
+      if (pid && processAlive(pid, true)) signalGroup(pid, 'SIGTERM');
+      await Promise.race([this.closed, delay(300)]);
+      if (pid && processAlive(pid, true)) signalGroup(pid, 'SIGKILL');
+      const until = Date.now() + 2000;
+      while (!this.exited && pid && Date.now() < until) await delay(25);
+      while (pid && processAlive(pid, true) && Date.now() < until) await delay(25);
+      if (pid && (!this.exited || processAlive(pid, true))) throw new Error(`App Server process group ${pid} exit is unconfirmed`);
     })();
     return this.stopPromise;
   }
@@ -117,25 +118,32 @@ export function memberOverrides(config) {
   return overrides;
 }
 
-async function startReadOnlyThread(client, cwd, selection, signal) {
+async function startMemberThread(client, cwd, selection, signal, { mode = 'read-only', role = 'member' } = {}) {
   const { config } = await client.request('config/read', { includeLayers: false }, signal);
   const started = await client.request('thread/start', {
-    cwd, model: selection.model, sandbox: 'read-only', approvalPolicy: 'never',
-    developerInstructions: MEMBER_INSTRUCTIONS, config: memberOverrides(config), ephemeral: true,
+    cwd, model: selection.model, sandbox: mode, approvalPolicy: 'never',
+    developerInstructions: role === 'review' ? REVIEW_INSTRUCTIONS : mode === 'workspace-write' ? WRITE_INSTRUCTIONS : MEMBER_INSTRUCTIONS,
+    config: { ...memberOverrides(config), ...(mode === 'workspace-write' ? {
+      'sandbox_workspace_write.writable_roots': [], 'sandbox_workspace_write.network_access': false,
+      'sandbox_workspace_write.exclude_tmpdir_env_var': true, 'sandbox_workspace_write.exclude_slash_tmp': true,
+    } : {}) }, ephemeral: true,
   }, signal);
   if (started.model !== selection.model) throw new Error(`Model changed unexpectedly: ${started.model}`);
-  if (started.sandbox?.type !== 'readOnly' || started.sandbox.networkAccess !== false || started.approvalPolicy !== 'never') {
-    throw new Error('Host did not confirm read-only permissions; refusing to start inference.');
+  const safe = mode === 'workspace-write'
+    ? started.sandbox?.type === 'workspaceWrite' && started.sandbox.writableRoots?.length === 0 && started.sandbox.excludeSlashTmp === true && started.sandbox.excludeTmpdirEnvVar === true && realpathSync(started.cwd) === realpathSync(cwd)
+    : started.sandbox?.type === 'readOnly';
+  if (!safe || started.sandbox.networkAccess !== false || started.approvalPolicy !== 'never') {
+    throw new Error(`Host did not confirm ${mode} permissions; refusing to start inference.`);
   }
   return started;
 }
 
 export class CodexBackend {
   constructor(options = {}) { this.options = options; }
-  async probe(cwd = process.cwd(), { checkThread = false } = {}) {
+  async probe(cwd = process.cwd(), { checkThread = false, profiles, plugin } = {}) {
     const client = new AppServerClient({ ...this.options, cwd });
     try {
-      const server = await client.initialize();
+      const server = await client.initialize(undefined, { experimentalApi: Boolean(plugin) });
       const models = [];
       let cursor;
       do {
@@ -143,17 +151,33 @@ export class CodexBackend {
         models.push(...page.data.map(m => ({ model: m.model, default: m.isDefault, efforts: m.supportedReasoningEfforts.map(e => e.reasoningEffort) })));
         cursor = page.nextCursor;
       } while (cursor);
+      const profileChecks = [];
+      for (const [name, profile] of Object.entries(profiles ?? {})) {
+        const model = models.find(candidate => candidate.model === profile.model);
+        if (!model) throw new Error(`Configured ${name} model is unavailable: ${profile.model}`);
+        if (profile.effort && !model.efforts.includes(profile.effort)) throw new Error(`Configured ${name} effort is unsupported: ${profile.effort} (${profile.model})`);
+        profileChecks.push({ profile: name, model: profile.model, effort: profile.effort ?? null, available: true });
+      }
+      let pluginCheck;
+      if (plugin) {
+        const { plugin: detail } = await client.request('plugin/read', { marketplacePath: plugin.marketplacePath, pluginName: plugin.pluginName });
+        if (detail?.summary?.name !== plugin.pluginName || !detail.skills?.some(skill => ['team', `${plugin.pluginName}:team`].includes(skill.name)) || !detail.mcpServers?.includes('codex-agent-teams')) {
+          throw new Error(`Host did not discover the prepared team skill and MCP server (skills: ${detail?.skills?.map(skill => skill.name).join(', ') ?? 'none'}; MCP: ${detail?.mcpServers?.join(', ') ?? 'none'})`);
+        }
+        pluginCheck = { name: detail.summary.name, marketplace: detail.marketplaceName, skills: detail.skills.map(skill => skill.name), mcpServers: detail.mcpServers, installed: detail.summary.installed, enabled: detail.summary.enabled, mcpConnectionChecked: false };
+      }
       let threadCheck;
       if (checkThread) {
-        const model = models.find(m => m.default)?.model;
+        const model = profiles?.expert?.model ?? models.find(m => m.default)?.model;
         if (!model) throw new Error('No default model is available for thread check');
-        const started = await startReadOnlyThread(client, cwd, { model });
+        const started = await startMemberThread(client, cwd, { model });
         threadCheck = { created: Boolean(started.thread.id), model: started.model, sandbox: started.sandbox, approvalPolicy: started.approvalPolicy };
       }
-      return { server, models, ...(threadCheck ? { threadCheck } : {}), inferenceStarted: false };
+      return { server, models, ...(profiles ? { profileChecks } : {}), ...(pluginCheck ? { pluginCheck } : {}), ...(threadCheck ? { threadCheck } : {}), inferenceStarted: false };
     } finally { await client.stop(); }
   }
-  async run({ cwd, selection, acceptance, prompt, signal, onProgress = () => {} }) {
+  async run({ cwd, selection, acceptance, prompt, signal, mode = 'read-only', role = 'member', onProgress = () => {} }) {
+    onProgress({ memberLaunch: 'starting' });
     const client = new AppServerClient({ ...this.options, cwd });
     let threadId, turnId, usage = null, finalTurn, fatal, wake;
     const messages = new Map();
@@ -175,9 +199,9 @@ export class CodexBackend {
     signal.addEventListener('abort', abort, { once: true });
     try {
       if (signal.aborted) throw signal.reason;
-      onProgress({ childPid: client.child.pid });
+      onProgress({ childPid: client.child.pid, memberLaunch: 'active' });
       await client.initialize(signal);
-      const started = await startReadOnlyThread(client, cwd, selection, signal);
+      const started = await startMemberThread(client, cwd, selection, signal, { mode, role });
       threadId = started.thread.id;
       onProgress({ threadId, actualModel: started.model ?? null });
       const turn = await client.request('turn/start', {
@@ -204,6 +228,7 @@ export class CodexBackend {
         await client.request('turn/interrupt', { threadId, turnId }).catch(() => {});
       }
       await client.stop();
+      onProgress({ memberLaunch: 'exited' });
     }
   }
 }

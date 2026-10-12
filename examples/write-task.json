@@ -1,0 +1,27 @@
+{
+  "objective": "修复约定范围内的一个明确缺陷；使用前替换为实际目标和验收标准",
+  "kind": "implementation",
+  "mode": "workspace-write",
+  "profile": "expert",
+  "acceptance": [
+    "描述一个可由文件证据和测试核对的行为"
+  ],
+  "context": [
+    "保持改动集中。不提交、不推送、不安装依赖；验收由运行时执行。"
+  ],
+  "executionPlan": {
+    "dirtyPolicy": "reject",
+    "allowedPaths": [
+      "src",
+      "tests"
+    ],
+    "verification": {
+      "command": "npm",
+      "args": [
+        "test"
+      ],
+      "timeoutMs": 120000,
+      "maxOutputBytes": 2097152
+    }
+  }
+}

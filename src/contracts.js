@@ -1,7 +1,9 @@
 import { z } from 'zod';
+import { inspectWorkspaceSchema } from './workspace.js';
+import { verificationSchema } from './verification.js';
 
 const text = z.string().trim().min(1);
-const kind = z.enum(['lookup', 'analysis', 'review']);
+const kind = z.enum(['lookup', 'analysis', 'review', 'implementation']);
 const profile = z.strictObject({ model: text, effort: text.optional() });
 export const configSchema = z.strictObject({
   workspace: text,
@@ -25,7 +27,10 @@ export const taskSchema = z.strictObject({
   context: z.array(text.max(8000)).max(30).default([]),
   dependencies: z.array(text).max(20).default([]),
   profile: z.enum(['expert', 'qualified']).default('expert'),
-  mode: z.literal('read-only').default('read-only'),
+  mode: z.enum(['read-only', 'workspace-write']).default('read-only'),
+  executionPlan: z.strictObject({ dirtyPolicy: z.enum(['reject', 'snapshot']).default('reject'), verification: verificationSchema, allowedPaths: inspectWorkspaceSchema.shape.allowedPaths }).optional(),
+}).superRefine((task, ctx) => {
+  if (task.mode === 'workspace-write' && (!task.executionPlan?.allowedPaths?.length || task.profile !== 'expert')) ctx.addIssue({ code: 'custom', message: 'Write tasks require expert, executionPlan.verification and allowedPaths' });
 });
 
 const criterion = z.strictObject({

@@ -1,0 +1,6 @@
+{
+  "command": "node",
+  "args": ["--test", "tests/core.test.js", "tests/backend.test.js"],
+  "timeoutMs": 60000,
+  "maxOutputBytes": 2097152
+}

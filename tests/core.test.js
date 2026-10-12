@@ -136,6 +136,7 @@ test('retry guidance reaches the fresh member without replaying raw conversation
   await runtime.wait(task.id);
   assert.equal(packets[1].retryGuidance.reason, 'Inspect the workspace test script as well.');
   assert.equal(packets[1].retryGuidance.previousReview.verdict, 'reject');
+  assert.equal(packets[1].retryGuidance.previousReview.attemptId, undefined);
   assert.ok(!('attempts' in packets[1]));
 });
 

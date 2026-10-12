@@ -1,0 +1,102 @@
+import { cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { loadConfig } from './config.js';
+
+const projectRoot = fileURLToPath(new URL('../', import.meta.url));
+const name = 'codex-agent-teams';
+const marketplaceName = 'codex-agent-teams-local';
+const json = path => JSON.parse(readFileSync(path, 'utf8'));
+const writeJson = (path, value) => writeFileSync(path, JSON.stringify(value, null, 2) + '\n');
+const contained = (root, path) => {
+  const suffix = relative(root, path);
+  return suffix === '' || (!isAbsolute(suffix) && suffix !== '..' && !suffix.startsWith(`..${sep}`));
+};
+
+/** Prepare a machine-local package. No install, network access, or model call. */
+export function packPlugin({ configPath, out = resolve('dist/local-marketplace') }) {
+  const config = loadConfig(configPath);
+  const root = realpathSync(projectRoot);
+  out = resolve(out);
+  if (existsSync(out)) throw new Error(`Output already exists; choose a new --out directory: ${out}`);
+  // Resolve existing ancestors before making directories, including symlinked parents.
+  let ancestor = dirname(out);
+  while (!existsSync(ancestor)) ancestor = dirname(ancestor);
+  out = resolve(realpathSync(ancestor), relative(ancestor, out));
+  for (const source of ['src', 'skills', 'node_modules']) {
+    if (contained(join(root, source), out)) throw new Error(`Output cannot be inside ${source}`);
+  }
+  const manifest = json(join(root, 'plugin.json'));
+  const compatibility = json(join(root, '.codex-plugin/plugin.json'));
+  const packageJson = json(join(root, 'package.json'));
+  if (manifest.name !== name || compatibility.name !== name || manifest.version !== packageJson.version || compatibility.version !== manifest.version) {
+    throw new Error('Plugin manifests and package version must agree');
+  }
+  const lock = json(join(root, 'package-lock.json'));
+  if (lock.lockfileVersion !== 3 || !lock.packages) throw new Error('Expected npm lockfile v3');
+  const declared = packageJson.dependencies ?? {};
+  const locked = lock.packages['']?.dependencies ?? {};
+  if (Object.keys(declared).length !== Object.keys(locked).length || Object.entries(declared).some(([name, version]) => locked[name] !== version || !lock.packages[`node_modules/${name}`] || lock.packages[`node_modules/${name}`].dev)) {
+    throw new Error('Runtime dependencies and lockfile must agree; run npm ci first');
+  }
+  const dependencies = Object.entries(lock.packages).filter(([path, info]) => path && !info.dev);
+  for (const [path, info] of dependencies) {
+    if (!path.startsWith('node_modules/') || !contained(join(root, 'node_modules'), resolve(root, path)) || info.link) {
+      throw new Error(`Unsupported runtime dependency path: ${path}`);
+    }
+    const installed = join(root, path);
+    if (!existsSync(installed)) throw new Error(`Missing runtime dependency ${path}; run npm ci first`);
+    if (!lstatSync(installed).isDirectory() || json(join(installed, 'package.json')).version !== info.version) {
+      throw new Error(`Runtime dependency differs from lockfile: ${path}; run npm ci first`);
+    }
+  }
+  mkdirSync(dirname(out), { recursive: true });
+  const stage = mkdtempSync(join(dirname(out), '.teams-package-'));
+  try {
+    const pluginRoot = join(stage, 'plugins', name);
+    mkdirSync(pluginRoot, { recursive: true });
+    for (const path of ['src', 'skills', 'PRINCIPLES.md', 'package.json']) {
+      cpSync(join(root, path), join(pluginRoot, path), { recursive: true });
+    }
+    writeJson(join(pluginRoot, 'plugin.json'), manifest);
+    mkdirSync(join(pluginRoot, '.codex-plugin'));
+    writeJson(join(pluginRoot, '.codex-plugin/plugin.json'), { ...compatibility, mcpServers: './.mcp.json' });
+    for (const [path] of dependencies) cpSync(join(root, path), join(pluginRoot, path), { recursive: true, filter: source => basename(source) !== 'node_modules' });
+    writeJson(join(pluginRoot, 'teams.config.json'), config);
+    const server = {
+      command: 'node', args: ['src/cli.js', 'mcp', '--config', 'teams.config.json'],
+      cwd: './', env: { PATH: [dirname(process.execPath), process.env.PATH].filter(Boolean).join(':') },
+    };
+    writeJson(join(pluginRoot, 'mcp.json'), {
+      $schema: 'https://agent-plugins.org/schemas/1.0.0/mcp.schema.json',
+      mcpServers: { [name]: { type: 'stdio', ...server } },
+    });
+    // Older local hosts use the compatibility manifest and .mcp.json.
+    writeJson(join(pluginRoot, '.mcp.json'), { mcpServers: { [name]: { ...server, command: process.execPath } } });
+    const catalog = join(stage, '.agents', 'plugins');
+    mkdirSync(catalog, { recursive: true });
+    writeJson(join(catalog, 'marketplace.json'), {
+      name: marketplaceName, interface: { displayName: 'Codex Agent Teams (Local)' },
+      plugins: [{ name, source: { source: 'local', path: `./plugins/${name}` },
+        policy: { installation: 'AVAILABLE', authentication: 'ON_USE' }, category: 'Productivity' }],
+    });
+    writeFileSync(join(stage, 'README.md'), `# Codex Agent Teams 本机插件\n\n这是本机配置快照，包含运行依赖；没有执行安装或模型调用。\n\n目标工作区：${config.workspace}\n\n检查：\n\n\`\`\`sh\nnode plugins/${name}/src/cli.js doctor --plugin . --check-thread\n\`\`\`\n\n在支持本地 marketplace 的 Codex 中，手动添加本目录作为来源并安装插件。安装会改写宿主配置；请由用户明确执行。\n\n配置变化时生成新的目录。缓存副本需要在宿主中重新安装或刷新。不要与手工 MCP 配置同时启用，也不要为同一工作区启动多个运行时。\n\n本目录包含工作区路径和模型配置，面向本机使用，不能作为跨机器分发包。\n`);
+    if (existsSync(out)) throw new Error(`Output already exists: ${out}`);
+    renameSync(stage, out);
+    return { ...pluginTarget(out), runtimeDependencies: dependencies.map(([path]) => path), installed: false, inferenceStarted: false };
+  } finally { rmSync(stage, { recursive: true, force: true }); }
+}
+
+/** Read only our prepared local marketplace, with paths contained in its root. */
+export function pluginTarget(path) {
+  const marketplaceRoot = realpathSync(resolve(path));
+  const marketplacePath = join(marketplaceRoot, '.agents', 'plugins', 'marketplace.json');
+  const catalog = json(marketplacePath);
+  const entry = catalog.plugins?.find(plugin => plugin.name === name);
+  if (catalog.name !== marketplaceName || entry?.source?.source !== 'local' || typeof entry.source.path !== 'string') {
+    throw new Error('Expected a prepared Codex Agent Teams local marketplace');
+  }
+  const pluginRoot = realpathSync(resolve(marketplaceRoot, entry.source.path));
+  if (!contained(marketplaceRoot, pluginRoot)) throw new Error('Plugin path escapes marketplace root');
+  return { marketplaceRoot, marketplacePath, pluginRoot, pluginName: name, configPath: join(pluginRoot, 'teams.config.json') };
+}

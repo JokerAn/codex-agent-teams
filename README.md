@@ -1,120 +1,172 @@
 # Codex Agent Teams
 
-准确率与完成效率优先，成本其次。一个独立、小型、本地运行的 Codex 委派插件原型。
+准确率与完成效率优先，成本其次。一个小型、本机运行的 Codex 委派插件。
 
-先读 [中心思想](PRINCIPLES.md)。后续工作从 [当前状态](docs/STATUS.md) 和 [路线](docs/ROADMAP.md) 继续。
+**0.2.0 已支持真实写任务闭环**：合同 → 独立 worktree 修改 → 命令验证 → 全新强模型线程审查 → 队长复核 → 显式集成 → 源工作区再次验证。不会自动提交或推送。只读任务继续支持并发、依赖、取消与显式重试。
 
-## 当前能做什么
+设计依据：[PRINCIPLES.md](PRINCIPLES.md)。验证记录：[docs/STATUS.md](docs/STATUS.md)。项目使用 Node.js 24+、原生 ESM、内置 SQLite、官方 MCP SDK 与 Zod，没有编译步骤、前端或后台协调者。
 
-P0 支持只读任务：队长创建合同 → 新建 Codex 成员线程 → 收集结构化结果 → 队长逐项复核 → 解锁后续任务。
+## 快速开始
 
-- 默认使用明确配置的强模型；没有评测资格就拒绝 qualified 路线。
-- 不复制父聊天历史，传入必要事实与已验收的依赖结果；过大的任务包报错而不静默截断。
-- 默认并发 2，最多 4；运行中可取消，任务超时会终止自己管理的成员进程。
-- SQLite 持久化任务和 attempt，旧结果不能覆盖新执行；异常退出后不自动重放。
-- 运行结束只进入 `awaiting_review`。`succeeded` 表示队长已经逐项记录复核依据，不表示插件独立证明了答案正确。
-- 提供 6 个 MCP 工具和 CLI；没有前端，也没有后台自动规划器。
-
-当前写任务、worktree、自动运行测试、跨厂商后端、父聊天主动唤醒均未实现。
-
-## 环境与启动
-
-Node.js 24+，macOS/Linux，已配置且可使用的 Codex CLI。项目使用原生 ESM JavaScript + Zod，没有编译步骤。运行依赖是官方 MCP Server SDK 与 Zod，官方 MCP Client SDK 仅用于测试。
+需要可用的 Codex CLI 和模型账号。本机实测 Node `24.21.0`、macOS arm64、Codex `0.147.0-alpha.6.5`；其他版本先运行 doctor。
 
 ```sh
 npm ci
 npm test
-node src/cli.js doctor --check-thread
+node src/cli.js doctor
 ```
 
-`doctor` 只做握手和模型列表查询；`--check-thread` 额外新建一个临时只读线程并检查权限响应，不启动模型推理。按实际检测到的可用模型配置，不在代码中固定具体型号。
-
-1. 将 `examples/teams.config.json` 复制为 `teams.local.json`。
-2. 填写真实工作区绝对路径、Codex 可执行文件和强模型名称/推理强度。
-3. 配置对应账号的权限和额度，执行任务时会调用该账号的模型。
+复制 `examples/teams.config.json` 为 `teams.local.json`，填写实际 workspace、Codex 可执行文件和 expert 模型。不要提交这个本机配置。相对 workspace/带路径的 codexBin 以配置文件目录为基准，普通命令名从 PATH 查找。
 
 ```sh
-node src/cli.js run --config ./teams.local.json --task ./examples/read-only-task.json
+node src/cli.js doctor --config ./teams.local.json --check-thread
 ```
 
-该命令实际启动模型，结果保存在 `<workspace>/.codex-teams/state.sqlite`。返回 `awaiting_review` 是预期行为：CLI 不会替队长批准自己的结果。
-
-不要提交 `teams.local.json` 和工作区中的 `.codex-teams/`。将 `.codex-teams/` 加入目标仓库自己的忽略文件；本项目不会自动修改其他仓库。
+doctor 只做握手、模型/推理强度与可选只读线程权限检查，不启动推理。写成员的权限另外按本机协议核对。任务执行会使用账号模型额度；`npm test` 不调用模型。
 
 ## 接入 Codex
 
-P0 将工作流 skill 与本地 MCP 分开配置，避免依赖未经本机验证的插件路径变量。`plugin.json` 与 `.codex-plugin/plugin.json` 提供 skill 包装；**仅加载 skill 不会自动连接 MCP**。
+```sh
+node src/cli.js pack --config ./teams.local.json --out ./dist/marketplace-v0.2.0
+node src/cli.js doctor --plugin ./dist/marketplace-v0.2.0 --check-thread
+```
 
-按照 `examples/mcp.config.toml` 的形状填写绝对路径，合并到你实际使用的 Codex 配置。项目不会自动改全局配置。先测试 stdio MCP，再在目标桌面版本中安装 skill/插件；桌面完整安装链路仍需单独验收。
+pack 生成本机 marketplace：包含 skill、MCP、源代码、配置快照和锁定的生产依赖，不包含测试或运行数据。需要先 npm ci；拒绝覆盖已有输出。插件根目录的相对路径可随宿主缓存搬迁，Node/Codex 仍依赖本机安装。
+
+以下两条由用户明确选择执行，会修改宿主插件配置：
+
+```sh
+codex plugin marketplace add /absolute/path/to/dist/marketplace-v0.2.0
+codex plugin add codex-agent-teams@codex-agent-teams-local
+```
+
+在新聊天中使用 `codex-agent-teams:team` skill，确认七个 teams_* 工具可用。项目不会自动安装到用户配置；已验证临时 CODEX_HOME 中真实安装、缓存启动、工具注入和调用，桌面 UI 安装未代操作。宿主缓存不自动跟随源码更新；版本/配置更新后生成新包并刷新或重新安装。
+
+也可按 `examples/mcp.config.toml` 手工配置 MCP：
 
 ```sh
 node src/cli.js mcp --config /absolute/path/to/teams.local.json
 ```
 
-此命令的 stdout 是 MCP 协议，不能混入普通日志。
+每个目标工作区同时只允许一个实际运行时；插件与手工 MCP 选一种，避免两个聊天争抢状态库。握手和工具清单连接不会获取 owner。关闭 MCP 会取消活跃成员/命令，成员不会自动唤醒已结束的父聊天。
 
-| 工具 | 作用 |
+| 工具 | 用途 |
 |---|---|
-| `teams_create` | 创建只读任务合同，不调用模型 |
-| `teams_start` | 在依赖通过后执行；失败重试须给出原因，使用 expert |
-| `teams_status` | 查询单项结果或精简列表 |
-| `teams_wait` | 等待最多 30 秒；等待超时不取消任务 |
-| `teams_review` | 队长逐项核查证据，接受或拒绝指定 attempt |
-| `teams_cancel` | 取消任务并等待管理的进程退出 |
+| teams_create | 固定合同、必要上下文、依赖与验收条件；不调用模型 |
+| teams_start | 启动成员；可选工作区/验证计划；失败重试须明确理由，统一 expert，最多三次 |
+| teams_status | 状态、attempt、结果和证据；列表简要返回 |
+| teams_wait | 最多等待 30 秒，超时不取消 |
+| teams_review | 队长逐项复核指定 attempt；写任务通过后仍等待显式集成 |
+| teams_integrate | 应用已复核补丁并验证源工作区；不提交、不推送 |
+| teams_cancel | 取消并等待退出；可显式 cleanup/discard 清理最新目录，保留记录和日志 |
 
-运行中成员不会自动唤醒已结束的父聊天。队长先做独立工作，需要结果时再有界等待。关闭 MCP 连接会关闭该运行时并取消仍在执行的成员。每个工作区同时只允许一个运行时；多个会话不要各启动一个运行时争抢同一状态库。
+## 升级代码后重装插件
 
-## 模型配置
+当前通过本地 marketplace 安装，宿主使用插件缓存副本。修改项目源码或 `teams.local.json` 后，先生成并检查新包，再卸载旧插件、切换来源并重新安装；仅修改 `src/` 不会更新已安装副本。
 
-默认只需要 `profiles.expert`。是否足够强由用户选择和任务评测决定，程序不会根据型号名字猜能力。
+以下以升级到 **0.2.1** 为例，这是后续版本示例，不表示当前版本已经升级。
 
-只有在已完成特定任务类型评测后，才添加可选的 `qualified`：
+1. 更新源码并同步版本号：`package.json`、`package-lock.json` 的顶层与根包版本、`plugin.json`、`.codex-plugin/plugin.json`。当前 `src/mcp.js` 和 `src/app-server.js` 也有版本元数据，发布新版时一并同步；pack 会检查包与两个插件 manifest 的版本一致。
+2. 在项目根目录先验证并生成新包。输出目录必须尚不存在；保留旧包，便于需要时恢复。
+
+```sh
+npm ci
+npm test
+
+node src/cli.js pack \
+  --config ./teams.local.json \
+  --out ./dist/marketplace-v0.2.1
+
+node src/cli.js doctor \
+  --plugin ./dist/marketplace-v0.2.1 \
+  --check-thread
+```
+
+3. 新包检查通过后，等现有团队任务结束或明确取消并确认退出，关闭使用旧插件的 Codex 会话。在项目根目录的独立终端切换安装：
+
+```sh
+# 卸载旧插件，清除它的安装配置和缓存
+codex plugin remove codex-agent-teams@codex-agent-teams-local
+
+# 新包目录变了，切换同名 marketplace 的来源
+codex plugin marketplace remove codex-agent-teams-local
+codex plugin marketplace add ./dist/marketplace-v0.2.1
+
+# 安装新插件
+codex plugin add codex-agent-teams@codex-agent-teams-local
+```
+
+4. 重启 Codex 并开启新聊天，确认 `codex-agent-teams:team` skill 和七个 `teams_*` 工具可用。安装结果应显示预期版本。若第一次接入、尚未安装旧版，则直接添加新 marketplace 并安装，跳过 remove。
+
+卸载插件清理宿主的安装配置和插件缓存，不删除目标工作区 `.codex-teams/` 中的任务、worktree 或日志。不要为了升级手工删除运行数据。切换 marketplace 必须指向新包目录，否则可能重新安装旧包。
+
+本机 `codex plugin marketplace upgrade` 用于刷新 **Git marketplace** 快照，不适用于这里的本地目录换包流程。本地来源切换与 0.2.0 → 0.2.1 重装已在临时 `CODEX_HOME` 中实际验证；没有操作用户正式配置。
+
+如果使用的是手工 MCP 配置，源码入口直接指向本地项目，则无需卸载插件：更新源码和依赖、验证后重启对应 Codex/MCP 进程即可。
+
+## 只读与写任务
+
+普通只读合同见 `examples/read-only-task.json`；可选独立 worktree 与验收命令见 `examples/verified-read-only-task.json`。
+
+```sh
+node src/cli.js run --config ./teams.local.json --task ./examples/read-only-task.json
+```
+
+返回 awaiting_review 是预期，成员不能自我验收。写任务先按 `examples/write-task.json` 替换实际目标、验收标准、allowedPaths 和命令。必须选择 expert，mode=workspace-write，并有 executionPlan。
+
+```sh
+node src/cli.js run --config ./teams.local.json --task ./my-task.json
+node src/cli.js status --config ./teams.local.json --id '<taskId>'
+node src/cli.js review --config ./teams.local.json --spec ./.codex-teams/review.json
+# 拒绝/失败后，用已有任务重试：start --id '<taskId>' --retry --reason '新的证据或修复理由'
+node src/cli.js integrate --config ./teams.local.json --id '<taskId>' --attempt '<attemptId>'
+```
+
+将 review.json 放在 `.codex-teams/` 等不参与基线的目录，避免新增审查文件改变源指纹。它使用真实 taskId/attemptId，按原顺序对每项 criterion 提供原始证据，例如：
 
 ```json
 {
-  "model": "your-qualified-model",
-  "effort": "high",
-  "kinds": ["lookup"],
-  "evaluationReference": "evals/local-lookup-2026-10"
+  "taskId": "从状态中取得",
+  "attemptId": "当前 attempt 的 id",
+  "verdict": "pass",
+  "evidence": [{"criterion": "原验收条目，逐字复制", "evidence": "已检查的文件、行为和验证日志"}]
 }
 ```
 
-这段放在 `profiles.qualified` 下。使用它的任务必须明确指定 `profile: "qualified"`、`complexity: "bounded"`，且类型在资格列表内。评测引用由操作者提供；当前不会自动检查评测真实性。任意模型故障均不会触发廉价兜底。
+只读任务复核后 succeeded；写任务复核后 awaiting_integration，显式集成后的命令通过才 succeeded、解锁依赖。机器验证和独立 expert 审查不替代队长证据复核。
 
-## 真实边界
+源工作区必须仍与捕获时一致，包括已有未提交改动与 index。源变化或应用冲突直接拒绝，不覆盖用户改动，不自动解决冲突。snapshot 可显式把现有暂存/未暂存最终内容作为基线；集成只应用本次 patch，不暂存也不修改 HEAD。集成验证失败或中断时保留已应用内容并记 integration_failed，不能重放；检查源文件和日志后再明确规划修复。
 
-- 新线程不是文件系统隔离。成员依然可能读取允许的项目文件和 AGENTS.md。
-- 执行前请求并核对只读沙箱、网络关闭和禁止提权审批；禁用继承的 MCP、插件、hooks、原生多 Agent 和 memories。只读限制的实际强制执行仍依赖宿主和操作系统，接口回显不是渗透验证。
-- P0 禁用继承的 MCP 名称仅支持字母、数字、下划线和短横线；无法明确覆盖的配置直接拒绝，不静默放行。
-- 不能把队长的复核声明当作真实运行过的测试。自动验证器属于 P1。
-- 状态恢复时如发现旧成员 PID 仍存在，会拒绝接管，需确认旧进程退出；不会自动杀死身份不明的旧 PID。
-- 持久状态不是断点续跑承诺。重启后中断任务需显式重试，最多三次，之后应重规划。
-- 线程用量由宿主报告，缺失时为 null；没有计费或省钱估算。
-- CLI/App Server 与桌面宿主的内置版本可能不同。只保证 STATUS.md 中实际验证过的接口。
+## 工作区、验证与边界
 
-## 目录
-
-```text
-PRINCIPLES.md            中心思想，后续决策依据
-AGENTS.md               后续开发协作规则
-src/contracts.js        配置、任务、结果和验收合同
-src/policy.js           模型选择与上下文包
-src/store.js            SQLite、唯一运行时、保守恢复
-src/runtime.js          依赖、attempt、并发、取消、复核
-src/app-server.js       官方 Codex 执行协议适配
-src/mcp.js              官方 SDK 的 6 个工具
-src/cli.js              诊断、单任务和 MCP 入口
-skills/team/SKILL.md     队长工作流
-examples/               配置与任务示例
-tests/                  回归、协议故障与 MCP 连接测试
-```
-
-下一阶段先实现 worktree 和可重复验证，再允许代码修改。任务驱动推进，不以增加角色数量为目标。
-
-## 可选真实模型检查
+工作区使用 `.codex-teams/worktrees/<id>`；证据保存在 `.codex-teams/`，将这个目录加入目标仓库自己的忽略文件。原 index/文件不会因基线捕获被 stash 或覆盖。用以下命令查看和清理：
 
 ```sh
-node scripts/smoke-live.js --model <doctor列出的可用模型>
+node src/cli.js workspace list --config ./teams.local.json
+node src/cli.js workspace inspect --config ./teams.local.json --id '<workspaceId>'
+node src/cli.js workspace remove --config ./teams.local.json --id '<workspaceId>' --discard
 ```
 
-这是显式启动的真实模型检查，会消耗模型额度，不包含在 `npm test` 内。它只在临时工作区写入随机 proof.txt，让成员只读提取，通过结构化结果后由脚本精确核对。60 秒截止后取消并清理。它证明单次接入闭环，不证明复杂任务的质量或成本。
+MCP 连接仍持有 owner 时，调用 `teams_cancel({taskId, cleanup: true, discard: true})` 清理最新目录；成功任务保持 succeeded。不要同时启动 CLI 去抢同一状态库。
+
+`--discard` 明确丢弃该 worktree 的内容；不影响已集成到源的文件。默认 remove 只删除干净 worktree，当前 running/awaiting_review/awaiting_integration 目录要先完成复核/集成或取消。退出未确认时禁止重派/清理，崩溃恢复不自动重放或误杀旧 PID。
+
+[WORKSPACES.md](docs/WORKSPACES.md) 说明手工 prepare/verify、限额和支持的 Git 形态。当前基线拒绝 submodule、sparse、unmerged、外部 filter、越界 symlink；不复制忽略依赖或自动安装。命令为显式授权的本机程序，command+args 不隐式拼接 shell，日志合计默认 2 MiB，输出超限不会通过。
+
+写成员请求并核对 worktree 写沙箱、网络关闭、临时目录排除和禁止提权。allowedPaths 是路径审计与交付门禁，不是逐文件系统调用权限；宿主写沙箱限制工作区。独立审查为只读。worktree 共用 Git 对象且不是文件系统虚拟机，实际限制依赖宿主/OS；后台程序主动创建新 session 的完整治理、PID 复用和所有平台矩阵仍有限制。
+
+带工作区/写计划的任务当前串行，普通只读默认并发 2、最多 4。qualified 模型需配置明确的任务评测资格，写任务和独立审查固定 expert；不静默降级、不声称未经对照评测的节省比例。
+
+## 可重复验证
+
+```sh
+npm test
+node scripts/smoke-plugin.js       # 临时 CODEX_HOME，真实宿主插件安装/缓存/MCP，无模型
+node scripts/smoke-sandbox.js      # 临时工作区，实际文件/网络限制，无模型
+node scripts/smoke-live.js --model <available-model>
+node scripts/smoke-write-live.js --model <available-strong-model>
+```
+
+最后两条显式使用模型额度。写 smoke 在临时仓库完成 writer、独立 reviewer、前后真实命令、队长核验与集成，保留本机证据；单次通过只证明接入和运行链路，不证明复杂任务通过率。详见 STATUS.md。
+
+核心源码保持单一链路：contracts/policy → runtime/store → app-server、workspace/verification；MCP 与 CLI 为两个入口，plugin 只负责本机封装。参考官方 Codex/插件规范、Git worktree、Execa、Symphony 等成熟实现的执行边界，具体来源和取舍见 [ARCHITECTURE.md](docs/ARCHITECTURE.md)。

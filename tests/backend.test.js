@@ -57,3 +57,29 @@ test('doctor can verify real permission response without a model turn', async ()
   assert.equal(result.threadCheck.sandbox.type, 'readOnly');
   assert.equal(result.inferenceStarted, false);
 });
+
+
+test('doctor checks configured profiles and rejects unavailable models or efforts', async () => {
+  const result = await backend('normal').probe(process.cwd(), { profiles: { expert: { model: 'configured-model', effort: 'high' } }, checkThread: true });
+  assert.equal(result.profileChecks[0].available, true);
+  assert.equal(result.threadCheck.model, 'configured-model');
+  await assert.rejects(backend('normal').probe(process.cwd(), { profiles: { expert: { model: 'missing-model' } } }), /expert model is unavailable/);
+  await assert.rejects(backend('normal').probe(process.cwd(), { profiles: { expert: { model: 'test-model', effort: 'unsupported' } } }), /expert effort is unsupported/);
+});
+
+test('doctor only reports plugin discovery when both skill and MCP server are visible', async () => {
+  const plugin = { marketplacePath: '/fixture/.agents/plugins/marketplace.json', pluginName: 'codex-agent-teams' };
+  const result = await backend('normal').probe(process.cwd(), { plugin });
+  assert.deepEqual(result.pluginCheck.skills, ['codex-agent-teams:team']);
+  assert.equal(result.pluginCheck.installed, false);
+  assert.equal(result.pluginCheck.mcpConnectionChecked, false);
+  await assert.rejects(backend('plugin-missing').probe(process.cwd(), { plugin }), /did not discover/);
+});
+
+test('real backend persists launch phase before spawning and reports exit only after cleanup', async () => {
+  const updates = [];
+  await backend('normal').run({ ...request(new AbortController().signal), onProgress: update => updates.push(update) });
+  assert.equal(updates[0].memberLaunch, 'starting');
+  assert.equal(updates.find(update => update.memberLaunch === 'active').childPid > 0, true);
+  assert.equal(updates.at(-1).memberLaunch, 'exited');
+});

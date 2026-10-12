@@ -1,6 +1,9 @@
+import { writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 const mode = process.argv[2] ?? 'normal';
-let model;
+let model, cwd, writable;
+const thread = mode === 'write-runtime' ? `thread-${process.pid}` : 'thread-test';
 const emit = frame => process.stdout.write(JSON.stringify(frame) + '\n');
 const notify = (method, params) => emit({ method, params });
 const rl = createInterface({ input: process.stdin });
@@ -10,17 +13,27 @@ rl.on('line', line => {
   if (mode === 'timeout') return;
   if (req.method === 'initialize') return reply({ userAgent: 'fake-test-server' });
   if (req.method === 'initialized') return;
+  if (req.method === 'plugin/read') {
+    if (!req.params.marketplacePath || req.params.pluginName !== 'codex-agent-teams') return emit({ id: req.id, error: { message: 'Plugin target missing' } });
+    return reply({ plugin: { summary: { name: 'codex-agent-teams', installed: false, enabled: false }, marketplaceName: 'codex-agent-teams-local', skills: [{ name: 'codex-agent-teams:team' }], mcpServers: mode === 'plugin-missing' ? [] : ['codex-agent-teams'] } });
+  }
   if (req.method === 'config/read') return reply({ config: { mcp_servers: { 'inherited-team': { command: 'do-not-run' } } } });
-  if (req.method === 'model/list') return reply({ data: [{ model: 'test-model', isDefault: true, supportedReasoningEfforts: [{ reasoningEffort: 'high' }] }], nextCursor: null });
+  if (req.method === 'model/list') return reply({ data: [{ model: 'test-model', isDefault: true, supportedReasoningEfforts: [{ reasoningEffort: 'high' }] }, { model: 'configured-model', isDefault: false, supportedReasoningEfforts: [{ reasoningEffort: 'high' }] }], nextCursor: null });
   if (req.method === 'thread/start') {
-    if (req.params.sandbox !== 'read-only' || req.params.approvalPolicy !== 'never' || req.params.config['features.multi_agent'] !== false || req.params.config['mcp_servers.inherited-team.enabled'] !== false) {
+    if (!['read-only', 'workspace-write'].includes(req.params.sandbox) || req.params.approvalPolicy !== 'never' || req.params.config['features.multi_agent'] !== false || req.params.config['mcp_servers.inherited-team.enabled'] !== false) {
       return emit({ id: req.id, error: { message: 'Isolation settings missing' } });
     }
+    cwd = req.params.cwd; writable = req.params.sandbox === 'workspace-write';
+    if (writable) {
+      if (req.params.config['sandbox_workspace_write.network_access'] !== false || req.params.config['sandbox_workspace_write.exclude_slash_tmp'] !== true || req.params.config['sandbox_workspace_write.writable_roots'].length) return emit({id:req.id,error:{message:'Unsafe write settings'}});
+      model = req.params.model;
+      return reply({thread:{id:thread},model,cwd:req.params.cwd,sandbox:{type:'workspaceWrite',writableRoots: mode === 'unsafe-write' ? ['/'] : [],networkAccess:false,excludeSlashTmp:true,excludeTmpdirEnvVar:true},approvalPolicy:'never'});
+    }
     model = req.params.model;
-    return reply({ thread: { id: 'thread-test' }, model, sandbox: { type: mode === 'unsafe' ? 'dangerFullAccess' : 'readOnly', networkAccess: false }, approvalPolicy: 'never' });
+    return reply({ thread: { id: thread }, model, sandbox: { type: mode === 'unsafe' ? 'dangerFullAccess' : 'readOnly', networkAccess: false }, approvalPolicy: 'never' });
   }
   if (req.method === 'turn/start') {
-    const common = { threadId: 'thread-test', turnId: 'turn-test' };
+    const common = { threadId: thread, turnId: 'turn-test' };
     if (mode === 'hang') return reply({ turn: { id: 'turn-test' } });
     if (mode === 'approval') {
       reply({ turn: { id: 'turn-test' } });
@@ -28,6 +41,7 @@ rl.on('line', line => {
     }
     if (mode === 'crash') return process.exit(7);
     if (mode === 'bad-json') return process.stdout.write('not-json\n');
+    if (mode === 'write-runtime' && writable) writeFileSync(join(cwd, 'sum.js'), 'export const sum = (a,b) => a+b;\n');
     const packet = JSON.parse(req.params.input[0].text);
     if (req.params.outputSchema.properties.criteria.items.properties.criterion.enum[0] !== packet.acceptance[0]) return emit({ id: req.id, error: { message: 'Per-task acceptance schema missing' } });
     const result = { summary: 'Protocol fixture completed', criteria: packet.acceptance.map(criterion => ({ criterion, satisfied: true, evidence: 'fixture:1' })), findings: [], blockers: [] };
@@ -39,6 +53,6 @@ rl.on('line', line => {
   }
   if (req.method === 'turn/interrupt') {
     reply({});
-    return notify('turn/completed', { threadId: 'thread-test', turn: { id: 'turn-test', status: 'interrupted', items: [] } });
+    return notify('turn/completed', { threadId: thread, turn: { id: 'turn-test', status: 'interrupted', items: [] } });
   }
 });

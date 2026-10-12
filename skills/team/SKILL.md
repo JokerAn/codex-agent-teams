@@ -1,18 +1,19 @@
 ---
 name: team
-description: Delegate independent read-only repository tasks to Codex members using explicit contracts and captain review. Accuracy and completion efficiency take precedence over cost.
+description: Delegate bounded repository tasks with explicit contracts, isolated edits, real verification, independent expert review and captain approval. Accuracy and completion efficiency first.
 ---
 
-Read PRINCIPLES.md in this plugin for the project's priority order.
+Read PRINCIPLES.md in this plugin. Use this workflow when delegation advances the authorized objective; do tiny tasks directly and keep urgent blocking decisions local. Never duplicate a member's work or copy the parent conversation.
 
-Use this workflow only when delegation advances the user's authorized objective. Complete tiny tasks directly. Keep the current blocking decision local unless delegation provides a clear benefit. Never duplicate a member's assigned work.
+All seven teams_* tools must be available. If absent, follow README to pack/check or configure MCP. Pack/doctor do not install or infer; changing the user's Codex configuration requires their authorization. One actual runtime owns a workspace; avoid enabling a manual copy and plugin together.
 
-1. Establish the goal and acceptance criteria. Use teams_create with the necessary facts and constraints only. Do not copy the parent conversation. P0 supports read-only work; do not ask a member to edit code.
-2. Use the expert profile by default. The qualified profile is allowed only when operator configuration records task-specific evaluation eligibility. Never choose it merely because it is cheaper.
-3. Call teams_start for authorized ready tasks. A maximum of 2 members by default (up to 4 configured) may run. Dependencies must pass captain review first. Do not recursively spawn teams.
-4. While members run, advance separate useful work. Use teams_wait when the next step actually depends on their result; never busy-poll. Members do not automatically wake an ended parent chat.
-5. Inspect each result and relevant original evidence. Call teams_review with the exact attemptId and a concrete justification for EVERY acceptance criterion. Do not rubber-stamp a report. Passing review is captain attestation, not an independently executed test.
-6. Missing context requires a better contract. Model failure may justify an explicit retry with new evidence; retries use expert and are bounded. Cancel unneeded work and wait for managed processes to exit.
-7. Report outcomes, evidence, remaining uncertainty, elapsed time and available usage. Never claim money saved without a controlled comparison.
+1. Define objective, original acceptance criteria, necessary context and existing dependencies. Use teams_create. Defaults are expert/read-only. Other models require operator-supplied task-specific evaluation eligibility; never downgrade just for cost.
+2. For edits, explicitly set mode=workspace-write, profile=expert, and executionPlan containing dirtyPolicy, allowedPaths and one verification command/args/deadline. Restrict paths to the intended files/directories. Default reject refuses dirty source; snapshot deliberately captures its current contents without changing index/HEAD. Only execute commands covered by the user's authorization. No dependency installation is implicit.
+3. Use teams_start on ready tasks. The runtime creates a new worktree per attempt, runs the member, audits scope, runs verification and independently reviews write changes with expert in a fresh read-only thread. Workspace tasks currently run exclusively; ordinary read-only work can use the configured concurrency. Do separate useful work, then bounded teams_wait when necessary; do not busy-poll.
+4. awaiting_review is a report, not success. Inspect original evidence, current patch path, verification logs and machineReview. Use teams_review for the exact latest attemptId and EVERY original criterion with concrete evidence. Runtime checks current binding/files/logs too. A failing command/reviewer cannot be rubber-stamped. Passing a read-only task succeeds; passing a write task yields awaiting_integration.
+5. Integrate only when applying the patch is within the user's authorized objective. Inspect the concrete patch and call teams_integrate with latest taskId/attemptId. It refuses source drift, applies only this patch without staging/commit/push, then verifies source. Use teams_wait; succeeded now means captain-approved and integrated with passing source verification. Do not introduce extra human approval when session authorization already covers the change.
+6. Missing context needs a better contract. Explicit bounded retries require new reason, use expert, preserve old artifacts and capture a new worktree. Never replay stale review/results. integration_failed retains applied source edits; inspect source/logs before planning a repair, never blindly reapply. Cancel waits for managed execution; old live groups block recovery rather than being killed by PID alone.
+7. Cancel unneeded tasks. After terminal completion, teams_cancel with cleanup=true and discard=true explicitly removes the latest changed worktree, retaining records/logs and a succeeded task's status. Without discard, changed files are preserved. Old artifacts may be cleaned via CLI after the MCP runtime closes. Do not race a CLI owner against an active MCP owner.
+8. Report outcomes, evidence, uncertainty, elapsed time and host usage. Distinguish protocol fixtures, real model execution, command results and captain attestation. Never claim savings or general quality from one smoke.
 
-The user's existing authorization is sufficient; this workflow does not impose an extra human approval ceremony. Agent review is a quality gate, not a request for the user to approve every task.
+Worktree sharing is not filesystem virtualization. Host write sandbox limits the worktree; allowedPaths is an audited delivery gate, not per-file syscall permissions. No recursive agents, automatic commit/push, background captain or parent-chat wake guarantee. This workflow adds quality gates, not a per-task user approval ceremony.

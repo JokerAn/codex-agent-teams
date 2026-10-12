@@ -1,0 +1,20 @@
+{
+  "objective": "分析当前仓库的真实测试入口，并给出可核对的配置依据",
+  "kind": "analysis",
+  "acceptance": [
+    "列出真实存在的测试命令及其配置位置"
+  ],
+  "context": [
+    "只读分析。运行时将在你退出后执行验收命令；不要自行运行该命令，也不要声称已经执行。"
+  ],
+  "profile": "expert",
+  "executionPlan": {
+    "dirtyPolicy": "snapshot",
+    "verification": {
+      "command": "node",
+      "args": ["--test", "tests/core.test.js", "tests/backend.test.js"],
+      "timeoutMs": 60000,
+      "maxOutputBytes": 2097152
+    }
+  }
+}

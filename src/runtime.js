@@ -1,6 +1,11 @@
 import { randomUUID } from 'node:crypto';
+import { existsSync, lstatSync, mkdirSync } from 'node:fs';
+import { join } from 'node:path';
+import { processAlive } from './store.js';
+import { runVerification, verificationSchema, verifyLogEvidence } from './verification.js';
 import { taskSchema, reviewSchema, validateResult } from './contracts.js';
 import { selectProfile, taskPrompt } from './policy.js';
+import { GitWorkspace, prepareWorkspaceSchema, inspectWorkspaceSchema, removeWorkspaceSchema } from './workspace.js';
 
 export class TaskRuntime {
   constructor(store, backend, config) {
@@ -24,11 +29,16 @@ export class TaskRuntime {
   status(id) { return id ? this.store.get(id) : this.store.list(); }
   start(id, { retry = false, reason = '' } = {}) {
     if (this.closing) throw new Error('Runtime is closing');
+    if (this.verification) throw new Error('Wait for command verification to exit before starting members');
+    for (const task of this.store.list()) { const attempt = task.attempts.at(-1); if (attempt?.cleanupConfirmed === false) throw new Error('Previous member/reviewer exit is unconfirmed; reopen after checking its process group'); }
+    for (const workspace of this.store.listWorkspaces()) this.assertVerificationExited(workspace);
     if (this.active.size >= this.config.maxConcurrency) throw new Error('Concurrency limit reached; collect current work first.');
     const task = this.store.get(id);
+    if ((task.executionPlan && this.active.size) || [...this.active.values()].some(entry => entry.workspaceBound)) throw new Error('Verified-worktree tasks run exclusively until member and command exit');
     const canRetry = ['failed', 'blocked', 'interrupted', 'cancelled'].includes(task.status);
     if (task.status !== 'pending' && !(canRetry && retry && reason.trim())) throw new Error('Task is not pending, or explicit retry reason is missing.');
     if (this.active.has(id)) throw new Error('Previous attempt is still stopping');
+    if (retry && (processAlive(task.attempts.at(-1)?.childPid, true) || processAlive(task.attempts.at(-1)?.machineReview?.childPid, true))) throw new Error('Previous member process group exit is unconfirmed');
     if (retry && task.attempts.length >= 3) throw new Error('Three attempts exhausted; replan with new evidence.');
     const dependencies = task.dependencies.map(dep => this.store.get(dep));
     if (dependencies.some(dep => dep.status !== 'succeeded')) throw new Error('Dependencies must pass review before execution.');
@@ -40,45 +50,91 @@ export class TaskRuntime {
     delete task.result; delete task.review; delete task.error;
     this.store.save(task, 'started');
     const controller = new AbortController();
-    const entry = { controller, attemptId: attempt.id, done: null };
+    const entry = { controller, attemptId: attempt.id, workspaceBound: Boolean(task.executionPlan), done: null };
     this.active.set(id, entry);
     entry.done = this.execute(task, attempt, dependencies, controller).finally(() => this.active.delete(id));
     return { taskId: id, attemptId: attempt.id, status: 'running', selection };
   }
   async execute(task, attempt, dependencies, controller) {
+    const deadline = Date.now() + this.config.taskTimeoutMs;
     const timer = setTimeout(() => controller.abort(new Error('Task deadline exceeded')), this.config.taskTimeoutMs);
-    const onProgress = update => {
+    const progress = update => {
       const current = this.store.get(task.id);
       if (current.status !== 'running' || current.attempts.at(-1)?.id !== attempt.id) return;
       Object.assign(current.attempts.at(-1), update);
       this.store.save(current, 'execution-metadata');
     };
-    try {
-      const execution = await this.backend.run({
-        cwd: this.config.workspace, selection: attempt.selection, acceptance: task.acceptance,
-        prompt: taskPrompt(task, dependencies, { reason: attempt.reason, previous: task.attempts.at(-2) }), signal: controller.signal, onProgress,
-      });
+    const live = () => {
+      if (Date.now() >= deadline) controller.abort(new Error('Task deadline exceeded'));
       if (controller.signal.aborted) throw controller.signal.reason;
-      let result;
+    };
+    let execution, result, workspace;
+    try {
+      if (task.executionPlan) {
+        workspace = this.prepareWorkspaceRecord({ dirtyPolicy: task.executionPlan.dirtyPolicy }, { taskId: task.id, attemptId: attempt.id });
+        progress({ workspaceInputDigest: new GitWorkspace(this.config.workspace).inspect(workspace).contentDigest });
+      }
+      live();
+      execution = await this.backend.run({ cwd: workspace?.worktreePath ?? this.config.workspace, mode: task.mode,
+        selection: attempt.selection, acceptance: task.acceptance,
+        prompt: taskPrompt(task, dependencies, { reason: attempt.reason, previous: task.attempts.at(-2) }), signal: controller.signal, onProgress: progress });
+      live();
       try { result = validateResult(execution.result, task); }
       catch (error) {
         const raw = JSON.stringify(execution.result) ?? 'undefined';
-        onProgress({ validationFailure: { message: error.message, resultExcerpt: raw.slice(0, 12000), truncated: raw.length > 12000 } });
+        progress({ validationFailure: { message: error.message, resultExcerpt: raw.slice(0, 12000), truncated: raw.length > 12000 } });
         throw error;
       }
-      this.finish(task.id, attempt.id, result.blockers.length || result.criteria.some(c => !c.satisfied) ? 'blocked' : 'awaiting_review', {
-        result, execution: { ...execution, result: undefined },
-      });
+      if (workspace && !result.blockers.length && result.criteria.every(criterion => criterion.satisfied)) {
+        const manager = new GitWorkspace(this.config.workspace), before = manager.inspect(workspace);
+        if (processAlive(this.store.get(task.id).attempts.at(-1)?.childPid, true)) throw new Error('Member process group exit is unconfirmed; verification refused');
+        if (task.mode === 'workspace-write') {
+          progress({ candidate: manager.candidate(workspace, task.executionPlan.allowedPaths) });
+        } else if (before.contentDigest !== this.store.get(task.id).attempts.at(-1).workspaceInputDigest || !before.clean) throw new Error('Read-only member workspace changed; prepare a fresh attempt');
+        live();
+        const check = await this.verifyWorkspaceRecord(workspace.id, task.executionPlan.verification, { taskId: task.id, attemptId: attempt.id, controller });
+        live();
+        if (check.status !== 'passed' || !check.cleanupConfirmed || check.workspaceChanged) throw new Error(`Attempt verification did not pass unchanged: ${check.status}${check.error ? ': ' + check.error : ''}`);
+        if (task.mode === 'workspace-write') {
+          const candidate = this.store.get(task.id).attempts.at(-1).candidate;
+          const patch = manager.candidateEvidence(workspace, candidate).toString('utf8');
+          const packet = JSON.stringify({ objective: task.objective, acceptance: task.acceptance, constraints: task.context,
+            allowedPaths: task.executionPlan.allowedPaths, baselineCommit: workspace.baseline.commit, patch,
+            memberReport: result, verification: { command: check.command, args: check.args, exitCode: check.exitCode, stdoutPath: check.stdoutPath, stderrPath: check.stderrPath },
+            instruction: 'Inspect actual files and patch against every criterion. Do not run commands that modify files. Report concrete defects or missing evidence honestly.' });
+          if (packet.length > 120000) throw new Error('Review packet exceeds 120000 characters; narrow the change');
+          progress({ machineReview: { status: 'running', selection: this.config.profiles.expert } });
+          const reviewed = await this.backend.run({ cwd: workspace.worktreePath, mode: 'read-only', role: 'review',
+            selection: this.config.profiles.expert, acceptance: task.acceptance, prompt: packet, signal: controller.signal,
+            onProgress: update => { const previous = this.store.get(task.id).attempts.at(-1).machineReview; progress({ machineReview: { ...previous, ...update } }); } });
+          live();
+          if (reviewed.actualModel !== this.config.profiles.expert.model) throw new Error('Independent review model changed unexpectedly');
+          if (reviewed.threadId && reviewed.threadId === execution.threadId) throw new Error('Independent review must use a fresh thread');
+          const reviewResult = validateResult(reviewed.result, task);
+          const passed = !reviewResult.blockers.length && reviewResult.criteria.every(criterion => criterion.satisfied);
+          progress({ machineReview: { ...this.store.get(task.id).attempts.at(-1).machineReview, ...reviewed, result: reviewResult,
+            candidateDigest: candidate.digest, status: passed ? 'passed' : 'rejected' } });
+          if (processAlive(this.store.get(task.id).attempts.at(-1).machineReview.childPid, true)) throw new Error('Reviewer process group exit is unconfirmed');
+          manager.candidateEvidence(workspace, candidate);
+          if (!passed) throw new Error('Independent expert review rejected the change');
+        }
+      }
+      this.finish(task.id, attempt.id, result.blockers.length || result.criteria.some(criterion => !criterion.satisfied) ? 'blocked' : 'awaiting_review', {
+        result, execution: { ...execution, result: undefined } });
     } catch (error) {
-      this.finish(task.id, attempt.id, controller.signal.aborted ? 'cancelled' : 'failed', { error: error.message });
+      this.finish(task.id, attempt.id, controller.signal.aborted ? 'cancelled' : 'failed', { error: error.message,
+        ...(result ? { result, execution: { ...execution, result: undefined } } : {}) });
     } finally { clearTimeout(timer); }
   }
   finish(id, attemptId, status, payload) {
     const task = this.store.get(id);
     if (task.status !== 'running' || task.attempts.at(-1)?.id !== attemptId) return false;
+    const cleanupConfirmed = !processAlive(task.attempts.at(-1)?.childPid, true) && !processAlive(task.attempts.at(-1)?.machineReview?.childPid, true);
+    if (!cleanupConfirmed && status === 'awaiting_review') { status = 'failed'; payload = { ...payload, error: 'Member/reviewer process group exit is unconfirmed' }; }
     task.status = status;
     Object.assign(task, payload);
-    Object.assign(task.attempts.at(-1), payload, { status, endedAt: new Date().toISOString() });
+    const attempt = task.attempts.at(-1);
+    Object.assign(attempt, payload, { status, endedAt: new Date().toISOString(), cleanupConfirmed });
     this.store.save(task, status);
     return true;
   }
@@ -89,10 +145,66 @@ export class TaskRuntime {
     if (check.evidence.length !== task.acceptance.length || check.evidence.some((e, i) => e.criterion !== task.acceptance[i])) {
       throw new Error('Review must address all criteria in the original order');
     }
-    task.review = { ...check, at: new Date().toISOString(), authority: 'captain-attested' };
-    task.status = check.verdict === 'pass' ? 'succeeded' : 'failed';
+    const verificationId = check.verdict === 'pass' && task.executionPlan ? this.checkAttemptEvidence(task).verification.id : undefined;
+    task.review = { ...check, at: new Date().toISOString(), authority: 'captain-attested', ...(verificationId ? { verificationId } : {}) };
+    task.status = check.verdict === 'pass' ? task.mode === 'workspace-write' ? 'awaiting_integration' : 'succeeded' : 'failed';
     Object.assign(task.attempts.at(-1), { status: task.status, review: task.review });
     return this.store.save(task, 'reviewed');
+  }
+  checkAttemptEvidence(task) {
+    const attempt = task.attempts.at(-1), workspace = this.store.getWorkspace(attempt.workspaceId);
+    this.assertAttemptBinding(workspace, task.id, attempt.id);
+    this.assertVerificationExited(workspace);
+    if (processAlive(attempt.childPid, true) || processAlive(attempt.machineReview?.childPid, true)) throw new Error('Member/reviewer exit is unconfirmed');
+    const verification = workspace.verifications?.find(value => value.id === attempt.verificationId);
+    const input = task.mode === 'workspace-write' ? attempt.candidate?.digest : attempt.workspaceInputDigest;
+    if (verification?.taskId !== task.id || verification.attemptId !== attempt.id || ['command', 'args', 'timeoutMs', 'maxOutputBytes'].some(key => JSON.stringify(verification[key]) !== JSON.stringify(task.executionPlan.verification[key])) || verification.status !== 'passed' || !verification.cleanupConfirmed || verification.workspaceChanged || verification.baselineCommit !== workspace.baseline.commit || workspace.baseline.commit !== attempt.baselineCommit || verification.inputDigest !== input || verification.outputDigest !== input) throw new Error('No current passed verification bound to this attempt');
+    const manager = new GitWorkspace(this.config.workspace), current = manager.inspect(workspace);
+    if (workspace.status !== 'ready' || current.contentDigest !== verification.outputDigest) throw new Error('Verified workspace changed or was removed; cancel and retry with a fresh attempt');
+    verifyLogEvidence(verification, join(manager.managed, 'verifications', verification.id));
+    if (task.mode === 'workspace-write') {
+      if (attempt.machineReview?.status !== 'passed' || attempt.machineReview.candidateDigest !== attempt.candidate.digest || attempt.machineReview.actualModel !== this.config.profiles.expert.model) throw new Error('Current independent expert review is required');
+      manager.candidateEvidence(workspace, attempt.candidate);
+    }
+    return { workspace, verification, manager };
+  }
+  integrate(id, attemptId) {
+    if (this.closing) throw new Error('Runtime is closing');
+    this.assertWorkspaceIdle();
+    const task = this.store.get(id), attempt = task.attempts.at(-1);
+    if (task.mode !== 'workspace-write' || task.status !== 'awaiting_integration' || attempt?.id !== attemptId) throw new Error('Integration requires the current captain-approved write attempt');
+    const { workspace, manager } = this.checkAttemptEvidence(task);
+    if (manager.source().digest !== workspace.baseline.sourceDigest) throw new Error('Source workspace changed since baseline; integration refused');
+    const controller = new AbortController();
+    attempt.integration = { status: 'applying', startedAt: new Date().toISOString() };
+    task.status = 'integrating'; attempt.status = 'integrating'; this.store.save(task, 'integration-started');
+    const entry = { controller, attemptId, workspaceBound: true, done: null };
+    this.active.set(id, entry);
+    entry.done = (async () => {
+      const deadline = Date.now() + this.config.taskTimeoutMs;
+      const timer = setTimeout(() => controller.abort(new Error('Integration deadline exceeded')), this.config.taskTimeoutMs);
+      try {
+        const digest = manager.applyCandidate(workspace, attempt.candidate);
+        const current = this.store.get(id); current.attempts.at(-1).integration.appliedDigest = digest;
+        current.attempts.at(-1).integration.status = 'verifying'; this.store.save(current, 'integration-applied');
+        if (Date.now() >= deadline) controller.abort(new Error('Integration deadline exceeded'));
+        if (controller.signal.aborted) throw controller.signal.reason;
+        const check = await this.verifyWorkspaceRecord(workspace.id, task.executionPlan.verification, { taskId: id, attemptId, controller, phase: 'integration' });
+        if (Date.now() >= deadline) controller.abort(new Error('Integration deadline exceeded'));
+        if (controller.signal.aborted) throw controller.signal.reason;
+        if (check.status !== 'passed' || !check.cleanupConfirmed || check.workspaceChanged) throw new Error('Integration verification failed; applied changes retained for inspection');
+        const latest = this.store.get(id), integrated = latest.attempts.at(-1);
+        integrated.integration.status = 'passed'; integrated.integration.endedAt = new Date().toISOString();
+        integrated.status = 'succeeded'; latest.status = 'succeeded';
+        this.store.save(latest, 'integrated-and-verified');
+      } catch (error) {
+        const latest = this.store.get(id), interrupted = latest.attempts.at(-1);
+        latest.status = 'integration_failed'; interrupted.status = 'integration_failed';
+        interrupted.integration.status = 'recovery_required'; interrupted.integration.error = error.message;
+        latest.error = error.message; this.store.save(latest, 'integration-failed');
+      } finally { clearTimeout(timer); }
+    })().finally(() => this.active.delete(id));
+    return { taskId: id, attemptId, status: 'integrating' };
   }
   async wait(id, timeoutMs = 10000) {
     const entry = this.active.get(id);
@@ -111,12 +223,154 @@ export class TaskRuntime {
       return this.store.get(id);
     }
     const task = this.store.get(id);
-    if (['pending', 'awaiting_review', 'blocked'].includes(task.status)) {
+    if (['pending', 'awaiting_review', 'awaiting_integration', 'blocked'].includes(task.status)) {
       task.status = 'cancelled';
       if (task.attempts.length) task.attempts.at(-1).status = 'cancelled';
       this.store.save(task, 'cancelled');
     }
     return task;
+  }
+  prepareWorkspace(input = {}) {
+    if (this.closing) throw new Error('Runtime is closing');
+    this.assertWorkspaceIdle();
+    return this.prepareWorkspaceRecord(input);
+  }
+  prepareWorkspaceRecord(input, binding) {
+    const { dirtyPolicy } = prepareWorkspaceSchema.parse(input);
+    const manager = new GitWorkspace(this.config.workspace);
+    const id = randomUUID();
+    const record = { id, status: 'preparing', repoRoot: manager.root, worktreePath: manager.path(id), ...(binding ? { binding } : {}), createdAt: new Date().toISOString() };
+    const save = event => this.saveWorkspaceRecord(record, event);
+    save('workspace-preparing');
+    try {
+      manager.prepare(record, dirtyPolicy, () => save('workspace-baseline-captured'));
+      record.status = 'ready';
+      return save('workspace-ready');
+    } catch (error) {
+      record.status = 'failed'; record.error = error.message;
+      save('workspace-failed');
+      throw new Error(`Workspace ${id} failed: ${error.message}`);
+    }
+  }
+  workspaceStatus(id) { return id ? this.store.getWorkspace(id) : this.store.listWorkspaces(); }
+  inspectWorkspace(id, input = {}) {
+    if (this.closing) throw new Error('Runtime is closing');
+    this.assertWorkspaceIdle();
+    const options = inspectWorkspaceSchema.parse(input);
+    const record = this.store.getWorkspace(id);
+    this.assertVerificationExited(record);
+    if (!['ready', 'failed', 'recovery_required'].includes(record.status)) throw new Error('Workspace is not inspectable');
+    record.lastInspection = new GitWorkspace(this.config.workspace).inspect(record, options);
+    return this.store.saveWorkspace(record, 'workspace-inspected');
+  }
+  removeWorkspace(id, input = {}) {
+    if (this.closing) throw new Error('Runtime is closing');
+    this.assertWorkspaceIdle();
+    const options = removeWorkspaceSchema.parse(input);
+    const record = this.store.getWorkspace(id);
+    this.assertVerificationExited(record);
+    if (!['ready', 'failed', 'recovery_required'].includes(record.status)) throw new Error('Workspace is not removable');
+    if (record.binding) {
+      const task = this.store.get(record.binding.taskId);
+      const attempt = task.attempts.find(value => value.id === record.binding.attemptId);
+      if (processAlive(attempt?.childPid, true) || processAlive(attempt?.machineReview?.childPid, true) || (task.attempts.at(-1)?.id === record.binding.attemptId && ['running', 'awaiting_review', 'awaiting_integration', 'integrating'].includes(task.status))) throw new Error('Review or cancel the bound attempt and confirm member exit before workspace removal');
+    }
+    record.statusBeforeRemoval = record.status;
+    record.status = 'removing';
+    this.store.saveWorkspace(record, 'workspace-removing');
+    try {
+      record.lastInspection = new GitWorkspace(this.config.workspace).remove(record, options);
+      record.status = 'removed'; record.discarded = options.discard;
+      delete record.error; delete record.statusBeforeRemoval;
+      return this.store.saveWorkspace(record, 'workspace-removed');
+    } catch (error) {
+      record.status = 'recovery_required'; record.error = error.message;
+      this.store.saveWorkspace(record, 'workspace-removal-refused');
+      throw error;
+    }
+  }
+  assertWorkspaceIdle() {
+    if (this.active.size || this.verification) throw new Error('Workspace operations require managed members and verification commands to exit first');
+    for (const task of this.store.list()) { const attempt = task.attempts.at(-1); if (attempt?.cleanupConfirmed === false) throw new Error('Previous member/reviewer exit is unconfirmed; reopen after checking its process group'); }
+    for (const workspace of this.store.listWorkspaces()) this.assertVerificationExited(workspace);
+  }
+  assertVerificationExited(record) {
+    for (const check of record.verifications ?? []) {
+      if (check.status === 'running' || check.cleanupConfirmed === false) throw new Error('Previous verification exit is unconfirmed; reopen the runtime after checking its process group');
+    }
+  }
+  assertAttemptBinding(record, taskId, attemptId) {
+    const task = this.store.get(taskId);
+    if (record.binding?.taskId !== taskId || record.binding.attemptId !== attemptId || !['running', 'awaiting_review', 'awaiting_integration', 'integrating'].includes(task.status) || task.attempts.at(-1)?.id !== attemptId || task.attempts.at(-1)?.workspaceId !== record.id) throw new Error('Stale or mismatched workspace attempt binding');
+    return task;
+  }
+  saveWorkspaceRecord(record, event) {
+    if (!record.binding) return this.store.saveWorkspace(record, event);
+    const { taskId, attemptId } = record.binding;
+    const task = this.store.get(taskId), attempt = task.attempts.at(-1);
+    if (task.status !== 'running' || attempt?.id !== attemptId || attempt.workspaceId && attempt.workspaceId !== record.id) throw new Error('Stale workspace attempt cannot write back');
+    Object.assign(attempt, { workspaceId: record.id, ...(record.baseline ? { baselineCommit: record.baseline.commit } : {}) });
+    return this.store.saveBinding(task, record, event);
+  }
+  async verifyWorkspace(id, input) {
+    if (this.closing) throw new Error('Runtime is closing');
+    this.assertWorkspaceIdle();
+    if (this.store.getWorkspace(id).binding) throw new Error('Bound workspaces are verified only by their task attempt');
+    return this.verifyWorkspaceRecord(id, input);
+  }
+  async verifyWorkspaceRecord(id, input, binding) {
+    if (this.closing) throw new Error('Runtime is closing');
+    if (binding && (this.active.size !== 1 || this.active.get(binding.taskId)?.attemptId !== binding.attemptId || this.verification)) throw new Error('Bound verification requires its exclusive active attempt');
+    const spec = verificationSchema.parse(input);
+    const record = this.store.getWorkspace(id);
+    this.assertVerificationExited(record);
+    if (binding) this.assertAttemptBinding(record, binding.taskId, binding.attemptId);
+    if (record.status !== 'ready') throw new Error('Verification requires a ready managed workspace');
+    if ((record.verifications?.length ?? 0) >= 20) throw new Error('20 verification records reached; prepare a new workspace');
+    const manager = new GitWorkspace(this.config.workspace);
+    const snapshot = () => binding?.phase === 'integration' ? { head: manager.head(), contentDigest: manager.source().digest } : manager.inspect(record);
+    const before = snapshot();
+    const logs = join(manager.managed, 'verifications');
+    if (existsSync(logs) && (!lstatSync(logs).isDirectory() || lstatSync(logs).isSymbolicLink())) throw new Error('Verification log root must not be a symlink');
+    mkdirSync(logs, { recursive: true, mode: 0o700 });
+    const check = { id: randomUUID(), ...spec, status: 'running', startedAt: new Date().toISOString(), baselineCommit: record.baseline.commit,
+      worktreePath: record.worktreePath, ...(binding ? { taskId: binding.taskId, attemptId: binding.attemptId, ...(binding.phase ? { phase: binding.phase } : {}) } : {}), inputHead: before.head, inputDigest: before.contentDigest, cleanupConfirmed: false };
+    (record.verifications ??= []).push(check);
+    const save = event => {
+      if (!binding) return this.store.saveWorkspace(record, event);
+      const task = this.assertAttemptBinding(record, binding.taskId, binding.attemptId);
+      if (binding.phase === 'integration') task.attempts.at(-1).integration.verificationId = check.id;
+      else task.attempts.at(-1).verificationId = check.id;
+      return this.store.saveBinding(task, record, event);
+    };
+    save('verification-started');
+    const controller = binding?.controller ?? new AbortController();
+    const entry = { workspaceId: id, controller, done: null };
+    this.verification = entry;
+    entry.done = (async () => {
+      try {
+        const result = await runVerification(spec, { cwd: binding?.phase === 'integration' ? manager.root : record.worktreePath, logDir: join(logs, check.id), signal: controller.signal,
+          onSpawn: update => { Object.assign(check, update); save('verification-child-started'); } });
+        Object.assign(check, result);
+        if (check.cleanupConfirmed) {
+          try {
+            const after = snapshot();
+            check.outputHead = after.head; check.outputDigest = after.contentDigest;
+            check.workspaceChanged = before.contentDigest !== after.contentDigest;
+            record.lastInspection = after;
+          } catch (error) { check.status = 'failed'; check.error = `Post-command audit failed: ${error.message}`; }
+        } else { check.status = 'recovery_required'; check.error ??= 'Command process exit was not confirmed'; }
+      } catch (error) { check.status = 'failed'; check.error = error.message; check.cleanupConfirmed = !check.childPid || !processAlive(check.childPid, true); check.endedAt = new Date().toISOString(); }
+      save('verification-finished');
+      return check;
+    })().finally(() => { this.verification = undefined; });
+    return entry.done;
+  }
+  async cancelVerification(id) {
+    const entry = this.verification;
+    if (entry?.workspaceId !== id) throw new Error('No active verification for this workspace');
+    entry.controller.abort(new Error('Verification cancelled by operator'));
+    return entry.done;
   }
   close() {
     return this.closePromise ??= this.shutdown();
@@ -125,7 +379,9 @@ export class TaskRuntime {
     this.closing = true;
     const entries = [...this.active.values()];
     for (const entry of entries) entry.controller.abort(new Error('Runtime shutting down'));
-    await Promise.allSettled(entries.map(e => e.done));
+    const verification = this.verification;
+    verification?.controller.abort(new Error('Runtime shutting down'));
+    await Promise.allSettled([...entries.map(e => e.done), ...(verification ? [verification.done] : [])]);
     this.store.close();
   }
 }
