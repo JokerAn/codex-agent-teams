@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawn, spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, statSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -170,7 +170,8 @@ test('log root symlink and replaced worktree identity are refused before command
   symlinkSync(outside, join(f.repo, '.codex-teams/verifications'));
   await assert.rejects(f.runtime.verifyWorkspace(prepared.id, command("require('node:fs').writeFileSync('marker','bad')")), /log root must not be a symlink/);
   assert.equal(existsSync(join(prepared.worktreePath, 'marker')), false);
-  rmSync(join(f.repo, '.codex-teams/verifications'));
+  unlinkSync(join(f.repo, '.codex-teams/verifications'));
+  assert.equal(existsSync(outside), true, 'Removing the link must preserve its target');
   const record = f.runtime.workspaceStatus(prepared.id); record.worktreePath = outside;
   f.runtime.store.saveWorkspace(record, 'forged-path');
   await assert.rejects(f.runtime.verifyWorkspace(prepared.id, command('')), /identity mismatch/);

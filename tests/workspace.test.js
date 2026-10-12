@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { TaskStore } from '../src/store.js';
@@ -224,7 +224,8 @@ test('changed baseline ref, removed registration and a symlink replacement block
   symlinkSync(moved, originalPath);
   assert.throws(() => runtime.removeWorkspace(prepared.id, { discard: true }), /missing or replaced/);
   assert.ok(existsSync(join(moved, 'tracked.txt')));
-  rmSync(originalPath); run(repo, ['worktree', 'move', moved, originalPath]);
+  unlinkSync(originalPath); assert.ok(existsSync(join(moved, 'tracked.txt')));
+  run(repo, ['worktree', 'move', moved, originalPath]);
   runtime.removeWorkspace(prepared.id);
 });
 
