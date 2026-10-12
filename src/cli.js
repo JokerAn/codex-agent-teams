@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 import { parseArgs } from 'node:util';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { pluginIdentity, readSnapshot, overview, renderText, renderHtml } from './status.js';
 import { loadConfig } from './config.js';
 import { CodexBackend } from './app-server.js';
 
@@ -13,6 +14,7 @@ try {
       out: { type: 'string' }, plugin: { type: 'string' }, help: { type: 'boolean' },
       reason: { type: 'string' }, retry: { type: 'boolean' }, attempt: { type: 'string' }, spec: { type: 'string' }, id: { type: 'string' }, dirty: { type: 'string' }, allow: { type: 'string', multiple: true }, discard: { type: 'boolean' },
       'check-thread': { type: 'boolean' },
+      human: { type: 'boolean' }, overview: { type: 'boolean' }, html: { type: 'string' }, limit: { type: 'string' },
     },
   });
   const command = positionals[0];
@@ -36,7 +38,8 @@ node src/cli.js workspace remove --config <file> --id <id> [--discard]
 node src/cli.js mcp --config <file>        Start local MCP server
 node src/cli.js start --config <file> --id <task-id> [--retry --reason <reason>]
 node src/cli.js cancel --config <file> --id <task-id>
-node src/cli.js status --config <file> [--id <task-id>]
+node src/cli.js status --config <file> [--id <task-id>] [--human | --overview | --html <new.html>] [--limit 20]
+                                         Read-only observation, even while MCP owns the workspace
 node src/cli.js review --config <file> --spec <review.json>
 node src/cli.js integrate --config <file> --id <task-id> --attempt <attempt-id>
                                          Apply reviewed patch and verify; no commit/push
@@ -53,15 +56,27 @@ node src/cli.js run --config <file> --task <json>
       checkThread: values['check-thread'] ?? false, profiles: config?.profiles, plugin,
     });
     console.log(JSON.stringify(result, null, 2));
-  } else if (['mcp', 'run', 'workspace', 'status', 'review', 'integrate', 'start', 'cancel'].includes(command)) {
+  } else if (command === 'status') {
+    const config = loadConfig(values.config ?? process.env.TEAMS_CONFIG);
+    if ([values.human, values.overview, values.html].filter(Boolean).length > 1) throw new Error('Choose one of --human, --overview or --html');
+    const snapshot = readSnapshot(config.workspace, values.id);
+    if (values.human || values.overview || values.html) {
+      const report = overview(snapshot, { limit: values.limit === undefined ? 20 : Number(values.limit) });
+      if (values.html) {
+        if (!values.html.endsWith('.html')) throw new Error('Status page output must end in .html');
+        writeFileSync(values.html, renderHtml(report), { flag: 'wx', mode: 0o600 });
+        console.log(JSON.stringify({ path: values.html, capturedAt: report.capturedAt, viewer: report.viewer, runtime: report.runtime }, null, 2));
+      } else console.log(values.human ? renderText(report) : JSON.stringify(report, null, 2));
+    } else console.log(JSON.stringify(values.id ? snapshot.tasks[0] : snapshot.tasks, null, 2));
+  } else if (['mcp', 'run', 'workspace', 'review', 'integrate', 'start', 'cancel'].includes(command)) {
     if (process.env.CODEX_TEAMS_MEMBER === '1') throw new Error('Members cannot start another team runtime');
     const config = loadConfig(values.config ?? process.env.TEAMS_CONFIG);
     const { TaskStore } = await import('./store.js');
     const { TaskRuntime } = await import('./runtime.js');
-    const createRuntime = () => new TaskRuntime(new TaskStore(join(config.workspace, '.codex-teams', 'state.sqlite')), new CodexBackend({ binary: config.codexBin }), config);
+    const createRuntime = () => new TaskRuntime(new TaskStore(join(config.workspace, '.codex-teams', 'state.sqlite'), pluginIdentity()), new CodexBackend({ binary: config.codexBin }), config);
     if (command === 'mcp') {
       const { serve } = await import('./mcp.js');
-      await serve(createRuntime);
+      await serve(createRuntime, { observe: taskId => readSnapshot(config.workspace, taskId) });
     } else {
       const runtime = createRuntime();
       if (command === 'workspace') {
@@ -87,9 +102,7 @@ node src/cli.js run --config <file> --task <json>
         const stop = () => { void runtime.close().catch(() => {}); };
         process.once('SIGINT', stop); process.once('SIGTERM', stop);
         try {
-          if (command === 'status') {
-            console.log(JSON.stringify(runtime.status(values.id), null, 2));
-          } else if (command === 'cancel') {
+          if (command === 'cancel') {
             if (!values.id) throw new Error('cancel requires --id');
             console.log(JSON.stringify(await runtime.cancel(values.id), null, 2));
           } else if (command === 'start') {

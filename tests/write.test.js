@@ -69,6 +69,7 @@ test('write -> real verification -> fresh expert review -> captain -> explicit i
   assert.deepEqual(f.roles.map(role => [role.role, role.mode]), [['member', 'workspace-write'], ['review', 'read-only']]);
   assert.notEqual(f.roles[0].cwd, f.repo); assert.equal(f.roles[0].cwd, f.roles[1].cwd);
   assert.match(readFileSync(join(f.repo, 'sum.js'), 'utf8'), /a - b/);
+  assert.deepEqual(task.attempts[0].phases.map(phase => phase.phase), ['preparing','member','auditing','verification','independent_review','awaiting_review']);
   const attempt = task.attempts[0]; assert.equal(attempt.machineReview.status, 'passed');
   assert.equal(attempt.machineReview.actualModel, 'test-model'); assert.ok(existsSync(attempt.candidate.patchPath));
   const dependent = f.runtime.create({ objective: 'Read integrated sum', acceptance: ['cite sum'], dependencies: [task.id] });
@@ -79,6 +80,7 @@ test('write -> real verification -> fresh expert review -> captain -> explicit i
   await f.reopen();
   const integrated = await integrate(f, reviewed);
   assert.equal(integrated.status, 'succeeded', integrated.error); assert.equal(integrated.attempts[0].integration.status, 'passed');
+  assert.deepEqual(integrated.attempts[0].phases.slice(-4).map(phase => phase.phase), ['awaiting_integration','applying','integration_verification','succeeded']);
   assert.match(readFileSync(join(f.repo, 'sum.js'), 'utf8'), /a \+ b/);
   assert.deepEqual(readFileSync(join(f.repo, '.git/index')), originalIndex); assert.equal(f.git(['rev-parse', 'HEAD']), head);
   assert.equal(f.runtime.workspaceStatus(attempt.workspaceId).verifications.length, 2);

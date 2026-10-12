@@ -4,7 +4,7 @@
 
 当前 Codex 会话是 captain，负责授权目标、验收和显式集成。代码负责合同、持久状态、执行与证据；不驻留后台自动规划器。Node.js 24+ 原生 ESM，无编译步骤，Zod 校验边界，内置 SQLite，官方 MCP SDK。
 
-核心只有 11 个源文件。contracts/policy 管合同和显式上下文；runtime/store 拥有状态；app-server 封装官方 App Server；workspace/verification 负责 Git 与一个真实命令；MCP/CLI 两个入口，plugin 只封装本机产物。没有前端、第三方进程框架或独立验证队列。
+核心有 12 个源文件。contracts/policy 管合同和显式上下文；runtime/store 拥有状态；app-server 封装官方 App Server；workspace/verification 负责 Git 与一个真实命令；MCP/CLI 两个入口，plugin 只封装本机产物；status 提供无 owner 的状态观察、显示摘要与本地 HTML 快照。没有前端框架、第三方进程框架或独立验证队列。
 
 ## 合同与执行
 
@@ -40,7 +40,7 @@ SQLite 唯一 owner 持有 PID+token。task 与 workspace 关联在同一事务�
 
 标准 root plugin.json + mcp.json + skills，加 .codex-plugin/plugin.json/.mcp.json 本机兼容。pack 只输出新目录，复制锁定生产依赖和已解析配置；路径相对于插件根目录，Node/Codex 为本机安装。没有自动注册/安装。
 
-MCP initialize/listTools 不创建 owner，第一次实际 tool 才创建 runtime；宿主接口发现连接可以并存，两个任务操作连接不能争用状态。七工具维持 create/start/status/wait/review/integrate/cancel。cancel 可显式 cleanup/discard 清理最新 worktree，保留 succeeded 和日志。CLI 提供独立操作入口但不能抢活 MCP owner。
+MCP initialize/listTools 不创建 owner，第一次实际写入/执行 tool 才创建 runtime；teams_status 使用独立 read-only SQLite 快照；宿主接口发现连接可以并存，两个写入/执行连接不能争用状态，只读状态连接可并存。七工具维持 create/start/status/wait/review/integrate/cancel。cancel 可显式 cleanup/discard 清理最新 worktree，保留 succeeded 和日志。CLI 提供独立操作入口但不能抢活 MCP owner。
 
 ## 验证依据与限制
 
@@ -63,3 +63,11 @@ worktree 共用 Git 对象，不是 VM；命令为显式本机程序，不复制
 - OMX（任务组织比较，未移植其大型调度）：https://github.com/Yeachan-Heo/oh-my-codex
 
 采用明确合同、独立 workspace、进程清理和证据复核这些窄做法；没有引入 Execa 依赖，也没有复制 Symphony/OMX 的服务、界面或常驻调度结构。
+
+## 0.2.2 运行反馈
+
+runtime 在同一 attempt 内保存 phase/phases：准备、成员、审计、验证、独立审查、队长复核、集成与源复验。状态转换和历史记录由当前 owner 唯一写入；显示层不写回、不恢复中断、不触发验收。旧记录缺少 phase 时保留未知，任务状态优先于可能滞后的阶段字段。
+
+status.js 通过 readOnly SQLite + 只读事务获得任务、工作区和 owner 同一快照；从未运行的工作区不创建数据库。owner 摘要只返回 PID 存在性、版本和来源，剔除 token；查看工具 identity 与 owner identity 分开。只读查看不执行项目命令，不争抢现有 owner。MCP 保持七个工具，teams_status 新增 overview/limit 可选参数，原详情/列表兼容。
+
+pack 写入无配置内容的 build-info.json；版本、打包时间、核心源码/技能/包元数据摘要随缓存搬迁保留。HTML 以转义文本显示仓库数据，页面无外部依赖或网络请求，搜索/筛选只处理当前快照。导出为显式的新文件，不开启服务，也不承诺宿主自动注入可视化界面。聊天提示由 team 技能的前台反馈约定执行，不能保证父聊天唤醒或宿主原生进度 UI。

@@ -149,3 +149,31 @@ test('no unbounded failure retry loop', async t => {
   }
   assert.throws(() => runtime.start(task.id, { retry: true, reason: 'again' }), /Three attempts exhausted/);
 });
+
+for (const outcome of ['failed', 'cancelled', 'invalid-result']) {
+  test(`retry ${outcome} cannot expose the previous attempt execution`, async t => {
+    const previous = { threadId: 'previous-thread', actualModel: 'previous-model', usage: { total: { totalTokens: 17 } } };
+    let calls = 0, completeRetry;
+    const { runtime } = setup(t, { run: async ({ signal }) => {
+      if (++calls === 1) return { result: structuredClone(report), ...previous };
+      return new Promise((resolve, reject) => {
+        completeRetry = () => outcome === 'invalid-result' ? resolve({ result: {} }) : reject(new Error('retry failed'));
+        signal.addEventListener('abort', () => reject(signal.reason), { once: true });
+      });
+    } });
+    const task = runtime.create(contract), first = runtime.start(task.id);
+    await runtime.wait(task.id);
+    runtime.review({ taskId: task.id, attemptId: first.attemptId, verdict: 'reject', evidence: [{ criterion: contract.acceptance[0], evidence: 'Retry with original source evidence.' }] });
+    runtime.start(task.id, { retry: true, reason: 'Inspect the original source.' });
+    const running = runtime.status(task.id);
+    assert.equal(running.status, 'running');
+    assert.equal(running.execution, undefined);
+    for (const [key, value] of Object.entries(previous)) assert.deepEqual(running.attempts[0].execution[key], value);
+    if (outcome === 'cancelled') await runtime.cancel(task.id); else completeRetry();
+    const ended = await runtime.wait(task.id);
+    assert.equal(ended.status, outcome === 'cancelled' ? 'cancelled' : 'failed');
+    assert.equal(ended.execution, undefined);
+    assert.equal(ended.attempts[1].execution, undefined);
+    for (const [key, value] of Object.entries(previous)) assert.deepEqual(ended.attempts[0].execution[key], value);
+  });
+}

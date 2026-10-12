@@ -1,3 +1,4 @@
+import { markPhase } from './status.js';
 import { randomUUID } from 'node:crypto';
 import { existsSync, lstatSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -45,9 +46,10 @@ export class TaskRuntime {
     // A rejected/failed cheaper run never silently repeats on a cheaper route.
     const selection = selectProfile(retry ? { ...task, profile: 'expert' } : task, this.config);
     const attempt = { id: randomUUID(), status: 'running', startedAt: new Date().toISOString(), selection, reason };
+    markPhase(attempt, task.executionPlan ? 'preparing' : 'member', attempt.startedAt);
     task.attempts.push(attempt);
     task.status = 'running';
-    delete task.result; delete task.review; delete task.error;
+    delete task.result; delete task.review; delete task.error; delete task.execution;
     this.store.save(task, 'started');
     const controller = new AbortController();
     const entry = { controller, attemptId: attempt.id, workspaceBound: Boolean(task.executionPlan), done: null };
@@ -64,6 +66,12 @@ export class TaskRuntime {
       Object.assign(current.attempts.at(-1), update);
       this.store.save(current, 'execution-metadata');
     };
+    const phase = name => {
+      const current = this.store.get(task.id);
+      if (current.status !== 'running' || current.attempts.at(-1)?.id !== attempt.id) return;
+      markPhase(current.attempts.at(-1), name);
+      this.store.save(current, 'phase-changed');
+    };
     const live = () => {
       if (Date.now() >= deadline) controller.abort(new Error('Task deadline exceeded'));
       if (controller.signal.aborted) throw controller.signal.reason;
@@ -75,6 +83,7 @@ export class TaskRuntime {
         progress({ workspaceInputDigest: new GitWorkspace(this.config.workspace).inspect(workspace).contentDigest });
       }
       live();
+      phase('member');
       execution = await this.backend.run({ cwd: workspace?.worktreePath ?? this.config.workspace, mode: task.mode,
         selection: attempt.selection, acceptance: task.acceptance,
         prompt: taskPrompt(task, dependencies, { reason: attempt.reason, previous: task.attempts.at(-2) }), signal: controller.signal, onProgress: progress });
@@ -86,12 +95,14 @@ export class TaskRuntime {
         throw error;
       }
       if (workspace && !result.blockers.length && result.criteria.every(criterion => criterion.satisfied)) {
+        phase('auditing');
         const manager = new GitWorkspace(this.config.workspace), before = manager.inspect(workspace);
         if (processAlive(this.store.get(task.id).attempts.at(-1)?.childPid, true)) throw new Error('Member process group exit is unconfirmed; verification refused');
         if (task.mode === 'workspace-write') {
           progress({ candidate: manager.candidate(workspace, task.executionPlan.allowedPaths) });
         } else if (before.contentDigest !== this.store.get(task.id).attempts.at(-1).workspaceInputDigest || !before.clean) throw new Error('Read-only member workspace changed; prepare a fresh attempt');
         live();
+        phase('verification');
         const check = await this.verifyWorkspaceRecord(workspace.id, task.executionPlan.verification, { taskId: task.id, attemptId: attempt.id, controller });
         live();
         if (check.status !== 'passed' || !check.cleanupConfirmed || check.workspaceChanged) throw new Error(`Attempt verification did not pass unchanged: ${check.status}${check.error ? ': ' + check.error : ''}`);
@@ -103,6 +114,7 @@ export class TaskRuntime {
             memberReport: result, verification: { command: check.command, args: check.args, exitCode: check.exitCode, stdoutPath: check.stdoutPath, stderrPath: check.stderrPath },
             instruction: 'Inspect actual files and patch against every criterion. Do not run commands that modify files. Report concrete defects or missing evidence honestly.' });
           if (packet.length > 120000) throw new Error('Review packet exceeds 120000 characters; narrow the change');
+          phase('independent_review');
           progress({ machineReview: { status: 'running', selection: this.config.profiles.expert } });
           const reviewed = await this.backend.run({ cwd: workspace.worktreePath, mode: 'read-only', role: 'review',
             selection: this.config.profiles.expert, acceptance: task.acceptance, prompt: packet, signal: controller.signal,
@@ -135,6 +147,7 @@ export class TaskRuntime {
     Object.assign(task, payload);
     const attempt = task.attempts.at(-1);
     Object.assign(attempt, payload, { status, endedAt: new Date().toISOString(), cleanupConfirmed });
+    markPhase(attempt, status, attempt.endedAt);
     this.store.save(task, status);
     return true;
   }
@@ -149,6 +162,7 @@ export class TaskRuntime {
     task.review = { ...check, at: new Date().toISOString(), authority: 'captain-attested', ...(verificationId ? { verificationId } : {}) };
     task.status = check.verdict === 'pass' ? task.mode === 'workspace-write' ? 'awaiting_integration' : 'succeeded' : 'failed';
     Object.assign(task.attempts.at(-1), { status: task.status, review: task.review });
+    markPhase(task.attempts.at(-1), task.status, task.review.at);
     return this.store.save(task, 'reviewed');
   }
   checkAttemptEvidence(task) {
@@ -177,6 +191,7 @@ export class TaskRuntime {
     if (manager.source().digest !== workspace.baseline.sourceDigest) throw new Error('Source workspace changed since baseline; integration refused');
     const controller = new AbortController();
     attempt.integration = { status: 'applying', startedAt: new Date().toISOString() };
+    markPhase(attempt, 'applying', attempt.integration.startedAt);
     task.status = 'integrating'; attempt.status = 'integrating'; this.store.save(task, 'integration-started');
     const entry = { controller, attemptId, workspaceBound: true, done: null };
     this.active.set(id, entry);
@@ -186,6 +201,7 @@ export class TaskRuntime {
       try {
         const digest = manager.applyCandidate(workspace, attempt.candidate);
         const current = this.store.get(id); current.attempts.at(-1).integration.appliedDigest = digest;
+        markPhase(current.attempts.at(-1), 'integration_verification');
         current.attempts.at(-1).integration.status = 'verifying'; this.store.save(current, 'integration-applied');
         if (Date.now() >= deadline) controller.abort(new Error('Integration deadline exceeded'));
         if (controller.signal.aborted) throw controller.signal.reason;
@@ -196,11 +212,14 @@ export class TaskRuntime {
         const latest = this.store.get(id), integrated = latest.attempts.at(-1);
         integrated.integration.status = 'passed'; integrated.integration.endedAt = new Date().toISOString();
         integrated.status = 'succeeded'; latest.status = 'succeeded';
+        markPhase(integrated, 'succeeded', integrated.integration.endedAt);
         this.store.save(latest, 'integrated-and-verified');
       } catch (error) {
         const latest = this.store.get(id), interrupted = latest.attempts.at(-1);
         latest.status = 'integration_failed'; interrupted.status = 'integration_failed';
         interrupted.integration.status = 'recovery_required'; interrupted.integration.error = error.message;
+        interrupted.integration.endedAt = new Date().toISOString();
+        markPhase(interrupted, 'integration_failed', interrupted.integration.endedAt);
         latest.error = error.message; this.store.save(latest, 'integration-failed');
       } finally { clearTimeout(timer); }
     })().finally(() => this.active.delete(id));
@@ -225,7 +244,7 @@ export class TaskRuntime {
     const task = this.store.get(id);
     if (['pending', 'awaiting_review', 'awaiting_integration', 'blocked'].includes(task.status)) {
       task.status = 'cancelled';
-      if (task.attempts.length) task.attempts.at(-1).status = 'cancelled';
+      if (task.attempts.length) { task.attempts.at(-1).status = 'cancelled'; markPhase(task.attempts.at(-1), 'cancelled'); }
       this.store.save(task, 'cancelled');
     }
     return task;

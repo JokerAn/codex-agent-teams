@@ -1,6 +1,6 @@
 {
   "name": "codex-agent-teams",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "description": "Quality-first task delegation with isolated edits, verification, independent expert review and explicit integration",
   "skills": "./skills/"
 }

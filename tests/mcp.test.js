@@ -1,3 +1,5 @@
+import packageInfo from '../package.json' with { type: 'json' };
+const clientVersion = () => packageInfo.version;
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Client } from '@modelcontextprotocol/client';
@@ -18,6 +20,9 @@ test('real SDK client connects over stdio; contracts validate before any paid ca
   assert.equal(tools.tools.length, 7);
   assert.equal(tools.tools.find(tool => tool.name === 'teams_start').annotations.destructiveHint, true);
   assert.equal(existsSync(join(dir, '.codex-teams')), false, 'MCP inventory must not acquire a workspace runtime');
+  const unused = await client.callTool({ name: 'teams_status', arguments: { overview: true } });
+  assert.equal(JSON.parse(unused.content[0].text).counts.total, 0);
+  assert.equal(existsSync(join(dir, '.codex-teams')), false, 'Status observation must not create owner');
   const created = await client.callTool({ name: 'teams_create', arguments: { objective: 'Inspect test config', acceptance: ['Cite config file'] } });
   assert.ok(!created.isError);
   const task = JSON.parse(created.content[0].text);
@@ -35,7 +40,7 @@ test('real SDK client connects over stdio; contracts validate before any paid ca
 });
 
 
-test('MCP inventory can connect while another connection owns the runtime; tool calls still respect ownership', async t => {
+test('MCP observation coexists with a live owner while mutating tools still respect ownership', async t => {
   const dir = mkdtempSync(join(tmpdir(), 'teams-mcp-inventory-'));
   const configPath = join(dir, 'config.json');
   writeFileSync(configPath, JSON.stringify({ workspace: dir, profiles: { expert: { model: 'not-used-in-this-test' } } }));
@@ -52,7 +57,11 @@ test('MCP inventory can connect while another connection owns the runtime; tool 
   assert.ok(!task.isError);
   const inventory = await connect();
   assert.equal((await inventory.listTools()).tools.length, 7);
-  const busy = await inventory.callTool({ name: 'teams_status', arguments: {} });
+  const observed = await inventory.callTool({ name: 'teams_status', arguments: { overview: true } });
+  assert.ok(!observed.isError);
+  assert.equal(JSON.parse(observed.content[0].text).counts.pending, 1);
+  assert.equal(JSON.parse(observed.content[0].text).runtime.version, clientVersion());
+  const busy = await inventory.callTool({ name: 'teams_create', arguments: { objective: 'Another writer', acceptance: ['proof'] } });
   assert.equal(busy.isError, true);
   assert.match(busy.content[0].text, /Another runtime owns this workspace/);
   await inventory.close();

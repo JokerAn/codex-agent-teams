@@ -1,3 +1,4 @@
+import packageInfo from '../package.json' with { type: 'json' };
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
@@ -18,7 +19,7 @@ const workspace = join(root, 'workspace');
 mkdirSync(home); mkdirSync(workspace);
 const configPath = join(root, 'teams.config.json');
 writeFileSync(configPath, JSON.stringify({ workspace, profiles: { expert: { model: 'not-used-no-inference' } } }));
-let client, cancelStartup, result;
+let client, cancelStartup, result, cleanupSafe = false;
 try {
   const packed = packPlugin({ configPath, out: join(root, 'marketplace') });
   const env = { ...process.env, CODEX_HOME: home, CODEX_TEAMS_MEMBER: '0' };
@@ -55,6 +56,14 @@ try {
   const mcp = inventory.data.find(entry => entry.name === 'codex-agent-teams');
   assert.deepEqual(Object.keys(mcp?.tools ?? {}).sort(), ['teams_cancel', 'teams_create', 'teams_integrate', 'teams_review', 'teams_start', 'teams_status', 'teams_wait']);
   const call = (tool, args) => client.request('mcpServer/tool/call', { threadId: started.thread.id, server: 'codex-agent-teams', tool, arguments: args });
+  const initialStatus = await call('teams_status', { overview: true });
+  assert.ok(!initialStatus.isError);
+  const initial = JSON.parse(initialStatus.content[0].text);
+  assert.equal(initial.viewer.version, packageInfo.version);
+  assert.equal(initial.viewer.distribution, 'packaged');
+  assert.ok(initial.viewer.sourceRoot.startsWith(installed.installedPath + '/'));
+  assert.equal(initial.counts.total, 0);
+  assert.equal(existsSync(join(workspace, '.codex-teams')), false, 'Status discovery must not acquire owner');
   const created = await call('teams_create', { objective: 'Inspect isolated plugin installation', acceptance: ['Cite evidence'] });
   assert.ok(!created.isError, JSON.stringify(created.content));
   const task = JSON.parse(created.content[0].text);
@@ -62,6 +71,12 @@ try {
   assert.equal(Object.keys(activeInventory.data.find(entry => entry.name === 'codex-agent-teams')?.tools ?? {}).length, 7);
   const status = await call('teams_status', { taskId: task.id });
   assert.equal(JSON.parse(status.content[0].text).status, 'pending');
+  const activeStatus = await call('teams_status', { overview: true });
+  assert.ok(!activeStatus.isError);
+  const active = JSON.parse(activeStatus.content[0].text);
+  assert.equal(active.runtime.version, packageInfo.version);
+  assert.equal(active.counts.pending, 1);
+  assert.ok(active.runtime.sourceRoot.startsWith(installed.installedPath + '/'));
   const rejected = await call('teams_create', { objective: 'Modify files', acceptance: ['Write'], mode: 'workspace-write' });
   assert.equal(rejected.isError, true);
   const cancelled = await call('teams_cancel', { taskId: task.id });
@@ -69,6 +84,7 @@ try {
   assert.ok(existsSync(join(workspace, '.codex-teams', 'state.sqlite')));
   result = { server, marketplace: marketplace.marketplaceName, installedInTemporaryHome: true,
     cachedPackageIndependent: true, cachedSkillDiscovered: true, inventoryWhileRuntimeActive: true, startupStatus: ready.status, tools: Object.keys(mcp.tools).sort(),
+    statusBeforeOwner: true, observedPluginVersion: initial.viewer.version, observedRuntimeVersion: active.runtime.version,
     contractCreated: true, incompleteWriteContractRejected: true, taskCancelled: true, inferenceStarted: false,
     userConfigChanged: false };
 } finally {
@@ -79,7 +95,8 @@ try {
     if (existsSync(path)) {
       const db = new DatabaseSync(path, { readOnly: true });
       try {
-        const deadline = Date.now() + 2000;
+        db.exec('PRAGMA busy_timeout=1000');
+        const deadline = Date.now() + 3000;
         let alive;
         do {
           const row = db.prepare('SELECT value FROM meta WHERE key=?').get('owner');
@@ -90,6 +107,10 @@ try {
         assert.ok(!alive, 'Managed MCP runtime must exit before temporary workspace cleanup');
       } finally { db.close(); }
     }
-  } finally { rmSync(root, { recursive: true, force: true }); }
+    cleanupSafe = true;
+  } finally {
+    if (cleanupSafe) rmSync(root, { recursive: true, force: true });
+    else console.error(`Temporary smoke artifacts retained because runtime exit is unconfirmed: ${root}`);
+  }
 }
 console.log(JSON.stringify({ ...result, managedRuntimeExited: true }, null, 2));

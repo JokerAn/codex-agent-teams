@@ -1,7 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
-import { CodexBackend, memberOverrides } from '../src/app-server.js';
+import { mkdtempSync, realpathSync, rmSync, symlinkSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { AppServerClient, CodexBackend, memberOverrides } from '../src/app-server.js';
 import { processAlive } from '../src/store.js';
 
 const fixture = fileURLToPath(new URL('./fixtures/fake-app-server.js', import.meta.url));
@@ -82,4 +85,102 @@ test('real backend persists launch phase before spawning and reports exit only a
   assert.equal(updates[0].memberLaunch, 'starting');
   assert.equal(updates.find(update => update.memberLaunch === 'active').childPid > 0, true);
   assert.equal(updates.at(-1).memberLaunch, 'exited');
+});
+
+for (const mode of ['wrong-cwd', 'missing-cwd', 'invalid-cwd']) {
+  for (const options of [{ mode: 'read-only' }, { mode: 'read-only', role: 'review' }, { mode: 'workspace-write' }]) {
+    test(`${mode} rejects ${options.role ?? options.mode} before inference and confirms exit`, async () => {
+      const updates = [];
+      await assert.rejects(backend(mode).run({ ...request(new AbortController().signal), ...options, onProgress: update => updates.push(update) }), /requested working directory/);
+      assert.equal(updates.some(update => update.turnId), false);
+      assert.equal(updates.at(-1).memberLaunch, 'exited');
+      assert.equal(processAlive(updates.find(update => update.childPid).childPid, true), false);
+    });
+  }
+}
+
+for (const mode of ['read-only', 'workspace-write']) {
+  test(`${mode} accepts canonical host cwd for a symlinked request`, async t => {
+    const temporary = mkdtempSync(join(tmpdir(), 'teams-cwd-'));
+    t.after(() => rmSync(temporary, { recursive: true, force: true }));
+    const alias = join(temporary, 'repository');
+    symlinkSync(realpathSync(process.cwd()), alias, 'dir');
+    const result = await backend('canonical-cwd').run({ ...request(new AbortController().signal), cwd: alias, mode });
+    assert.equal(result.result.criteria[0].satisfied, true);
+  });
+}
+
+test('doctor refuses an unexpected cwd without starting inference', async () => {
+  await assert.rejects(backend('wrong-cwd').probe(process.cwd(), { checkThread: true }), /requested working directory/);
+});
+
+for (const failure of ['invalid-json', 'oversized-frame']) {
+  test(`${failure} releases protocol buffer, rejects pending requests and discards later output`, async t => {
+    const client = new AppServerClient({ binary: process.execPath, args: [fixture, 'normal'], requestTimeoutMs: 1000 });
+    t.after(() => client.stop());
+    await client.initialize();
+    const notifications = [], errors = [];
+    client.on('notification', (...args) => notifications.push(args));
+    client.on('fatal', error => errors.push(error));
+    const rejected = assert.rejects(client.request('fixture/no-response'), failure === 'invalid-json' ? /protocol frame/ : /frame exceeds 16 MiB/);
+    const valid = JSON.stringify({ method: 'fixture/notification', params: {} }) + '\n';
+    if (failure === 'invalid-json') client.child.stdout.emit('data', 'not-json\n' + valid);
+    else {
+      const chunk = '字'.repeat(16 * 1024);
+      for (let i = 0; i < 341; i++) client.child.stdout.emit('data', chunk);
+      assert.equal(client.frameBufferBytes, 341 * Buffer.byteLength(chunk));
+      client.child.stdout.emit('data', chunk);
+    }
+    await rejected;
+    client.child.stdout.emit('data', 'x'.repeat(1024 * 1024));
+    client.child.stdout.emit('data', valid);
+    assert.equal(client.frameBuffer, '');
+    assert.equal(client.frameBufferBytes, 0);
+    assert.equal(client.pending.size, 0);
+    assert.equal(errors.length, 1);
+    assert.deepEqual(notifications, []);
+    await client.stop();
+    assert.equal(processAlive(client.child.pid, true), false);
+  });
+}
+
+test('protocol byte accounting handles partial unicode frames and multiple notifications', async t => {
+  const client = new AppServerClient({ binary: process.execPath, args: [fixture, 'normal'] });
+  t.after(() => client.stop());
+  await client.initialize();
+  const notifications = [];
+  client.on('notification', (method, params) => notifications.push([method, params]));
+  const frame = JSON.stringify({ method: 'fixture/unicode', params: { text: '证据' } });
+  client.child.stdout.emit('data', frame.slice(0, -2));
+  assert.equal(client.frameBufferBytes, Buffer.byteLength(frame.slice(0, -2)));
+  client.child.stdout.emit('data', frame.slice(-2) + '\n' + frame + '\n');
+  assert.equal(client.frameBufferBytes, 0);
+  assert.equal(client.frameBuffer, '');
+  assert.equal(notifications.length, 2);
+  assert.deepEqual(notifications[0], ['fixture/unicode', { text: '证据' }]);
+});
+
+test('continuous oversized output ignoring TERM fails and is reaped before backend exit', async () => {
+  const updates = [];
+  await assert.rejects(backend('output-flood').run({ ...request(new AbortController().signal), onProgress: update => updates.push(update) }), /frame exceeds 16 MiB/);
+  assert.equal(updates.at(-1).memberLaunch, 'exited');
+  assert.equal(processAlive(updates.find(update => update.childPid).childPid, true), false);
+});
+
+
+test('a legal boundary-sized frame followed by another frame in the same chunk is accepted', async t => {
+  const client = new AppServerClient({ binary: process.execPath, args: [fixture, 'normal'] });
+  t.after(() => client.stop());
+  await client.initialize();
+  const notifications=[];
+  client.on('notification',method=>notifications.push(method));
+  const empty=JSON.stringify({method:'fixture/boundary',params:{text:''}});
+  const first=JSON.stringify({method:'fixture/boundary',params:{text:'x'.repeat(16*1024*1024-Buffer.byteLength(empty))}});
+  assert.equal(Buffer.byteLength(first),16*1024*1024);
+  client.child.stdout.emit('data',first.slice(0,-1));
+  client.child.stdout.emit('data',first.slice(-1)+'\n'+JSON.stringify({method:'fixture/next',params:{}})+'\n');
+  assert.equal(client.failure,undefined);
+  assert.deepEqual(notifications,['fixture/boundary','fixture/next']);
+  assert.equal(client.frameBufferBytes,0);
+  assert.equal(client.frameBuffer,'');
 });

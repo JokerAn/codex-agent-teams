@@ -11,7 +11,7 @@ export function processAlive(pid, group = false) {
 
 /** One runtime owns a workspace DB. No silent replay after a crash. */
 export class TaskStore {
-  constructor(path) {
+  constructor(path, identity = {}) {
     mkdirSync(dirname(path), { recursive: true });
     if (lstatSync(dirname(path)).isSymbolicLink() || (existsSync(path) && lstatSync(path).isSymbolicLink())) throw new Error('State directory and database must not be symlinks');
     this.db = new DatabaseSync(path);
@@ -65,7 +65,7 @@ export class TaskStore {
           this.saveWorkspace(workspace, 'workspace-recovery-required', false);
         }
         this.db.prepare('INSERT OR REPLACE INTO meta VALUES (?,?)').run('version', '1');
-        this.db.prepare('INSERT OR REPLACE INTO meta VALUES (?,?)').run('owner', JSON.stringify({ pid: process.pid, token: this.owner }));
+        this.db.prepare('INSERT OR REPLACE INTO meta VALUES (?,?)').run('owner', JSON.stringify({ pid: process.pid, token: this.owner, version: identity.version ?? null, sourceRoot: identity.sourceRoot ?? null }));
       });
     } catch (error) { this.db.close(); throw error; }
   }

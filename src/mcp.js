@@ -1,11 +1,13 @@
+import { overview as statusOverview } from './status.js';
+import packageInfo from '../package.json' with { type: 'json' };
 import { McpServer } from '@modelcontextprotocol/server';
 import { StdioServerTransport } from '@modelcontextprotocol/server/stdio';
 import { z } from 'zod';
 import { taskSchema, reviewSchema } from './contracts.js';
 
-export function createMcpServer(runtime) {
+export function createMcpServer(runtime, { observe } = {}) {
   const getRuntime = () => typeof runtime === 'function' ? runtime() : runtime;
-  const server = new McpServer({ name: 'codex-agent-teams', version: '0.2.0' });
+  const server = new McpServer({ name: 'codex-agent-teams', version: packageInfo.version });
   const id = z.string().min(1);
   const tool = (name, description, schema, handler, readOnly = false, destructive = false) => {
     server.registerTool(name, {
@@ -24,9 +26,10 @@ export function createMcpServer(runtime) {
   tool('teams_start', 'Start a fresh Codex member for an authorized task. Consumes model quota. Use explicit retry plus new reason after failure; retry uses expert. No recursive delegation.', z.strictObject({
     taskId: id, retry: z.boolean().default(false), reason: z.string().default(''),
   }), ({ taskId, ...options }) => getRuntime().start(taskId, options), false, true);
-  tool('teams_status', 'Read task result or compact task list. A member report is not accepted until reviewed. Avoid repetitive polling.', z.strictObject({ taskId: id.optional() }), ({ taskId }) => {
-    const state = getRuntime().status(taskId);
-    return taskId ? state : state.map(t => ({ taskId: t.id, objective: t.objective, status: t.status, attemptId: t.attempts.at(-1)?.id, dependencies: t.dependencies }));
+  tool('teams_status', 'Read task result or compact list. overview=true shows plugin version/source, recorded runtime identity, task phases, elapsed time and evidence summaries without starting members. Share meaningful changes with the user; a report is pending until reviewed. Avoid repetitive polling.', z.strictObject({ taskId: id.optional(), overview: z.boolean().default(false), limit: z.number().int().min(1).max(100).default(20) }), ({ taskId, overview, limit }) => {
+    const snapshot = observe ? observe(taskId) : { tasks: taskId ? [getRuntime().status(taskId)] : getRuntime().status(), workspaces: getRuntime().workspaceStatus(), owner: null, stateExists: true };
+    if (overview) return statusOverview(snapshot, { limit });
+    return taskId ? snapshot.tasks[0] : snapshot.tasks.map(t => ({ taskId: t.id, objective: t.objective, status: t.status, attemptId: t.attempts.at(-1)?.id, dependencies: t.dependencies, phase: t.attempts.at(-1)?.phase ?? null }));
   }, true);
   tool('teams_wait', 'Wait up to 30 seconds for one active task. Returns current state; timeout does not cancel the member. Prefer doing independent work before waiting.', z.strictObject({
     taskId: id, timeoutMs: z.number().int().min(0).max(30000).default(10000),
@@ -42,14 +45,14 @@ export function createMcpServer(runtime) {
   return server;
 }
 
-export async function serve(runtimeOrFactory) {
+export async function serve(runtimeOrFactory, options = {}) {
   let runtime = typeof runtimeOrFactory === 'function' ? undefined : runtimeOrFactory;
   let closing;
   const getRuntime = () => {
     if (closing) throw new Error('Runtime is closing');
     return runtime ??= runtimeOrFactory();
   };
-  const server = createMcpServer(getRuntime);
+  const server = createMcpServer(getRuntime, options);
   const transport = new StdioServerTransport();
   const close = () => closing ??= (async () => { await runtime?.close(); await server.close(); })();
   server.server.onclose = () => { void close().catch(error => console.error(error.message)); };

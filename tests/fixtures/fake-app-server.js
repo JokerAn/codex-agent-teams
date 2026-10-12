@@ -1,5 +1,5 @@
-import { writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { realpathSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { createInterface } from 'node:readline';
 const mode = process.argv[2] ?? 'normal';
 let model, cwd, writable;
@@ -24,16 +24,27 @@ rl.on('line', line => {
       return emit({ id: req.id, error: { message: 'Isolation settings missing' } });
     }
     cwd = req.params.cwd; writable = req.params.sandbox === 'workspace-write';
+    const responseCwd = mode === 'wrong-cwd' ? dirname(cwd) : mode === 'invalid-cwd' ? join(cwd, 'missing-fixture-directory') : mode === 'canonical-cwd' ? realpathSync(cwd) : cwd;
+    const location = mode === 'missing-cwd' ? {} : { cwd: responseCwd };
     if (writable) {
       if (req.params.config['sandbox_workspace_write.network_access'] !== false || req.params.config['sandbox_workspace_write.exclude_slash_tmp'] !== true || req.params.config['sandbox_workspace_write.writable_roots'].length) return emit({id:req.id,error:{message:'Unsafe write settings'}});
       model = req.params.model;
-      return reply({thread:{id:thread},model,cwd:req.params.cwd,sandbox:{type:'workspaceWrite',writableRoots: mode === 'unsafe-write' ? ['/'] : [],networkAccess:false,excludeSlashTmp:true,excludeTmpdirEnvVar:true},approvalPolicy:'never'});
+      return reply({thread:{id:thread},model,...location,sandbox:{type:'workspaceWrite',writableRoots: mode === 'unsafe-write' ? ['/'] : [],networkAccess:false,excludeSlashTmp:true,excludeTmpdirEnvVar:true},approvalPolicy:'never'});
     }
     model = req.params.model;
-    return reply({ thread: { id: thread }, model, sandbox: { type: mode === 'unsafe' ? 'dangerFullAccess' : 'readOnly', networkAccess: false }, approvalPolicy: 'never' });
+    return reply({ thread: { id: thread }, model, ...location, sandbox: { type: mode === 'unsafe' ? 'dangerFullAccess' : 'readOnly', networkAccess: false }, approvalPolicy: 'never' });
   }
   if (req.method === 'turn/start') {
     const common = { threadId: thread, turnId: 'turn-test' };
+    if (['wrong-cwd', 'missing-cwd', 'invalid-cwd'].includes(mode)) return emit({ id: req.id, error: { message: 'UNEXPECTED_TURN_START' } });
+    if (mode === 'output-flood') {
+      process.on('SIGTERM', () => {});
+      const chunk = Buffer.alloc(64 * 1024, 'x');
+      const pump = () => { while (process.stdout.write(chunk)) {} };
+      process.stdout.on('drain', pump);
+      pump();
+      return;
+    }
     if (mode === 'hang') return reply({ turn: { id: 'turn-test' } });
     if (mode === 'approval') {
       reply({ turn: { id: 'turn-test' } });

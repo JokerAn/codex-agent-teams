@@ -1,3 +1,4 @@
+import packageInfo from '../package.json' with { type: 'json' };
 import { spawn } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 import { outputSchemaFor } from './contracts.js';
@@ -27,23 +28,36 @@ export class AppServerClient extends EventEmitter {
     this.child.stdin.on('error', error => { if (!this.stopping) this.fail(error); });
     this.child.stderr.setEncoding('utf8');
     this.child.stderr.on('data', chunk => { this.stderr = (this.stderr + chunk).slice(-8000); });
-    let buffer = '';
+    this.frameBuffer = '';
+    this.frameBufferBytes = 0;
     this.child.stdout.setEncoding('utf8');
     this.child.stdout.on('data', chunk => {
-      buffer += chunk;
-      if (Buffer.byteLength(buffer) > 16 * 1024 * 1024) { this.fail(new Error('App Server frame exceeds 16 MiB')); return; }
-      let end;
-      while ((end = buffer.indexOf('\n')) !== -1) {
-        const line = buffer.slice(0, end).trim(); buffer = buffer.slice(end + 1);
-        if (!line) continue;
-        try { this.receive(JSON.parse(line)); }
-        catch { this.fail(new Error('Invalid App Server protocol frame')); }
+      // Keep draining the pipe after failure, but never retain or parse more output.
+      if (this.failure || this.stopping) return;
+      let offset = 0;
+      while (!this.failure && !this.stopping && offset < chunk.length) {
+        const end = chunk.indexOf('\n', offset);
+        const fragment = chunk.slice(offset, end === -1 ? chunk.length : end);
+        const bytes = Buffer.byteLength(fragment);
+        if (this.frameBufferBytes + bytes > 16 * 1024 * 1024) { this.fail(new Error('App Server frame exceeds 16 MiB')); return; }
+        this.frameBuffer += fragment;
+        this.frameBufferBytes += bytes;
+        if (end === -1) return;
+        const line = this.frameBuffer.trim();
+        this.frameBuffer = ''; this.frameBufferBytes = 0;
+        if (line) {
+          try { this.receive(JSON.parse(line)); }
+          catch { this.fail(new Error('Invalid App Server protocol frame')); }
+        }
+        offset = end + 1;
       }
     });
   }
   fail(error) {
     if (this.failure) return;
     this.failure = error;
+    this.frameBuffer = '';
+    this.frameBufferBytes = 0;
     for (const pending of [...this.pending.values()]) pending.reject(error);
     this.emit('fatal', error);
   }
@@ -82,7 +96,7 @@ export class AppServerClient extends EventEmitter {
     });
   }
   async initialize(signal, { experimentalApi = false } = {}) {
-    const info = await this.request('initialize', { clientInfo: { name: 'codex_agent_teams', version: '0.2.0' }, ...(experimentalApi ? { capabilities: { experimentalApi: true } } : {}) }, signal);
+    const info = await this.request('initialize', { clientInfo: { name: 'codex_agent_teams', version: packageInfo.version }, ...(experimentalApi ? { capabilities: { experimentalApi: true } } : {}) }, signal);
     this.send({ method: 'initialized', params: {} });
     return info;
   }
@@ -90,6 +104,8 @@ export class AppServerClient extends EventEmitter {
     if (this.stopPromise) return this.stopPromise;
     this.stopPromise = (async () => {
       this.stopping = true;
+      this.frameBuffer = '';
+      this.frameBufferBytes = 0;
       for (const p of [...this.pending.values()]) p.reject(new Error('App Server stopped'));
       const pid = this.child.pid;
       if (pid && processAlive(pid, true)) signalGroup(pid, 'SIGTERM');
@@ -129,8 +145,12 @@ async function startMemberThread(client, cwd, selection, signal, { mode = 'read-
     } : {}) }, ephemeral: true,
   }, signal);
   if (started.model !== selection.model) throw new Error(`Model changed unexpectedly: ${started.model}`);
+  let sameDirectory = false;
+  try { sameDirectory = typeof started.cwd === 'string' && realpathSync(started.cwd) === realpathSync(cwd); }
+  catch { /* Missing or inaccessible paths must fail before inference. */ }
+  if (!sameDirectory) throw new Error('Host did not confirm the requested working directory; refusing to start inference.');
   const safe = mode === 'workspace-write'
-    ? started.sandbox?.type === 'workspaceWrite' && started.sandbox.writableRoots?.length === 0 && started.sandbox.excludeSlashTmp === true && started.sandbox.excludeTmpdirEnvVar === true && realpathSync(started.cwd) === realpathSync(cwd)
+    ? started.sandbox?.type === 'workspaceWrite' && started.sandbox.writableRoots?.length === 0 && started.sandbox.excludeSlashTmp === true && started.sandbox.excludeTmpdirEnvVar === true
     : started.sandbox?.type === 'readOnly';
   if (!safe || started.sandbox.networkAccess !== false || started.approvalPolicy !== 'never') {
     throw new Error(`Host did not confirm ${mode} permissions; refusing to start inference.`);

@@ -34,6 +34,9 @@ test('prepared package includes production dependencies, supports cache relocati
   const { root, workspace, configPath, out } = fixture(t);
   const packed = packPlugin({ configPath, out });
   assert.equal(packed.installed, false);
+  const build = json(join(packed.pluginRoot, 'build-info.json'));
+  assert.equal(build.version, json(resolve('package.json')).version);
+  assert.match(build.sourceDigest, /^[a-f0-9]{64}$/);
   assert.equal(packed.inferenceStarted, false);
   assert.deepEqual(packed.runtimeDependencies.sort(), ['node_modules/@modelcontextprotocol/core', 'node_modules/@modelcontextprotocol/server', 'node_modules/zod']);
   assert.equal(existsSync(join(packed.pluginRoot, 'node_modules/@modelcontextprotocol/client')), false);
@@ -50,6 +53,12 @@ test('prepared package includes production dependencies, supports cache relocati
   t.after(async () => { await client.close(); });
   try {
     await client.connect(transport);
+    assert.equal(client.getServerVersion().version, json(resolve('package.json')).version);
+    const overview = await client.callTool({ name: 'teams_status', arguments: { overview: true } });
+    const identity = JSON.parse(overview.content[0].text).viewer;
+    assert.equal(identity.distribution, 'packaged');
+    assert.equal(identity.build.sourceDigest, build.sourceDigest);
+    assert.equal(identity.sourceRoot.replace(/\/$/, ''), target.pluginRoot);
     assert.equal((await client.listTools()).tools.length, 7);
     const created = await client.callTool({ name: 'teams_create', arguments: { objective: 'Inspect relocated package', acceptance: ['Cite source'] } });
     assert.ok(!created.isError);

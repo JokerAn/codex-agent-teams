@@ -1,4 +1,5 @@
-import { cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadConfig } from './config.js';
@@ -62,6 +63,10 @@ export function packPlugin({ configPath, out = resolve('dist/local-marketplace')
     mkdirSync(join(pluginRoot, '.codex-plugin'));
     writeJson(join(pluginRoot, '.codex-plugin/plugin.json'), { ...compatibility, mcpServers: './.mcp.json' });
     for (const [path] of dependencies) cpSync(join(root, path), join(pluginRoot, path), { recursive: true, filter: source => basename(source) !== 'node_modules' });
+    const sourceFiles = [...readdirSync(join(root, 'src')).filter(path => path.endsWith('.js')).sort().map(path => `src/${path}`), 'skills/team/SKILL.md', 'package.json'];
+    const fingerprint = createHash('sha256');
+    for (const path of sourceFiles) { fingerprint.update(path + '\0'); fingerprint.update(readFileSync(join(root, path))); }
+    writeJson(join(pluginRoot, 'build-info.json'), { version: packageJson.version, createdAt: new Date().toISOString(), sourceDigest: fingerprint.digest('hex') });
     writeJson(join(pluginRoot, 'teams.config.json'), config);
     const server = {
       command: 'node', args: ['src/cli.js', 'mcp', '--config', 'teams.config.json'],
