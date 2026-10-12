@@ -1,4 +1,4 @@
-import { overview as statusOverview } from './status.js';
+import { overview as statusOverview, taskView, toolFeedback } from './status.js';
 import packageInfo from '../package.json' with { type: 'json' };
 import { McpServer } from '@modelcontextprotocol/server';
 import { StdioServerTransport } from '@modelcontextprotocol/server/stdio';
@@ -18,9 +18,9 @@ export function createMcpServer(runtime, { observe, discoverModels } = {}) {
     }, async (args, ctx) => {
       try {
         const value = await handler(args, ctx);
-        return { content: [{ type: 'text', text: JSON.stringify(value) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(value) }, { type: 'text', text: toolFeedback(name, value) }] };
       } catch (error) {
-        return { isError: true, content: [{ type: 'text', text: error.message }] };
+        return { isError: true, content: [{ type: 'text', text: error.message }, { type: 'text', text: `Agent Teams · ${name} 未成功\n${name === 'teams_models' ? '本次调用未启动新成员；模型确认没有完成，不得假定用户已同意。' : '请主 Agent 核对错误及当前记录后继续；此回执不代表成功。'}\n原因：${error.message}` }] };
       }
     });
   };
@@ -75,14 +75,19 @@ export function createMcpServer(runtime, { observe, discoverModels } = {}) {
     if (!current.modelConfirmation) current.restoreModels(state.selection, catalog);
     return current.start(taskId, options);
   }, false, true);
-  tool('teams_status', 'Read task result or compact list. overview=true shows plugin version/source, recorded runtime identity, task phases, elapsed time and evidence summaries without starting members. Share meaningful changes with the user; a report is pending until reviewed. Avoid repetitive polling.', z.strictObject({ taskId: id.optional(), overview: z.boolean().default(false), limit: z.number().int().min(1).max(100).default(20) }), ({ taskId, overview, limit }) => {
+  tool('teams_status', 'Read task result or compact list. taskId alone returns a compact summary of that task; add verbose=true only when raw per-attempt machine fields (thread id, digests, full review result) are genuinely needed, because that returns the unreduced record. overview=true shows plugin version/source, recorded runtime identity, task phases, elapsed time and evidence summaries without starting members. Share meaningful changes with the user; a report is pending until reviewed. Avoid repetitive polling.', z.strictObject({ taskId: id.optional(), overview: z.boolean().default(false), verbose: z.boolean().default(false), limit: z.number().int().min(1).max(100).default(20) }), ({ taskId, overview, verbose, limit }) => {
     const snapshot = observe ? observe(taskId) : { tasks: taskId ? [getRuntime().status(taskId)] : getRuntime().status(), workspaces: getRuntime().workspaceStatus(), owner: null, stateExists: true };
     if (overview) return statusOverview(snapshot, { limit });
-    return taskId ? snapshot.tasks[0] : snapshot.tasks.map(t => ({ taskId: t.id, objective: t.objective, status: t.status, attemptId: t.attempts.at(-1)?.id, dependencies: t.dependencies, phase: t.attempts.at(-1)?.phase ?? null }));
+    if (!taskId) return snapshot.tasks.map(t => ({ taskId: t.id, objective: t.objective, title: t.title ?? null, status: t.status, attemptId: t.attempts.at(-1)?.id, dependencies: t.dependencies, phase: t.attempts.at(-1)?.phase ?? null }));
+    const task = snapshot.tasks[0];
+    return verbose ? task : taskView(task, snapshot.workspaces);
   }, true);
-  tool('teams_wait', 'Wait up to 30 seconds for one active task. Returns current state; timeout does not cancel the member. Prefer doing independent work before waiting.', z.strictObject({
-    taskId: id, timeoutMs: z.number().int().min(0).max(30000).default(10000),
-  }), ({ taskId, timeoutMs }) => getRuntime().wait(taskId, timeoutMs), true);
+  tool('teams_wait', 'Wait up to 300 seconds for one active task. Returns a compact summary; timeout does not cancel the member. verbose=true returns the unreduced record. Prefer doing independent work before waiting.', z.strictObject({
+    taskId: id, timeoutMs: z.number().int().min(0).max(300000).default(10000), verbose: z.boolean().default(false),
+  }), async ({ taskId, timeoutMs, verbose }) => {
+    const task = await getRuntime().wait(taskId, timeoutMs);
+    return verbose ? task : taskView(task, getRuntime().workspaceStatus());
+  }, true);
   tool('teams_review', 'Captain must inspect evidence against EVERY acceptance criterion. Passing read-only tasks unlocks dependents; passing write tasks waits for explicit integration and source verification. Execution tasks also require a current passed command receipt, unchanged worktree and intact logs bound to this exact attempt. This records captain attestation, not independent machine verification or user approval.', reviewSchema, args => getRuntime().review(args));
   tool('teams_integrate', 'Explicitly apply the current captain-approved write patch to the unchanged source workspace, preserving its index. Runs post-integration verification; only then succeeds. Does not commit or push. Use teams_wait/status/cancel for progress.', z.strictObject({ taskId: id, attemptId: id }), ({ taskId, attemptId }) => getRuntime().integrate(taskId, attemptId), false, true);
   tool('teams_cancel', 'Cancel a task and wait for managed member/reviewer/command exit. Optional cleanup removes its latest worktree; explicit discard is required for changed content. Succeeded tasks keep their status. Records/logs are retained. Integration cancellation retains applied source changes.', z.strictObject({ taskId: id, cleanup: z.boolean().default(false), discard: z.boolean().default(false) }), async ({ taskId, cleanup, discard }) => {

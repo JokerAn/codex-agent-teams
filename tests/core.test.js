@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { TaskStore } from '../src/store.js';
 import { taskPrompt } from '../src/policy.js';
-import { setup, contract, report, approve, config } from './helpers.js';
+import { setup, contract, report, approve, config, tick } from './helpers.js';
 
 test('completion requires captain review before unlocking a dependency', async t => {
   const { runtime } = setup(t);
@@ -165,6 +165,7 @@ for (const outcome of ['failed', 'cancelled', 'invalid-result']) {
     await runtime.wait(task.id);
     runtime.review({ taskId: task.id, attemptId: first.attemptId, verdict: 'reject', evidence: [{ criterion: contract.acceptance[0], evidence: 'Retry with original source evidence.' }] });
     runtime.start(task.id, { retry: true, reason: 'Inspect the original source.' });
+    await tick();
     const running = runtime.status(task.id);
     assert.equal(running.status, 'running');
     assert.equal(running.execution, undefined);

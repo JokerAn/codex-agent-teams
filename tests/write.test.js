@@ -209,7 +209,7 @@ test('MCP write contract -> asynchronous integration stays available through the
   assert.equal(tools.find(tool => tool.name === 'teams_integrate').annotations.destructiveHint, true);
   await call('teams_models', { confirm: true });
   const task = await call('teams_create', { expectedWorkspace: f.repo, ...input(), complexity: 'simple' }); await call('teams_start', { taskId: task.id });
-  const ready = await call('teams_wait', { taskId: task.id, timeoutMs: 30000 }); assert.equal(ready.status, 'awaiting_review', ready.error);
+  const ready = await call('teams_wait', { taskId: task.id, timeoutMs: 30000, verbose: true }); assert.equal(ready.status, 'awaiting_review', ready.error);
   const attempt = ready.attempts[0];
   assert.equal(attempt.actualModel, 'configured-model');
   assert.equal(attempt.machineReview.actualModel, 'test-model');

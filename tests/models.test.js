@@ -8,7 +8,7 @@ import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import { selectProfile } from '../src/policy.js';
 import { modelChoices, acceptedModelRoles, modelSelectionForm } from '../src/models.js';
-import { setup, contract, report, config } from './helpers.js';
+import { setup, contract, report, config, tick } from './helpers.js';
 import { CodexBackend } from '../src/app-server.js';
 
 const expert = { model: 'test-model', effort: 'high' }, simple = { model: 'configured-model', effort: 'high' };
@@ -49,6 +49,7 @@ test('confirmed runtime records selection per attempt, retries on expert and rej
   assert.equal(runtime.status(task.id).attempts.length, 0);
   runtime.confirmModels({ expert, simple }, 'mcp-elicitation');
   runtime.start(task.id);
+  await tick();
   assert.throws(() => runtime.confirmModels({ expert }, 'mcp-elicitation'), /active execution/);
   assert.throws(() => runtime.forgetModels(), /active execution/);
   release(); await runtime.wait(task.id);
@@ -56,7 +57,7 @@ test('confirmed runtime records selection per attempt, retries on expert and rej
   assert.equal(first.selection.profile, 'simple'); assert.equal(first.modelConfirmation.source, 'mcp-elicitation');
   assert.deepEqual(first.reviewerSelection, expert);
   runtime.review({ taskId: task.id, attemptId: first.id, verdict: 'reject', evidence: [{ criterion: contract.acceptance[0], evidence: 'needs deeper analysis' }] });
-  runtime.start(task.id, { retry: true, reason: 'escalate after rejected result' }); release(); await runtime.wait(task.id);
+  runtime.start(task.id, { retry: true, reason: 'escalate after rejected result' }); await tick(); release(); await runtime.wait(task.id);
   assert.deepEqual(seen.map(p => p.model), [simple.model, expert.model]);
 });
 
@@ -115,7 +116,7 @@ test('real SDK user form gates start, decline/cancel/invalid input do not approv
   assert.equal((await f.call('teams_models', { confirm: true })).value.status, 'confirmed');
   assert.equal((await f.call('teams_models')).value.confirmationRequired, false);
   assert.equal((await f.call('teams_start', { taskId: task.id })).value.selection.model, simple.model);
-  const ready = (await f.call('teams_wait', { taskId: task.id, timeoutMs: 5000 })).value;
+  const ready = (await f.call('teams_wait', { taskId: task.id, timeoutMs: 5000, verbose: true })).value;
   assert.equal(ready.status, 'awaiting_review'); assert.equal(ready.attempts[0].actualModel, simple.model);
   assert.equal(forms, 4);
   const pending = (await f.call('teams_create', contract)).value;

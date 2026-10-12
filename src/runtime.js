@@ -89,7 +89,9 @@ export class TaskRuntime {
     const entry = { controller, attemptId: attempt.id, workspaceBound: Boolean(task.executionPlan), done: null };
     this.active.set(id, entry);
     entry.done = this.execute(task, attempt, dependencies, controller).finally(() => this.active.delete(id));
-    return { taskId: id, attemptId: attempt.id, status: 'running', selection, target };
+    return { taskId: id, attemptId: attempt.id, status: 'running', title: task.title ?? task.objective.slice(0, 80),
+      kind: task.kind, selection, reviewerSelection: task.mode === 'workspace-write' ? attempt.reviewerSelection : null,
+      confirmationScope: attempt.modelConfirmation?.scope ?? null, target };
   }
   async execute(task, attempt, dependencies, controller) {
     const deadline = Date.now() + this.config.taskTimeoutMs;
@@ -112,6 +114,9 @@ export class TaskRuntime {
     };
     let execution, result, workspace;
     try {
+      // Worktree preparation is synchronous (git fork/exec plus whole-tree hashing). Yield once so
+      // the MCP transport can answer status calls while a member is being prepared.
+      await new Promise(resolve => setImmediate(resolve));
       if (task.executionPlan) {
         workspace = this.prepareWorkspaceRecord({ dirtyPolicy: task.executionPlan.dirtyPolicy }, { taskId: task.id, attemptId: attempt.id });
         progress({ workspaceInputDigest: new GitWorkspace(this.config.workspace).inspect(workspace).contentDigest });

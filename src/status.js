@@ -59,16 +59,38 @@ const nextActions = { pending: '明确任务合同后启动', running: '等待�
   awaiting_review: '逐项核对证据，再执行队长复核', awaiting_integration: '检查源工作区与补丁，再显式集成',
   succeeded: '查看结果与验证证据', failed: '检查错误与退出记录，再明确重试理由', blocked: '补充缺失上下文或重新规划',
   cancelled: '确认退出后按需重新规划', interrupted: '检查旧进程与证据，再显式重试', integration_failed: '检查已应用的源改动和日志，禁止盲目重放' };
+const actionOwner = (status, phase) => status === 'running'
+  ? phase === 'member' ? '执行成员' : phase === 'independent_review' ? '独立审查成员' : phase === 'unknown' ? '主 Agent（核实进度）' : '运行时'
+  : status === 'integrating' ? '运行时' : status === 'succeeded' ? '无需操作' : '主 Agent';
+export const modelLabel = selection => `${selection?.model ?? '模型未知'} / ${selection?.effort ?? '推理强度未记录'}`;
+/** Compact per-attempt history: enough to answer "which model ran which round", without raw ids, PIDs or digests. */
+const attemptSummary = (attempt, check, integrationCheck, at) => ({
+  attemptId: attempt.id, status: attempt.status, phase: attempt.phase ?? null, phaseLabel: phaseLabels[attempt.phase] ?? attempt.phaseLabel ?? null,
+  model: attempt.actualModel ?? attempt.selection?.model ?? null, effort: attempt.selection?.effort ?? null,
+  profile: attempt.selection?.profile ?? null, reason: attempt.reason || null,
+  reviewer: attempt.machineReview ? { status: attempt.machineReview.status ?? null, model: attempt.machineReview.actualModel ?? attempt.reviewerSelection?.model ?? null,
+    effort: attempt.reviewerSelection?.effort ?? null } : null,
+  captainReview: attempt.review?.verdict ?? null,
+  verification: check ? check.status : null, integrationVerification: integrationCheck ? integrationCheck.status : null,
+  startedAt: attempt.startedAt ?? null, endedAt: attempt.endedAt ?? null, elapsedMs: elapsed(attempt.startedAt, attempt.endedAt ?? (attempt.status === 'running' ? at : undefined)),
+});
 export function taskView(task, workspaces = [], at = new Date().toISOString()) {
   const attempt = task.attempts.at(-1), workspace = workspaces.find(item => item.id === attempt?.workspaceId);
   const check = workspace?.verifications?.find(item => item.id === attempt?.verificationId);
   const integrationCheck = workspace?.verifications?.find(item => item.id === attempt?.integration?.verificationId);
   const active = ['running', 'integrating'].includes(task.status);
   const phase = active ? attempt?.phase ?? 'unknown' : task.status;
-  return { taskId: task.id, objective: task.objective, title: task.objective.length > 100 ? task.objective.slice(0, 100) + '…' : task.objective, status: task.status, phase, phaseLabel: phaseLabels[phase] ?? phase,
+  return { taskId: task.id, objective: task.objective, title: task.title ?? (task.objective.length > 80 ? task.objective.slice(0, 80) + '…' : task.objective), status: task.status, phase, phaseLabel: phaseLabels[phase] ?? phase,
     target: task.target ?? null, preflight: attempt?.preflight ?? null, failure: task.failure ?? null,
     attemptId: attempt?.id ?? null, attemptCount: task.attempts.length, mode: task.mode,
+    attempts: (task.attempts ?? []).map(item => attemptSummary(item,
+      workspace?.verifications?.find(entry => entry.id === item.verificationId),
+      workspace?.verifications?.find(entry => entry.id === item.integration?.verificationId), at)),
     model: attempt?.actualModel ?? attempt?.selection?.model ?? null,
+    effort: attempt?.selection?.effort ?? null,
+    reviewerSelection: attempt?.machineReview ? { model: attempt.machineReview.actualModel ?? attempt.reviewerSelection?.model ?? attempt.machineReview.selection?.model ?? null,
+      effort: attempt.reviewerSelection?.effort ?? attempt.machineReview.selection?.effort ?? null } : null,
+    nextActor: actionOwner(task.status, phase),
     selectedProfile: attempt?.selection?.profile ?? null, selectionReason: attempt?.selection?.reason ?? null,
     modelConfirmation: attempt?.modelConfirmation ?? null,
     elapsedMs: attempt ? elapsed(attempt.startedAt, attempt.endedAt ?? (task.status === 'running' ? at : undefined)) : null,
@@ -109,6 +131,43 @@ export function overview(snapshot, { limit = 20, at = new Date().toISOString() }
     observation: '这是读取时的快照；状态记录不保证进程正在推进。旧运行时的版本和来源可能未知。' };
 }
 const seconds = ms => ms === null ? '未知' : `${(ms / 1000).toFixed(1)} 秒`;
+// Additive MCP text receipt: the first content block remains the original JSON.
+// This describes recorded facts, not a native host card or background notification.
+export function toolFeedback(name, value) {
+  if (name === 'teams_models') {
+    const selection = value.selection;
+    const state = value.status === 'confirmed' ? '模型分工已确认'
+      : ['decline', 'cancel'].includes(value.status) ? '本次表单未确认'
+      : value.status === 'forgotten' ? '模型分工已撤销'
+      : value.confirmationRequired ? '等待模型确认' : '已有有效模型分工';
+    return [`Agent Teams · ${state}`, '本次调用未启动新成员；队长模型由当前聊天宿主控制。',
+      value.workspace ? `目标工作区：${value.workspace}` : '',
+      selection ? `复杂任务 / 独立审查：${modelLabel(selection.profiles.expert)}\n简单任务：${modelLabel(selection.profiles.simple ?? selection.profiles.expert)}\n确认范围：${selection.scope === 'workspace' ? '用户已选择记住此工作区' : '本次运行时'}` : '成员模型和推理强度尚未确认。',
+      ['decline', 'cancel'].includes(value.status) ? `宿主返回 ${value.status}；无法据此确认表单曾展示或由用户主动拒绝。${selection ? '原有效分工仍保留。' : '成员启动仍受阻。'}请由用户在支持交互的宿主或交互式 CLI 中确认；不得代填。` :
+        value.confirmationRequired ? '下一步：主 Agent 发起真实模型选择表单，用户选择模型及推理强度。' : '下一步：主 Agent 展示具体任务分工，再启动成员。'].filter(Boolean).join('\n');
+  }
+  if (name === 'teams_start') return [`Agent Teams 已启动 · ${value.title ?? value.taskId} [${value.taskId.slice(0, 8)}]`,
+    `角色：${value.kind === 'review' ? '独立评估 / 审查成员' : value.kind === 'implementation' ? '实现成员' : '分析成员'} · ${modelLabel(value.selection)}`,
+    `确认范围：${value.confirmationScope === 'workspace' ? '用户已选择记住此工作区' : value.confirmationScope === 'runtime-session' ? '本次运行时' : '未记录'} · 目标工作区：${value.target?.root ?? '未知'}`,
+    value.reviewerSelection ? `写任务后续独立审查：${modelLabel(value.reviewerSelection)}` : '',
+    '这是启动回执；实际阶段以状态记录为准，尚未验收。下一步：主 Agent 继续自己的分工并跟踪成员结果。'].filter(Boolean).join('\n');
+  if (name === 'teams_status' && value.viewer) return `Agent Teams · 只读状态观察（历史记录不代表本轮委派）\n${renderText(value)}`;
+  // Accepts a compact taskView, a raw task record, or a task list; never assumes which one arrived.
+  const fromView = view => [`Agent Teams · ${view.phaseLabel} · ${view.title} [${view.taskId.slice(0, 8)}]`,
+    view.attemptCount ? `成员：${modelLabel(view)} · 执行耗时：${seconds(view.elapsedMs)}` : view.status === 'pending' ? '合同已创建；尚未启动成员。' : '此任务没有成员执行记录。',
+    `下一步：${view.nextActor} · ${view.nextAction}`,
+    view.summary ? `成员结果：${view.summary.slice(0, 500)}` : '',
+    view.status === 'awaiting_review' ? '成员已提交，尚未验收；主 Agent 核对证据，无需额外等待用户批准。' : '',
+    view.status === 'awaiting_integration' ? '队长复核已通过，尚未集成；主 Agent 在已有授权范围内继续。' : '',
+    view.error ? `错误：${view.error}` : ''].filter(Boolean).join('\n');
+  if (value?.phaseLabel && value.taskId) return fromView(value);
+  if (value?.objective && Array.isArray(value.attempts)) return fromView(taskView(value));
+  if (Array.isArray(value)) return value.length
+    ? `Agent Teams · 共 ${value.length} 个任务（只读列表）\n` + value.map(t => `[${String(t.taskId).slice(0, 8)}] ${phaseLabels[t.status] ?? t.status} · ${t.title ?? t.objective}`).join('\n')
+    : 'Agent Teams · 尚无任务记录；本次查询未启动新成员。';
+  if (name === 'teams_integrate' && value?.taskId) return `Agent Teams · 已请求集成 [${value.taskId.slice(0, 8)}]\n下一步：运行时应用并复验；当前不是已完成状态。`;
+  return 'Agent Teams · 只读任务记录；本次查询未启动新成员。';
+}
 export function renderText(report) {
   return [`Agent Teams · 查看工具 v${report.viewer.version}`, `运行时版本：${report.runtime?.version ?? '未知'} · owner 进程：${report.runtime?.processAlive ? '存在' : '未检测到'}`,
     `目标工作区：${report.target?.root ?? '未知'}`, `查看来源：${report.viewer.sourceRoot}`, `运行来源：${report.runtime?.sourceRoot ?? '未知'}`, `快照：${report.capturedAt}`,

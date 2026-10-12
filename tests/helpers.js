@@ -24,3 +24,5 @@ export function approve(runtime, id) {
   const task = runtime.status(id);
   return runtime.review({ taskId: id, attemptId: task.attempts.at(-1).id, verdict: 'pass', evidence: task.acceptance.map(criterion => ({ criterion, evidence: 'Captain checked package.json against original source.' })) });
 }
+/** Execution yields once before touching the workspace, so a started attempt leaves `pending` a tick later. */
+export const tick = () => new Promise(resolve => setImmediate(resolve));

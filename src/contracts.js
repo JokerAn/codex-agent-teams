@@ -23,6 +23,7 @@ export const configSchema = z.strictObject({
 });
 
 export const taskSchema = z.strictObject({
+  title: text.max(80).optional(),
   objective: text.max(8000),
   expectedWorkspace: text.optional(),
   kind: kind.default('analysis'),

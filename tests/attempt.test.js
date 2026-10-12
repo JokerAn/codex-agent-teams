@@ -12,6 +12,7 @@ import { TaskStore, processAlive } from '../src/store.js';
 import { CodexBackend } from '../src/app-server.js';
 import { taskPrompt } from '../src/policy.js';
 import { GitWorkspace } from '../src/workspace.js';
+import { tick } from './helpers.js';
 
 const acceptance = ['Cite proof.txt content'];
 const report = value => ({ summary: 'Read baseline proof', criteria: [{ criterion: acceptance[0], satisfied: true, evidence: `proof.txt:1 ${value}` }], findings: [], blockers: [] });
@@ -196,11 +197,13 @@ test('verified-worktree tasks are exclusive; ordinary read-only tasks retain the
   let cwd;
   const f = setup(t, { run: ({ cwd: path, signal }) => { cwd = path; return new Promise((_, reject) => signal.addEventListener('abort', () => reject(signal.reason), { once: true })); } });
   const plain = f.runtime.create({ objective: 'Read main source', acceptance }); f.runtime.start(plain.id);
+  await tick();
   assert.equal(cwd, f.repo);
   const verified = f.runtime.create(contract());
   assert.throws(() => f.runtime.start(verified.id), /run exclusively/);
   await f.runtime.cancel(plain.id);
   f.runtime.start(verified.id);
+  await tick();
   assert.notEqual(cwd, f.repo);
   const other = f.runtime.create({ objective: 'Another read', acceptance });
   assert.throws(() => f.runtime.start(other.id), /run exclusively/);

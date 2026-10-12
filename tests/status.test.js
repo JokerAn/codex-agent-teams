@@ -6,8 +6,8 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { TaskStore } from '../src/store.js';
 import { TaskRuntime } from '../src/runtime.js';
-import { pluginIdentity, readSnapshot, overview, taskView, renderHtml, renderText, markPhase } from '../src/status.js';
-import { config, contract, report } from './helpers.js';
+import { pluginIdentity, readSnapshot, overview, taskView, renderHtml, renderText, markPhase, toolFeedback } from '../src/status.js';
+import { config, contract, report, tick } from './helpers.js';
 
 function fixture(t) {
   const root = mkdtempSync(join(tmpdir(), 'teams-status-'));
@@ -86,9 +86,11 @@ test('overview prioritizes active tasks and waits, keeps counts complete and enf
 test('phase history records transitions once, preserves retries and keeps awaiting states honest', async t => {
   const f = fixture(t), store = new TaskStore(f.path); t.after(() => store.close());
   let complete;
-  const runtime = new TaskRuntime(store, { run: () => new Promise(resolve => { complete = () => resolve({ result: report }); }) }, { ...config, workspace: f.root });
+  const backend = { run: () => new Promise(resolve => { complete = () => resolve({ result: report }); }) };
+  const runtime = new TaskRuntime(store, backend, { ...config, workspace: f.root });
   const task = runtime.create(contract);
   runtime.start(task.id);
+  await tick();
   assert.equal(taskView(runtime.status(task.id)).phase, 'member');
   complete(); await runtime.wait(task.id);
   const state = runtime.status(task.id);
@@ -99,7 +101,8 @@ test('phase history records transitions once, preserves retries and keeps awaiti
   assert.notEqual(view.phaseLabel, '已完成并验收');
   assert.equal(view.elapsedMs, Date.parse(state.attempts[0].endedAt) - Date.parse(state.attempts[0].startedAt));
   runtime.review({ taskId:task.id, attemptId:state.attempts[0].id, verdict:'reject', evidence:[{criterion:contract.acceptance[0],evidence:'fixture'}] });
-  runtime.start(task.id,{retry:true,reason:'fresh evidence'}); complete(); await runtime.wait(task.id);
+  runtime.start(task.id,{retry:true,reason:'fresh evidence'});
+  await tick(); complete(); await runtime.wait(task.id);
   assert.equal(runtime.status(task.id).attempts[0].phase, 'failed');
   assert.deepEqual(runtime.status(task.id).attempts[1].phases.map(phase=>phase.phase), ['member','awaiting_review']);
   await runtime.cancel(task.id);
@@ -217,4 +220,56 @@ test('recovery preserves execution endpoints and records observation separately 
   const reopened = new TaskStore(f.path);
   try { assert.equal(reopened.get('integrating-true').attempts[0].phases.length, 3); }
   finally { reopened.close(); }
+});
+
+test('tool receipts describe recorded facts for every tool shape without inventing progress', () => {
+  const pending = { id: 'abc12345-6789', objective: 'Inspect config', title: '检查配置', status: 'pending', mode: 'read-only', attemptCount: 0, attempts: [] };
+  const review = toolFeedback('teams_status', pending);
+  assert.match(review, /Agent Teams · 等待启动 · 检查配置 \[abc12345\]/);
+  assert.match(review, /合同已创建；尚未启动成员。/);
+  assert.match(review, /下一步：主 Agent · 明确任务合同后启动/);
+
+  // A compact taskView carries a reduced `attempts` summary, not the raw attempt record.
+  const view = taskView({ ...pending, dependencies: [] });
+  assert.ok(Array.isArray(view.attempts));
+  const rawAttemptKeys = ['threadId', 'turnId', 'childPid', 'usage', 'candidate', 'workspaceInputDigest', 'modelConfirmation', 'machineReview'];
+  const full = taskView({ id: 'ghi11223-4567', objective: 'Audit source', status: 'awaiting_review', mode: 'read-only', dependencies: [],
+    attempts: [{ id: 'attempt-1', status: 'succeeded', phase: 'awaiting_review', selection: { model: 'm', effort: 'high', profile: 'expert' }, actualModel: 'm',
+      threadId: 'thread-secret', turnId: 'turn-secret', childPid: 4242, usage: { total: { totalTokens: 9 } }, candidate: { patchPath: '/patch' },
+      modelConfirmation: { source: 'mcp-elicitation' }, result: { summary: 'done' } }] });
+  for (const key of rawAttemptKeys) assert.ok(!(key in full.attempts[0]), `attempts[0] must not expose ${key}`);
+  assert.equal(full.attempts[0].model, 'm'); assert.equal(full.attempts[0].effort, 'high');
+  const fromView = toolFeedback('teams_wait', view);
+  assert.match(fromView, /等待启动 · 检查配置/);
+  assert.doesNotMatch(fromView, /undefined/);
+  // The reduced summary must stay usable for receipts and must not leak raw attempt fields.
+  const fromFull = toolFeedback('teams_status', full);
+  assert.match(fromFull, /待验收|等待队长复核/);
+  assert.match(fromFull, /成员：m \/ high/);
+  assert.doesNotMatch(fromFull, /thread-secret|4242|patch/);
+
+  // A submitted member states that verification is still pending instead of implying success.
+  const submitted = toolFeedback('teams_status', taskView({ id: 'def67890-1234', objective: 'Audit source', status: 'awaiting_review', mode: 'read-only', attemptCount: 1,
+    attempts: [{ id: 'attempt-1', status: 'succeeded', selection: { model: 'm', profile: 'expert' }, result: { summary: 'done', blockers: [] } }] }));
+  assert.match(submitted, /成员已提交，尚未验收/);
+  assert.match(submitted, /无需额外等待用户批准/);
+
+  const list = toolFeedback('teams_status', [{ taskId: 'abc12345-6789', status: 'pending', title: '检查配置' }]);
+  assert.match(list, /共 1 个任务/);
+  assert.match(list, /\[abc12345\] 等待启动 · 检查配置/);
+  assert.match(toolFeedback('teams_status', []), /尚无任务记录/);
+
+  const started = toolFeedback('teams_start', { taskId: 'abc12345-6789', title: '检查配置', kind: 'implementation', selection: { model: 'm', effort: 'high' },
+    reviewerSelection: { model: 'r', effort: 'high' }, confirmationScope: 'workspace', target: { root: '/repo' } });
+  assert.match(started, /Agent Teams 已启动 · 检查配置 \[abc12345\]/);
+  assert.match(started, /角色：实现成员 · m \/ high/);
+  assert.match(started, /写任务后续独立审查：r \/ high/);
+  assert.match(started, /用户已选择记住此工作区/);
+
+  const models = toolFeedback('teams_models', { status: 'confirm', confirmationRequired: true, selection: null });
+  assert.match(models, /等待模型确认/);
+  assert.match(models, /成员模型和推理强度尚未确认。/);
+
+  assert.match(toolFeedback('teams_integrate', { taskId: 'abc12345-6789' }), /已请求集成 \[abc12345\]/);
+  assert.match(toolFeedback('teams_review', { some: 'other' }), /未启动新成员/);
 });
