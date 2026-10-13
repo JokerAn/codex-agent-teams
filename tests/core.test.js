@@ -6,6 +6,12 @@ import { taskPrompt } from '../src/policy.js';
 import { setup, contract, report, approve, config, tick } from './helpers.js';
 import { taskView } from '../src/status.js';
 
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+async function until(predicate) {
+  const deadline = Date.now() + 5000;
+  while (!predicate()) { if (Date.now() > deadline) throw new Error('Test condition timed out'); await delay(10); }
+}
+
 test('completion requires captain review before unlocking a dependency', async t => {
   const { runtime } = setup(t);
   const first = runtime.create(contract);
@@ -112,9 +118,31 @@ test('a captain cancellation stays distinct from a deadline overrun', async t =>
   runtime.start(task.id);
   const cancelled = await runtime.cancel(task.id);
   assert.equal(cancelled.status, 'cancelled');
-  assert.notEqual(cancelled.failure?.code, 'task_deadline_exceeded');
+  // A captain cancellation records no phase-level failure: "which stage failed" is meaningless when the
+  // captain stopped the run, and that bucket's guidance ("检查成员的原始错误") is actively wrong here.
+  assert.equal(cancelled.failure, undefined);
+  assert.match(cancelled.error, /Cancelled by captain/);
   assert.equal(taskView(cancelled).phaseLabel, '已取消');
   assert.match(taskView(cancelled).nextAction, /确认退出/);
+});
+
+test('a cancellation that lands just before the deadline stays a cancellation', async t => {
+  // The captain aborts first, but the backend takes longer to unwind than the remaining deadline. The
+  // deadline timer must not adopt an attempt the captain already owns: that produced status `timed_out`
+  // with `error: "Cancelled by captain"` and a task_deadline_exceeded code, i.e. one event recorded as two
+  // contradictory outcomes, plus a nextAction telling the user to raise a timeout they never reached.
+  const backend = { run: ({ signal }) => new Promise((resolve, reject) => {
+    signal.addEventListener('abort', () => setTimeout(() => reject(signal.reason), 150), { once: true });
+  }) };
+  const { runtime } = setup(t, backend, { taskTimeoutMs: 50 });
+  const task = runtime.create(contract);
+  runtime.start(task.id);
+  await until(() => runtime.status(task.id).status === 'running');
+  const cancelled = await runtime.cancel(task.id);
+  assert.equal(cancelled.status, 'cancelled');
+  assert.match(cancelled.error, /Cancelled by captain/);
+  assert.equal(cancelled.failure, undefined);
+  assert.equal(taskView(cancelled).phaseLabel, '已取消');
 });
 
 test('state has one owner and survives reopening', async t => {

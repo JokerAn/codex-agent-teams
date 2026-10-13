@@ -110,6 +110,11 @@ export class TaskRuntime {
     let timedOut = false;
     const exceedDeadline = () => {
       if (timedOut) return;
+      // A captain cancellation that lands first owns the outcome: whoever aborts the controller decides
+      // why. Without this, a cancel issued just before the deadline was recorded as `timed_out` (with a
+      // `task_deadline_exceeded` code) while `error` still said "Cancelled by captain" — two records of
+      // one event that disagree, and a nextAction telling the user to widen a timeout they never hit.
+      if (controller.signal.aborted) return;
       timedOut = true;
       controller.abort(new Error('Task deadline exceeded'));
     };
@@ -201,12 +206,21 @@ export class TaskRuntime {
         result, execution: { ...execution, result: undefined } });
     } catch (error) {
       // A deadline overrun is not a captain cancellation: reporting it as "cancelled" told users to go
-      // look for a leftover process that never existed.
+      // look for a leftover process that never existed. A captain cancellation is also not a failure —
+      // it carries no phase-level `failure`, because "which stage failed" is meaningless when the captain
+      // stopped the run, and the phase bucket would otherwise claim "检查成员的原始错误" for a task whose
+      // member was simply told to stop. `task.error` still records why.
       const status = timedOut ? 'timed_out' : controller.signal.aborted ? 'cancelled' : 'failed';
       this.finish(task.id, attempt.id, status, { error: error.message,
-        failure: timedOut ? { code: 'task_deadline_exceeded', phase: this.store.get(task.id).attempts.at(-1).phase,
-          nextAction: `本轮超出 ${Math.round(this.config.taskTimeoutMs / 1000)} 秒上限；缩小任务范围或提高 taskTimeoutMs 后显式重试；未检测到需确认的残留进程。` }
-          : executionFailure(error, this.store.get(task.id).attempts.at(-1).phase),
+        // No residual-process claim here: whether a member group is still alive is decided by finish()
+        // and read back from the attempt record. Asserting it in this string produced "未检测到需确认的
+        // 残留进程" next to `cleanupConfirmed:false` and a live process group — a status line contradicting
+        // both the record and the retry guard that was blocking the user.
+        ...(status === 'cancelled' ? {} : {
+          failure: timedOut ? { code: 'task_deadline_exceeded', phase: this.store.get(task.id).attempts.at(-1).phase,
+            nextAction: `本轮超出 ${Math.round(this.config.taskTimeoutMs / 1000)} 秒上限；缩小任务范围或提高 taskTimeoutMs 后显式重试，重试前确认成员进程已退出。` }
+            : executionFailure(error, this.store.get(task.id).attempts.at(-1).phase),
+        }),
         ...(result ? { result, execution: { ...execution, result: undefined } } : {}) });
     } finally { clearTimeout(timer); }
   }

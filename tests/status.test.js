@@ -110,6 +110,47 @@ test('phase history records transitions once, preserves retries and keeps awaiti
   assert.equal(runtime.status(task.id).attempts[1].phase, 'cancelled');
 });
 
+test('early attempts keep their own verification and failure guidance wins over the status line', () => {
+  // Each attempt carries its own workspaceId. Resolving them all against the latest attempt's workspace
+  // blanked earlier rounds: a passed check from attempt 1 read back as null as soon as attempt 2 existed.
+  const task = { id:'t', objective:'audit', status:'failed', mode:'read-only', dependencies:[],
+    failure:{ code:'verification_executable_missing', phase:'preflight', nextAction:'安装缺失的验证程序后再重试' },
+    attempts:[
+      { id:'a1', status:'failed', phase:'failed', workspaceId:'w1', verificationId:'v1' },
+      { id:'a2', status:'failed', phase:'failed', workspaceId:'w2', verificationId:'v2' },
+    ] };
+  const workspaces = [
+    { id:'w1', verifications:[{ id:'v1', status:'passed' }] },
+    { id:'w2', verifications:[{ id:'v2', status:'failed' }] },
+  ];
+  const view = taskView(task, workspaces);
+  assert.equal(view.attempts[0].verification, 'passed');
+  assert.equal(view.attempts[1].verification, 'failed');
+  // A recorded failure names the stage and the remedy; the generic per-status line must not replace it.
+  assert.equal(view.nextAction, '安装缺失的验证程序后再重试');
+});
+
+test('exit confirmation reports absence as unknown and cancel ignores a legacy stored failure', () => {
+  // cleanupConfirmed is written only by finish() (terminal) and store recovery, so a mid-run attempt has
+  // no value at all. `!== false` turned that absence into "exit confirmed" for a member whose process
+  // group was still alive; `?? null` keeps "no receipt yet" distinct from "confirmed exited".
+  const attempt = { id:'a', status:'running', phase:'member', startedAt:'2026-10-13T00:00:00Z' };
+  const task = { id:'t', objective:'o', status:'running', mode:'read-only', dependencies:[], attempts:[attempt] };
+  assert.equal(taskView(task).memberExitConfirmed, null);
+  assert.equal(taskView({ ...task, attempts:[{ ...attempt, cleanupConfirmed:false }] }).memberExitConfirmed, false);
+  assert.equal(taskView({ ...task, attempts:[{ ...attempt, status:'awaiting_review', cleanupConfirmed:true }] }).memberExitConfirmed, true);
+  assert.equal(taskView({ id:'p', objective:'o', status:'pending', mode:'read-only', dependencies:[], attempts:[] }).memberExitConfirmed, null);
+
+  // Tasks cancelled before runtime.js stopped recording a failure for cancellations still carry one on
+  // disk, and nothing migrates them. Reading it back would resurrect the exact misleading guidance
+  // ("检查成员的原始错误") that cancelling is supposed to avoid.
+  const legacy = { id:'c', objective:'o', status:'cancelled', mode:'read-only', dependencies:[], error:'Cancelled by captain',
+    failure:{ code:'member_failed', phase:'member', nextAction:'检查成员的原始错误与退出记录；明确新证据后再重试。' },
+    attempts:[{ id:'a', status:'cancelled', phase:'cancelled', startedAt:'2026-10-13T00:00:00Z', endedAt:'2026-10-13T00:00:01Z' }] };
+  assert.equal(taskView(legacy).nextAction, '确认退出后按需重新规划');
+  assert.equal(taskView({ ...legacy, status:'failed' }).nextAction, '检查成员的原始错误与退出记录；明确新证据后再重试。');
+});
+
 test('status separates member/reviewer usage, command receipts and captain authority', () => {
   const task = {id:'task',objective:'audit',status:'awaiting_integration',mode:'workspace-write',dependencies:[],attempts:[{id:'attempt',startedAt:'2026-10-12T00:00:00Z',endedAt:'2026-10-12T00:00:01Z',workspaceId:'workspace',verificationId:'verify',review:{verdict:'pass'},execution:{usage:{total:{totalTokens:100,inputTokens:80,cachedInputTokens:60,outputTokens:20}}},machineReview:{status:'passed',usage:{total:{totalTokens:30}}},candidate:{patchPath:'/patch'},integration:{startedAt:'2026-10-12T00:00:02Z',endedAt:'2026-10-12T00:00:03Z',verificationId:'source'}}]};
   const workspaces=[{id:'workspace',worktreePath:'/worktree',verifications:[{id:'verify',status:'passed',exitCode:0,cleanupConfirmed:true,stdoutPath:'/stdout',stderrPath:'/stderr'},{id:'source',status:'failed',exitCode:1}]}];

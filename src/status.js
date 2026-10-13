@@ -60,7 +60,7 @@ const usage = value => value?.total ? Object.fromEntries(['totalTokens', 'inputT
 const nextActions = { pending: '明确任务合同后启动', running: '等待当前阶段完成', integrating: '等待源工作区复验',
   awaiting_review: '逐项核对证据，再执行队长复核', awaiting_integration: '检查源工作区与补丁，再显式集成',
   succeeded: '查看结果与验证证据', failed: '检查错误与退出记录，再明确重试理由', blocked: '补充缺失上下文或重新规划',
-  cancelled: '确认退出后按需重新规划', timed_out: '本轮超出时限；缩小范围或提高 taskTimeoutMs 后显式重试；无残留进程需确认',
+  cancelled: '确认退出后按需重新规划', timed_out: '本轮超出时限；缩小范围或提高 taskTimeoutMs 后显式重试',
   interrupted: '检查旧进程与证据，再显式重试', integration_failed: '检查已应用的源改动和日志，禁止盲目重放' };
 const actionOwner = (status, phase) => status === 'running'
   ? phase === 'member' ? '执行成员' : phase === 'independent_review' ? '独立审查成员' : phase === 'unknown' ? '主 Agent（核实进度）' : '运行时'
@@ -86,9 +86,15 @@ export function taskView(task, workspaces = [], at = new Date().toISOString()) {
   return { taskId: task.id, objective: task.objective, title: task.title ?? (task.objective.length > 80 ? task.objective.slice(0, 80) + '…' : task.objective), status: task.status, phase, phaseLabel: phaseLabels[phase] ?? phase,
     target: task.target ?? null, preflight: attempt?.preflight ?? null, failure: task.failure ?? null,
     attemptId: attempt?.id ?? null, attemptCount: task.attempts.length, mode: task.mode,
-    attempts: (task.attempts ?? []).map(item => attemptSummary(item,
-      workspace?.verifications?.find(entry => entry.id === item.verificationId),
-      workspace?.verifications?.find(entry => entry.id === item.integration?.verificationId), at)),
+    // Each attempt carries its own workspaceId; resolving them all against the latest attempt's workspace
+    // silently blanked every earlier round's verification status (a passed check from attempt 1 read back
+    // as null once attempt 2 existed). History has to stay truthful to be worth storing.
+    attempts: (task.attempts ?? []).map(item => {
+      const itemWorkspace = workspaces.find(entry => entry.id === item.workspaceId) ?? workspace;
+      return attemptSummary(item,
+        itemWorkspace?.verifications?.find(entry => entry.id === item.verificationId),
+        itemWorkspace?.verifications?.find(entry => entry.id === item.integration?.verificationId), at);
+    }),
     model: attempt?.actualModel ?? attempt?.selection?.model ?? null,
     effort: attempt?.selection?.effort ?? null,
     reviewerSelection: attempt?.machineReview ? { model: attempt.machineReview.actualModel ?? attempt.reviewerSelection?.model ?? attempt.machineReview.selection?.model ?? null,
@@ -117,8 +123,20 @@ export function taskView(task, workspaces = [], at = new Date().toISOString()) {
     independentReview: attempt?.machineReview?.status ?? null, captainReview: attempt?.review?.verdict ?? null,
     integrationVerification: integrationCheck ? { status: integrationCheck.status, exitCode: integrationCheck.exitCode ?? null, stdoutPath: integrationCheck.stdoutPath, stderrPath: integrationCheck.stderrPath } : null,
     evidence: { workspacePath: workspace?.worktreePath ?? null, patchPath: attempt?.candidate?.patchPath ?? null },
-    // Terminal outcomes carry their own guidance; a stale phase-level failure must not override it.
-    nextAction: (nextActions[task.status] ?? task.failure?.nextAction) ?? '检查原始记录', dependencies: task.dependencies };
+    // Exit confirmation is a recorded fact, and absence is its own answer: `cleanupConfirmed` is written
+    // only by finish() (terminal states) and by store recovery. So `undefined` means "no exit receipt is
+    // on record yet" — for a running attempt that is honest, and it is why this reads `?? null` rather
+    // than `!== false`. The earlier form reported `true` ("exit confirmed") for a live member whose group
+    // was demonstrably still running, because `undefined !== false`.
+    memberExitConfirmed: attempt ? attempt.cleanupConfirmed ?? null : null,
+    // A recorded failure knows *which* stage broke and what to do about it, so it outranks the generic
+    // per-status line. The earlier inversion (status first) was aimed at the cancel path, where a
+    // phase-level failure was meaningless — but it also discarded specific guidance such as
+    // `verification_executable_missing → 安装缺失的验证程序`, replacing it with "检查错误与退出记录".
+    // Cancel is repaired at the source (runtime.js no longer records a failure for it) AND guarded here:
+    // tasks cancelled before that change still hold a stored `failure`, and nothing migrates them, so
+    // reading it back would resurface the very symptom this was written to remove.
+    nextAction: (task.status === 'cancelled' ? nextActions.cancelled : task.failure?.nextAction ?? nextActions[task.status]) ?? '检查原始记录', dependencies: task.dependencies };
 }
 export function overview(snapshot, { limit = 20, at = new Date().toISOString() } = {}) {
   if (!Number.isInteger(limit) || limit < 1 || limit > 100) throw new Error('Status limit must be an integer from 1 to 100');

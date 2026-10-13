@@ -189,7 +189,10 @@ test('the task deadline also covers its bound command and failed receipts cannot
   const task = await runTask(f, input);
   assert.equal(task.status, 'timed_out'); assert.match(task.error, /Task deadline exceeded/);
   assert.equal(task.failure.code, 'task_deadline_exceeded');
-  assert.match(task.failure.nextAction, /未检测到需确认的残留进程/);
+  // The deadline text must not claim anything about residual processes: it is written before the exit
+  // result is known, and once asserted it could read "无残留进程" beside cleanupConfirmed:false.
+  assert.ok(!/无残留|未检测到需确认的残留进程/.test(task.failure.nextAction));
+  assert.match(task.failure.nextAction, /确认成员进程已退出/);
   const workspace = f.runtime.workspaceStatus(task.attempts[0].workspaceId);
   assert.equal(workspace.verifications[0].status, 'cancelled'); assert.equal(workspace.verifications[0].cleanupConfirmed, true);
   f.runtime.removeWorkspace(workspace.id);
