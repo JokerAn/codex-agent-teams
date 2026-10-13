@@ -235,7 +235,7 @@ test('controlled App Server protocol fixture and CLI complete a bound attempt wi
   const code = `process.stdin.isTTY=true;process.stderr.isTTY=true;process.argv=${JSON.stringify(args)};await import(${JSON.stringify(new URL('../src/cli.js', import.meta.url).href)});`;
   const cli = spawn(process.execPath, ['--input-type=module', '-e', code], { stdio: 'pipe', timeout: 15000 });
   let stdout = '', stderr = '', step = 0;
-  const prompts = [['强模型编号：', '1\n'], ['简单任务模型编号（0 = 全部使用强模型）：', '0\n'], ['记住此工作区分工，允许重启复用？输入 yes，其他仅本次：', 'no\n'], ['确认此分工？输入 yes：', 'yes\n']];
+  const prompts = [['强模型编号：', '1\n'], ['简单任务模型编号（0 = 全部使用强模型）：', '0\n'], ['记住此工作区分工，允许重启复用？默认 yes（回车），输入 no 仅本次：', 'no\n'], ['确认此分工？输入 yes：', 'yes\n']];
   cli.stdout.on('data', chunk => { stdout += chunk; });
   cli.stderr.on('data', chunk => {
     stderr += chunk;

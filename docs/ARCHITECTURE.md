@@ -4,7 +4,7 @@
 
 当前 Codex 会话是 captain，负责授权目标、验收和显式集成。代码负责合同、持久状态、执行与证据；不驻留后台自动规划器。Node.js 24+ 原生 ESM，无编译步骤，Zod 校验边界，内置 SQLite，官方 MCP SDK。
 
-核心有 13 个源文件。contracts/policy 管合同和显式上下文；runtime/store 拥有状态；app-server 封装官方 App Server；workspace/verification 负责 Git 与一个真实命令；MCP/CLI 两个入口，plugin 只封装本机产物；status 提供无 owner 的状态观察、显示摘要与本地 HTML 快照。models 提供用户模型选择表单与交互终端确认。没有前端框架、第三方进程框架或独立验证队列。
+核心有 16 个源文件。contracts/policy 管合同和显式上下文；runtime/store 拥有状态；app-server 封装官方 App Server；workspace/verification 负责 Git 与一个真实命令；MCP/CLI 两个入口，plugin 只封装本机产物；status 提供无 owner 的状态观察、显示摘要与本地 HTML 快照。models 提供用户模型选择表单与交互终端确认，cli-progress 观察前台任务并向 stderr 输出回执，不拥有状态、截止时间或后台调度。workspace-router 延迟创建每个项目的独立运行时，定位已知任务而不建立中央索引。没有前端框架、第三方进程框架或独立验证队列。
 
 ## 合同与执行
 
@@ -40,7 +40,7 @@ SQLite 唯一 owner 持有 PID+token。task 与 workspace 关联在同一事务�
 
 标准 root plugin.json + mcp.json + skills，加 .codex-plugin/plugin.json/.mcp.json 本机兼容。pack 只输出新目录，复制锁定生产依赖和已解析配置；路径相对于插件根目录，Node/Codex 为本机安装。没有自动注册/安装。
 
-MCP initialize/listTools 不创建 owner，第一次实际写入/执行 tool 才创建 runtime；teams_status 使用独立 read-only SQLite 快照；宿主接口发现连接可以并存，两个写入/执行连接不能争用状态，只读状态连接可并存。七工具维持 create/start/status/wait/review/integrate/cancel。cancel 可显式 cleanup/discard 清理最新 worktree，保留 succeeded 和日志。CLI 提供独立操作入口但不能抢活 MCP owner。
+MCP initialize/listTools 不创建 owner，第一次实际写入/执行 tool 才创建 runtime；teams_status 使用独立 read-only SQLite 快照；宿主接口发现连接可以并存，两个写入/执行连接不能争用状态，只读状态连接可并存。八工具维持 models/create/start/status/wait/review/integrate/cancel。cancel 可显式 cleanup/discard 清理最新 worktree，保留 succeeded 和日志。CLI 提供独立操作入口但不能抢活 MCP owner。
 
 ## 验证依据与限制
 
@@ -84,6 +84,16 @@ MCP 新增 teams_models，CLI 新增 models；官方 App Server model/list 提�
 
 workspace 提供 checkout 身份，包含真实根目录、设备/inode、Git 目录身份及 commonDir；同一仓库的不同 worktree 分别绑定。新任务保存 target，公开创建入口核对 expectedWorkspace；旧无绑定任务禁止重新启动，不追溯修改历史。
 
-models 保留真人确认来源/时间，新增策略版本与目标绑定。用户主动 remember 时由唯一 owner 在既有 SQLite meta 存 modelPreference；readSnapshot 只读观察，不为列模型获取 owner。启动入口重新发现模型并校验确认，runtime 持有恢复后的选择；forget 或新的仅本次确认清除持久偏好。没有数据库 schema 升级、额外工具或运行依赖。
+models 保留真人确认来源/时间、策略版本与目标绑定。表单 remember 默认开启但必须明确提交布尔值，真人确认后由唯一 owner 在既有 SQLite meta 存 modelPreference；readSnapshot 只读观察，不为列模型获取 owner。终端回车默认记住，但仍要求最终输入 yes 确认。启动入口重新发现模型并校验确认，runtime 持有恢复后的选择；forget 或新的仅本次确认清除持久偏好。没有数据库 schema 升级、额外工具或运行依赖。
+
+0.4.1 包内现代 MCP 入口用可执行 `./mcp-launch`，通过安全 POSIX 引用调用打包所用的绝对 Node；兼容入口允许绝对 Node 并调用同一个 JS launcher。JS launcher 给宿主实时 PATH 前置 Node 目录，不序列化构建环境 PATH。Codex 另行解析并检查绝对可执行身份。本机实际 loader 拒绝现代配置的绝对 command，官方实现依据：[agent_plugin_config.rs](https://github.com/openai/codex/blob/main/codex-rs/codex-mcp/src/agent_plugin_config.rs)。这条宿主约束由真实缓存 smoke 验证，普通 SDK stdio 客户端本身不执行该限制。
+
+## 0.5.0 项目路由
+
+打包与 build 删除包内 workspace，保留原配置文件。CLI 无固定 workspace 时以实际 cwd 或 --workspace 选项目；MCP 不使用 cwd 兜底，因为进程通常位于插件缓存。队长从聊天上下文填写 models/status 的 workspace 和 create 的 expectedWorkspace，其他工具增加可选 workspace。单连接已知任务 ID 可省略路径，重连需上下文；多项目无任务 ID 时不猜最近目录。
+
+workspace-router 以真实目录身份复用稳定 scope，每次访问与异步发现返回后核对身份，符号链接别名不产生第二 owner。scope 提供各项目 getRuntime/observe/discoverModels；MCP 每次请求保留其局部 scope，不共享可变的当前目录。确认进行中与会话选择分别按项目记录，持久偏好在原项目 SQLite 中保存，另一项目无法复用。每个项目继续有独立并发限额与串行验证门禁，没有跨项目依赖或全局后台调度。
+
+taskId 仅在此连接已知项目的只读快照中查找，不扫描任意目录或使用跨项目中央数据库；错误 workspace 拒绝操作。显式项目只核自身身份；仅 ID 自动定位遇已知目录漂移时拒绝猜测，队长可补该任务的实际项目。关闭等待所有已创建运行时退出并聚合错误，模型发现/观察未创建 owner 的项目无需恢复。旧含 workspace 的直接配置保持固定目标语义。
 
 新增 preflight 模块：worktree 准备后解析验证程序和显式依赖，不运行代码或基线测试，不自动安装。失败记录结构化 code/phase/nextAction，原始 error 和进程退出门禁保留。Node 包检查采用 require 条件，不是通用构建环境证明；预检通过不改变真实命令/审查/源复验要求。

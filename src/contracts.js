@@ -8,7 +8,7 @@ const kind = z.enum(['lookup', 'analysis', 'review', 'implementation']);
 const profile = z.strictObject({ model: text, effort: text.optional() });
 export const modelRolesSchema = z.strictObject({ expert: profile, simple: profile.optional() });
 export const configSchema = z.strictObject({
-  workspace: text,
+  workspace: text.optional(),
   codexBin: text.default('codex'),
   maxConcurrency: z.number().int().min(1).max(4).default(2),
   taskTimeoutMs: z.number().int().min(1000).max(3600000).default(600000),
@@ -37,7 +37,17 @@ export const taskSchema = z.strictObject({
   dependencies: z.array(text).max(20).default([]),
   profile: z.enum(['auto', 'expert', 'simple', 'qualified']).default('auto'),
   mode: z.enum(['read-only', 'workspace-write']).default('read-only'),
-  executionPlan: z.strictObject({ dirtyPolicy: z.enum(['reject', 'snapshot']).default('reject'), verification: verificationSchema, preflight: preflightSchema.optional(), allowedPaths: inspectWorkspaceSchema.shape.allowedPaths }).optional(),
+  executionPlan: z.strictObject({
+    dirtyPolicy: z.enum(['reject', 'snapshot']).default('reject'),
+    verification: verificationSchema,
+    preflight: preflightSchema.optional(),
+    allowedPaths: inspectWorkspaceSchema.shape.allowedPaths,
+  }, { error: issue => {
+    if (issue.code !== 'unrecognized_keys') return undefined;
+    return `Unknown executionPlan field(s): ${issue.keys.join(', ')}. Accepted executionPlan fields: dirtyPolicy, verification, preflight, allowedPaths. `
+      + 'To limit which files a write task may change, use executionPlan.allowedPaths (repository-relative), not executionPlan.files; '
+      + 'files required before execution belong in executionPlan.preflight.requiredFiles. Unknown fields are rejected rather than ignored.';
+  } }).optional(),
 }, { error: issue => {
   if (issue.code !== 'unrecognized_keys') return undefined;
   const known = new Set(topLevelFields);

@@ -2,7 +2,7 @@
 
 准确率与完成效率优先，成本其次。一个小型、本机运行的 Codex 插件，用于可验收的代码委派。
 
-**0.4.0 支持目标工作区绑定、可选记住模型分工及启动前检查**：合同 → 独立 worktree 修改 → 命令验证 → 全新强模型线程审查 → 队长复核 → 显式集成 → 源工作区再次验证。不会自动提交或推送。只读任务继续支持并发、依赖、取消与显式重试。
+**0.5.0 安装一次，随当前项目使用**。插件不再绑定构建时的项目，队长从当前聊天上下文自动填入目标目录，用户无需逐项目配置或重新打包。任务仍按合同 → 独立 worktree 修改 → 命令验证 → 全新强模型线程审查 → 队长复核 → 显式集成 → 源工作区再次验证执行。不会自动提交或推送。
 
 0.2.1 补齐失败重试的执行信息归属、只读成员与 reviewer 的实际目录校验，以及协议致命错误后的缓冲释放；新增 macOS/Linux 离线 CI。
 
@@ -12,7 +12,7 @@
 
 ## 快速开始
 
-安装插件只需在项目根目录运行（需要 Node.js 24+ 和已登录的 Codex CLI；macOS 支持自动查找标准位置的 Codex/ChatGPT 桌面应用内置 CLI）：
+安装插件只需在项目根目录运行（支持 macOS/Linux，需要 Node.js 24+ 和已登录的 Codex CLI；macOS 支持自动查找标准位置的 Codex/ChatGPT 桌面应用内置 CLI；Windows 在构建/打包入口提前拒绝）：
 
 ```sh
 npm run build
@@ -20,11 +20,13 @@ npm run build
 
 build 优先使用配置/显式参数和 PATH；默认命令 `codex` 不在 PATH 时，macOS 会检查 `/Applications` 和 `~/Applications` 下的标准桌面应用位置。找到后打印绝对路径并保存到包内配置，已有 `teams.local.json` 不被改写；找不到时在安装依赖前报错。自定义安装位置可用 `npm run build -- --binary /完整路径/codex` 指定。显式配置的无效路径不会被自动替换。
 
-该命令自动执行 `npm ci --ignore-scripts`；首次使用当前项目目录和 Codex 有效配置模型（未配置时取目录默认项，要求支持 high）生成 `teams.local.json`，已有配置原样复用。默认模型必须支持 high，否则明确失败，不改选其他模型。随后生成包含生产依赖的本机插件包，并检查实际宿主的插件发现、模型和只读线程权限，不启动模型推理。
+该命令自动执行 `npm ci --ignore-scripts`；首次使用 Codex 有效配置模型（未配置时取目录默认项，要求支持 high）生成不含固定 workspace 的 `teams.local.json`，已有本机文件保持原样。默认模型必须支持 high，否则明确失败，不改选其他模型。随后生成包含生产依赖的本机插件包，并检查实际宿主的插件发现、模型和只读线程权限，不启动模型推理。
 
 完成后终端会打印「添加插件市场」的来源绝对路径，Git 引用和稀疏路径留空；添加市场后安装 `codex-agent-teams`。重复构建会生成新目录并保留旧包，已安装插件需要重装更新缓存。命令不会自动修改 Codex 插件配置。构建依赖可联网安装，宿主检查需要本机 Codex 可用。
 
-需要其他目标工作区或模型时修改 `teams.local.json` 再构建；也支持 `npm run build -- --config /path/to/config.json --out /path/to/new-marketplace`（或 `TEAMS_CONFIG`）。显式配置必须已存在，输出目录必须尚不存在。
+本机包保存 Node/Codex 的绝对可执行路径，打包时检查 Codex 可执行文件存在。现代 MCP 配置使用插件内 `./mcp-launch` 脚本调用固定 Node，符合宿主的命令路径限制；兼容配置直接使用固定 Node。启动继承宿主当前 PATH 并加入该 Node 目录，供 `env node` 脚本和验证命令使用，不再保存构建终端完整 PATH。自定义验证程序须在宿主 PATH 可见；启动前检查会明确拒绝缺失依赖。两个 manifest 遵循各自官方格式，仅共有元数据保持一致。
+
+换项目无需修改配置或重新构建。更改通用设置或升级版本时才生成新包；也支持 `npm run build -- --config /path/to/config.json --out /path/to/new-marketplace`（或 `TEAMS_CONFIG`）。显式配置必须已存在，输出目录必须尚不存在。旧配置即使包含 workspace，新包也会移除该字段；原文件不改写。
 
 以下为开发与手动配置入口：
 
@@ -36,7 +38,7 @@ npm test
 node src/cli.js doctor
 ```
 
-复制 `examples/teams.config.json` 为 `teams.local.json`，填写实际 workspace、Codex 可执行文件和 expert 模型。不要提交这个本机配置。相对 workspace/带路径的 codexBin 以配置文件目录为基准，普通命令名从 PATH 查找。
+复制 `examples/teams.config.json` 为 `teams.local.json`，填写 Codex 可执行文件和初始 expert 模型，跨项目配置不填 workspace。不要提交这个本机配置。带路径的 codexBin 以配置文件目录为基准，普通命令名从 PATH 查找。旧的直接 CLI/手工 MCP 配置若包含 workspace，仍锁定该项目；需要跨项目使用时移除该字段。
 
 ```sh
 node src/cli.js doctor --config ./teams.local.json --check-thread
@@ -47,8 +49,8 @@ doctor 只做握手、模型/推理强度与可选只读线程权限检查，不
 ## 接入 Codex
 
 ```sh
-node src/cli.js pack --config ./teams.local.json --out ./dist/marketplace-v0.4.0
-node src/cli.js doctor --plugin ./dist/marketplace-v0.4.0 --check-thread
+node src/cli.js pack --config ./teams.local.json --out ./dist/marketplace-v0.5.0
+node src/cli.js doctor --plugin ./dist/marketplace-v0.5.0 --check-thread
 ```
 
 pack 生成本机 marketplace：包含 skill、MCP、源代码、配置快照和锁定的生产依赖，不包含测试或运行数据。需要先 npm ci；拒绝覆盖已有输出。插件根目录的相对路径可随宿主缓存搬迁，Node/Codex 仍依赖本机安装。
@@ -56,7 +58,7 @@ pack 生成本机 marketplace：包含 skill、MCP、源代码、配置快照和
 以下两条由用户明确选择执行，会修改宿主插件配置：
 
 ```sh
-codex plugin marketplace add /absolute/path/to/dist/marketplace-v0.4.0
+codex plugin marketplace add /absolute/path/to/dist/marketplace-v0.5.0
 codex plugin add codex-agent-teams@codex-agent-teams-local
 ```
 
@@ -69,6 +71,8 @@ node src/cli.js mcp --config /absolute/path/to/teams.local.json
 ```
 
 每个目标工作区同时只允许一个实际运行时；插件与手工 MCP 选一种，避免两个运行时争抢状态库；只读状态观察可以并存。握手和工具清单连接不会获取 owner。关闭 MCP 会取消活跃成员/命令，成员不会自动唤醒已结束的父聊天。
+
+日常使用只需在当前项目聊天中要求“用 Team 处理这个任务”。队长自动调用 `teams_models({workspace: cwd})` 和 `teams_create({expectedWorkspace: cwd, ...})`，其中 cwd 来自聊天上下文。后续已知任务 ID 自动路由到其项目；重连时由队长补 workspace，多项目列表明确目标。项目状态与模型偏好分别保存在各项目的 `.codex-teams/`，不能串用。MCP 缓存目录不会被当成项目，缺少可确定的目标时会要求队长补上下文。
 
 | 工具 | 用途 |
 |---|---|
@@ -105,7 +109,7 @@ node src/cli.js status --config ./teams.local.json --html ./.codex-teams/teams-s
 
 当前通过本地 marketplace 安装，宿主使用插件缓存副本。修改项目源码或 `teams.local.json` 后，先生成并检查新包，再卸载旧插件、切换来源并重新安装；仅修改 `src/` 不会更新已安装副本。
 
-以下以当前 **0.4.0** 为例。后续升级时替换为新版本号，并选择尚不存在的输出目录。
+以下以当前 **0.5.0** 为例。后续升级时替换为新版本号，并选择尚不存在的输出目录。
 
 1. 更新源码并同步版本号：`package.json`、`package-lock.json` 的顶层与根包版本、`plugin.json`、`.codex-plugin/plugin.json`。MCP 与 App Server 的版本元数据直接读取 `package.json`；pack 会检查包与两个插件 manifest 的版本一致。
 2. 在项目根目录先验证并生成新包。输出目录必须尚不存在；保留旧包，便于需要时恢复。
@@ -116,10 +120,10 @@ npm test
 
 node src/cli.js pack \
   --config ./teams.local.json \
-  --out ./dist/marketplace-v0.4.0
+  --out ./dist/marketplace-v0.5.0
 
 node src/cli.js doctor \
-  --plugin ./dist/marketplace-v0.4.0 \
+  --plugin ./dist/marketplace-v0.5.0 \
   --check-thread
 ```
 
@@ -131,7 +135,7 @@ codex plugin remove codex-agent-teams@codex-agent-teams-local
 
 # 新包目录变了，切换同名 marketplace 的来源
 codex plugin marketplace remove codex-agent-teams-local
-codex plugin marketplace add ./dist/marketplace-v0.4.0
+codex plugin marketplace add ./dist/marketplace-v0.5.0
 
 # 安装新插件
 codex plugin add codex-agent-teams@codex-agent-teams-local
@@ -196,13 +200,13 @@ MCP 连接仍持有 owner 时，调用 `teams_cancel({taskId, cleanup: true, dis
 
 写成员请求并核对 worktree 写沙箱、网络关闭、临时目录排除和禁止提权。allowedPaths 是路径审计与交付门禁，不是逐文件系统调用权限；宿主写沙箱限制工作区。独立审查为只读。worktree 共用 Git 对象且不是文件系统虚拟机，实际限制依赖宿主/OS；后台程序主动创建新 session 的完整治理、PID 复用和所有平台矩阵仍有限制。
 
-带工作区/写计划的任务当前串行，普通只读默认并发 2、最多 4。首次启动前必须确认模型分工，或复用用户主动记住且重新校验有效的分工；auto 只把明确 simple 的非审查任务交给已确认的简单任务模型，其他任务使用 expert。简单写任务仍经过 expert 独立审查，重试也固定 expert。旧 qualified 路由要求评测依据，不代表已获本次确认；不按价格自动降级，不声称未经对照评测的节省比例。
+每个项目内，带工作区/写计划的任务当前串行，普通只读默认并发 2、最多 4。首次启动前必须确认模型分工，或复用用户主动记住且重新校验有效的分工；auto 只把明确 simple 的非审查任务交给已确认的简单任务模型，其他任务使用 expert。简单写任务仍经过 expert 独立审查，重试也固定 expert。旧 qualified 路由要求评测依据，不代表已获本次确认；不按价格自动降级，不声称未经对照评测的节省比例。
 
 ## 模型发现、用户确认与任务路由
 
 在已更新插件的新会话中，先调用 `teams_models` 查看宿主实际 `model/list` 列表和 `config/read` 中的模型/推理强度。只返回模型相关字段，不展示密钥、完整配置或配置层。目录默认项可能不同于有效配置；自定义路由名称不说明底层模型或能力排名。
 
-调用 `teams_models({confirm:true})` 会请求宿主展示用户表单，选择“强模型及强度”“简单任务模型及强度”（可全部使用强模型），并显式勾选确认。实际控件样式由宿主决定，不承诺与宿主模型下拉完全相同。确认只对本次 MCP 运行时有效，同一运行时的任务共享该选择；重启后重新确认。取消首次确认不会启动成员，取消修改保留先前选择。工具参数不能提交模型或伪造同意；已确认后更改分工也走用户表单，执行中不允许切换。
+调用 `teams_models({workspace: cwd, confirm:true})` 会请求宿主展示用户表单，选择“强模型及强度”“简单任务模型及强度”（可全部使用强模型），并显式勾选确认。实际控件样式由宿主决定，不承诺与宿主模型下拉完全相同。“记住此工作区分工”默认勾选，真人提交 `remember=true` 才持久保存，重启后重新核对目标、模型和强度后复用；取消勾选则仅本次运行时有效，重启重新确认。漏传 remember 会拒绝确认，取消首次确认不会启动成员，取消修改保留先前选择。工具参数不能提交模型或伪造同意；已确认后更改分工也走用户表单，执行中不允许切换。`teams_models({forget:true})` 或 `CLI models --forget` 可撤销。
 
 | 合同 | 使用模型 |
 |---|---|
@@ -225,7 +229,9 @@ node src/cli.js models --config ./teams.local.json
 node src/cli.js run --config ./teams.local.json --task ./examples/read-only-task.json
 ```
 
-`models` 只列出候选；`run`/`start` 在交互终端选择两类模型，再输入 `yes` 确认，非交互调用不会默认同意。恢复已有任务的 status/review/integrate/cancel 不启动新模型，不额外请求模型确认。直接嵌入 TaskRuntime 的受控测试/显式模型 smoke 不代表用户入口，可以通过构造选项要求确认；公开 MCP 与 CLI 启动入口始终要求用户确认。
+`models` 只列出候选；`run`/`start` 在交互终端选择两类模型，记住选项回车默认开启、输入 `no` 仅本次生效，最后必须输入 `yes` 确认。非交互调用不会默认同意。恢复已有任务的 status/review/integrate/cancel 不启动新模型，不额外请求模型确认。直接嵌入 TaskRuntime 的受控测试/显式模型 smoke 不代表用户入口，可以通过构造选项要求确认；公开 MCP 与 CLI 启动入口始终要求用户确认。
+
+CLI `start/run/integrate` 的阶段变化和每 30 秒状态回执写到 stderr，stdout 保持一份最终 JSON。最近记录时间不是实时心跳，也不证明模型正在推进；结束时会标明等待队长复核或实际失败。SIGINT/SIGTERM 先取消执行、等待退出并输出终态，再释放数据库 owner，避免关闭数据库后读取结果。
 
 ## 可重复验证
 
@@ -244,11 +250,11 @@ GitHub Actions 在 `ubuntu-24.04` / `macos-14` 与 Node `24.0.0` / `24.x` 上运
 
 核心源码保持单一链路：contracts/policy → runtime/store → app-server、workspace/verification；MCP 与 CLI 为两个入口，plugin 只负责本机封装。参考官方 Codex/插件规范、Git worktree、Execa、Symphony 等成熟实现的执行边界，具体来源和取舍见 [ARCHITECTURE.md](docs/ARCHITECTURE.md)。
 
-## 0.4.0 目标与启动前检查
+## 目标与启动前检查
 
-MCP `teams_create` 必须传 `expectedWorkspace`：从用户任务确定的绝对目标目录，不能为了通过校验盲抄插件配置。与插件配置不一致时拒绝创建；不自动切换仓库。新任务保存 realpath、目录设备/inode、Git 目录和 commonDir 身份，启动/集成前核对；历史未绑定任务可查看/取消，但重新启动必须创建新合同。overview、终端和 HTML 显示插件实际目标，不能将其当作宿主自动提供的聊天目录。
+MCP `teams_create` 的 `expectedWorkspace` 由队长从聊天上下文或授权任务目标自动填写。全局插件据此选择项目；旧固定配置与请求不一致时拒绝创建。新任务保存 realpath、目录设备/inode、Git 目录和 commonDir 身份，启动/集成前核对；历史未绑定任务可查看/取消，但重新启动必须创建新合同。overview、终端和 HTML 显示实际目标；它来自明确的任务参数，不是 MCP 自动提供的聊天目录。
 
-CLI `run/start` 默认把当前目录作为预期目标；从其他位置操作时必须传 `--workspace /absolute/target`。已保存的有效分工可以用于非交互启动；没有既有确认时仍需要真人表单或交互终端。此规则不允许用 `--yes` 或工具参数代替用户选择。保存的偏好是本机状态，不是抵御同账号恶意修改的安全凭证。
+CLI 使用不含 workspace 的全局配置时，所有项目操作默认目标为当前目录；从其他位置操作时传 `--workspace /absolute/target`。旧固定配置继续锁定原项目，不能用参数覆盖。已保存的有效分工可以用于非交互启动；没有既有确认时仍需要真人表单或交互终端。此规则不允许用 `--yes` 或工具参数代替用户选择。保存的偏好是本机状态，不是抵御同账号恶意修改的安全凭证。
 
 带 executionPlan 的任务准备 worktree 后、调用成员前，检查验证可执行文件是否可用。可以按任务增加以下声明，只声明应当预先存在的依赖，不把计划新建的产物列为必需文件：
 

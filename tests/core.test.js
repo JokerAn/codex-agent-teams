@@ -5,6 +5,7 @@ import { TaskStore } from '../src/store.js';
 import { taskPrompt } from '../src/policy.js';
 import { setup, contract, report, approve, config, tick } from './helpers.js';
 import { taskView } from '../src/status.js';
+import { taskSchema } from '../src/contracts.js';
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function until(predicate) {
@@ -31,6 +32,48 @@ test('fresh packet excludes arbitrary parent-history fields; schema rejects them
   const task = runtime.create(contract);
   assert.ok(!taskPrompt({ ...task, parentHistory: 'SECRET_PARENT_SENTINEL', attempts: ['SECRET_PARENT_SENTINEL'] }, []).includes('SECRET_PARENT_SENTINEL'));
   assert.throws(() => runtime.create({ ...contract, mode: 'workspace-write' }));
+});
+
+test('unknown top-level fields are rejected with their names and a path migration hint', () => {
+  for (const field of ['files', 'allowedPaths', 'parentHistory']) {
+    const parsed = taskSchema.safeParse({ ...contract, [field]: ['src/example.js'] });
+    assert.equal(parsed.success, false);
+    const issue = parsed.error.issues.find(issue => issue.code === 'unrecognized_keys');
+    assert.deepEqual(issue.keys, [field]);
+    assert.deepEqual(issue.path, []);
+    assert.ok(issue.message.includes(field));
+    assert.match(issue.message, /executionPlan\.allowedPaths \(repository-relative\)/);
+    assert.match(issue.message, /rejected rather than ignored/);
+  }
+});
+
+test('unknown executionPlan fields remain strict and explain allowedPaths versus requiredFiles', () => {
+  for (const field of ['files', 'allowedPath']) {
+    const parsed = taskSchema.safeParse({ ...contract, executionPlan: {
+      verification: { command: 'node' }, [field]: ['src/example.js'],
+    } });
+    assert.equal(parsed.success, false);
+    const issue = parsed.error.issues.find(issue => issue.code === 'unrecognized_keys');
+    assert.deepEqual(issue.keys, [field]);
+    assert.deepEqual(issue.path, ['executionPlan']);
+    assert.ok(issue.message.includes(field));
+    assert.match(issue.message, /executionPlan\.allowedPaths \(repository-relative\)/);
+    assert.match(issue.message, /executionPlan\.preflight\.requiredFiles/);
+    assert.match(issue.message, /rejected rather than ignored/);
+  }
+});
+
+test('valid executionPlan fields keep their values and task defaults stay conservative', () => {
+  const executionPlan = {
+    dirtyPolicy: 'snapshot',
+    allowedPaths: ['src/example.js', 'tests'],
+    preflight: { requiredFiles: ['package.json'], nodeModules: ['zod'] },
+    verification: { command: 'node', args: ['--test'], timeoutMs: 1000, maxOutputBytes: 1024 },
+  };
+  const parsed = taskSchema.parse({ ...contract, mode: 'workspace-write', executionPlan });
+  assert.deepEqual(parsed.executionPlan, executionPlan);
+  assert.equal(taskSchema.parse({ objective: contract.objective, acceptance: contract.acceptance }).complexity, 'uncertain');
+  assert.equal(taskSchema.parse({ ...contract, complexity: 'bounded' }).complexity, 'bounded');
 });
 
 test('no implicit downgrade; qualified profile needs task-specific eligibility', t => {

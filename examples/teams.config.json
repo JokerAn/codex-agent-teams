@@ -1,5 +1,4 @@
 {
-  "workspace": "/absolute/path/to/your/repository",
   "codexBin": "codex",
   "maxConcurrency": 2,
   "taskTimeoutMs": 600000,

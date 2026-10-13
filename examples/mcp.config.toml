@@ -1,4 +1,6 @@
 # Merge manually into the intended Codex configuration after filling real paths.
+# Use a global teams.local.json without workspace; the captain supplies the chat target to tools.
+# Legacy configs containing workspace remain fixed to that checkout.
 # The project does not modify your global Codex configuration.
 [mcp_servers.codex-agent-teams]
 command = "/absolute/path/to/node"

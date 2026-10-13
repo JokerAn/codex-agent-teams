@@ -32,13 +32,13 @@ export function modelSelectionForm(catalog, workspace) {
   const choices = modelChoices(catalog), values = choices.map(item => item.value), labels = choices.map(item => item.label);
   return {
     mode: 'form',
-    message: `确认团队模型分工，工作区：${workspace}。强模型负责复杂/不确定任务、独立审查和重试；轻量模型仅用于明确简单的任务。可以全部使用强模型。默认仅本次运行时有效；主动勾选记住后，可在同一工作区重启复用，每次启动仍核对模型及目录。不改变当前聊天的队长模型。`,
+    message: `确认团队模型分工，工作区：${workspace}。强模型负责复杂/不确定任务、独立审查和重试；轻量模型仅用于明确简单的任务。可以全部使用强模型。默认勾选记住此工作区分工，明确提交后可在同一工作区重启复用，每次启动仍核对模型及目录。取消勾选则仅本次运行时有效，可通过 teams_models(forget=true) 或 CLI models --forget 撤销。不改变当前聊天的队长模型。`,
     requestedSchema: { type: 'object', properties: {
       expert: { type: 'string', title: '强模型及推理强度', enum: values, enumNames: labels },
       simple: { type: 'string', title: '简单任务模型及推理强度', enum: ['none', ...values], enumNames: ['全部使用强模型', ...labels], default: 'none' },
       confirm: { type: 'boolean', title: '我确认以上分工，允许队长在此范围内派发任务', default: false },
-      remember: { type: 'boolean', title: '记住此工作区分工，允许重启后复用（可随时撤销）', default: false },
-    }, required: ['expert', 'simple', 'confirm'] },
+      remember: { type: 'boolean', title: '记住此工作区分工，允许重启后复用（可随时撤销）', default: true },
+    }, required: ['expert', 'simple', 'confirm', 'remember'] },
   };
 }
 
@@ -51,23 +51,29 @@ export function acceptedModelRoles(content, catalog) {
 }
 
 /** A terminal confirmation is human input, never inferred from a --yes flag. */
-export async function confirmModelsInTerminal(catalog, workspace) {
-  if (!process.stdin.isTTY || !process.stderr.isTTY) throw new Error('Model confirmation needs an interactive terminal or teams_models(confirm=true) in a host supporting MCP forms. No inference started.');
-  const choices = modelChoices(catalog), input = createInterface({ input: process.stdin, output: process.stderr });
+export async function confirmModelsInTerminal(catalog, workspace, { stdin = process.stdin, stderr = process.stderr, signal } = {}) {
+  if (!stdin.isTTY || !stderr.isTTY) throw new Error('Model confirmation needs an interactive terminal or teams_models(confirm=true) in a host supporting MCP forms. No inference started.');
+  const choices = modelChoices(catalog), input = createInterface({ input: stdin, output: stderr });
+  const closed = new AbortController();
+  const questionSignal = signal ? AbortSignal.any([signal, closed.signal]) : closed.signal;
+  input.once('close', () => closed.abort(new Error('Terminal closed before confirmation')));
   try {
-    process.stderr.write(modelSelectionForm(catalog, workspace).message + '\n');
-    choices.forEach((item, i) => process.stderr.write(`${i + 1}. ${item.label}\n`));
+    stderr.write(modelSelectionForm(catalog, workspace).message + '\n');
+    choices.forEach((item, i) => stderr.write(`${i + 1}. ${item.label}\n`));
     const pick = async (prompt, allowNone = false) => {
-      const answer = (await input.question(prompt)).trim();
+      const answer = (await input.question(prompt, { signal: questionSignal })).trim();
       if (allowNone && answer === '0') return 'none';
       if (!/^[1-9]\d*$/.test(answer) || !choices[Number(answer) - 1]) throw new Error('Invalid model selection; nothing confirmed.');
       return choices[Number(answer) - 1].value;
     };
     const expert = await pick('强模型编号：');
     const simple = await pick('简单任务模型编号（0 = 全部使用强模型）：', true);
-    process.stderr.write(`强模型：${expert}\n简单任务：${simple}\n`);
-    const remember = (await input.question('记住此工作区分工，允许重启复用？输入 yes，其他仅本次：')).trim() === 'yes';
-    const confirm = (await input.question('确认此分工？输入 yes：')).trim() === 'yes';
+    stderr.write(`强模型：${expert}\n简单任务：${simple}\n`);
+    const rememberAnswer = (await input.question('记住此工作区分工，允许重启复用？默认 yes（回车），输入 no 仅本次：', { signal: questionSignal })).trim().toLowerCase();
+    if (!['', 'yes', 'no'].includes(rememberAnswer)) throw new Error('Invalid remember choice; enter yes or no. Nothing confirmed.');
+    const remember = rememberAnswer !== 'no';
+    stderr.write(`记住工作区分工：${remember ? '是' : '否，仅本次运行时'}\n`);
+    const confirm = (await input.question('确认此分工？输入 yes：', { signal: questionSignal })).trim() === 'yes';
     return { profiles: acceptedModelRoles({ expert, simple, confirm }, catalog), remember };
   } finally { input.close(); }
 }

@@ -29,3 +29,13 @@ test('build rejects a missing explicit binary before npm bootstrap or package wr
   assert.match(result.stderr, /找不到可执行/);
   assert.doesNotMatch(result.stdout, /安装锁定依赖|打包插件/);
 });
+
+test('build rejects Windows before dependency installation or configuration reads', () => {
+  const result = spawnSync(process.execPath, ['--input-type=module', '-e', `
+    Object.defineProperty(process, 'platform', { value: 'win32' });
+    await import('./scripts/build.js');
+  `], { encoding: 'utf8' });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /仅支持 macOS\/Linux.*Windows/);
+  assert.doesNotMatch(result.stdout, /安装锁定依赖|打包插件|Codex CLI/);
+});

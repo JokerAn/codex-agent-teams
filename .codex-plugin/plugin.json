@@ -1,6 +1,7 @@
 {
   "name": "codex-agent-teams",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Quality-first task delegation with isolated edits, verification, independent expert review and explicit integration",
-  "skills": "./skills/"
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json"
 }

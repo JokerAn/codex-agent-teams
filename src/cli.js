@@ -2,8 +2,9 @@
 import { parseArgs } from 'node:util';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { pluginIdentity, readSnapshot, overview, renderText, renderHtml } from './status.js';
-import { loadConfig } from './config.js';
+import { pluginIdentity, readSnapshot, overview, renderText, renderHtml, toolFeedback } from './status.js';
+import { waitWithProgress } from './cli-progress.js';
+import { loadConfig, configForWorkspace } from './config.js';
 import { CodexBackend } from './app-server.js';
 import { confirmModelsInTerminal, validateModelSelection } from './models.js';
 import { workspaceIdentity, assertWorkspace } from './workspace.js';
@@ -28,7 +29,7 @@ node src/cli.js doctor [--config <file>] [--binary codex] [--check-thread]
 node src/cli.js models --config <file>    List Codex model choices and target; no inference
 node src/cli.js models --config <file> --forget
                                          Revoke saved/session model choices
---workspace <absolute path>              Expected target for run/start (default: current directory)
+--workspace <absolute path>              Target project (global config defaults to current directory)
 node src/cli.js pack --config <file> [--out <new directory>]
                                          Prepare machine-local plugin; does not install
 node src/cli.js doctor --plugin <prepared directory> [--check-thread]
@@ -50,24 +51,25 @@ node src/cli.js review --config <file> --spec <review.json>
 node src/cli.js integrate --config <file> --id <task-id> --attempt <attempt-id>
                                          Apply reviewed patch and verify; no commit/push
 node src/cli.js run --config <file> --task <json>
-                                         Run one task; captain review remains pending`);
+                                         Run one task; captain review remains pending
+                                         start/run/integrate report progress on stderr; stdout stays JSON`);
   } else if (command === 'pack') {
     const { packPlugin } = await import('./plugin.js');
     console.log(JSON.stringify(packPlugin({ configPath: values.config ?? process.env.TEAMS_CONFIG, out: values.out }), null, 2));
   } else if (command === 'models' && !values.forget) {
-    const config = loadConfig(values.config ?? process.env.TEAMS_CONFIG);
+    const config = configForWorkspace(loadConfig(values.config ?? process.env.TEAMS_CONFIG), values.workspace);
     const { models, configuredModel, configuredEffort } = await new CodexBackend({ binary: config.codexBin }).probe(config.workspace, { modelSettings: true });
     console.log(JSON.stringify({ workspace: config.workspace, target: workspaceIdentity(config.workspace), models, configuredModel, configuredEffort, inferenceStarted: false }, null, 2));
   } else if (command === 'doctor') {
     const plugin = values.plugin ? (await import('./plugin.js')).pluginTarget(values.plugin) : undefined;
     const configPath = values.config ?? process.env.TEAMS_CONFIG ?? plugin?.configPath;
-    const config = configPath ? loadConfig(configPath) : undefined;
+    const config = configPath ? configForWorkspace(loadConfig(configPath), values.workspace) : undefined;
     const result = await new CodexBackend({ binary: values.binary ?? config?.codexBin ?? 'codex' }).probe(config?.workspace ?? process.cwd(), {
       checkThread: values['check-thread'] ?? false, profiles: config?.profiles, plugin,
     });
     console.log(JSON.stringify(result, null, 2));
   } else if (command === 'status') {
-    const config = loadConfig(values.config ?? process.env.TEAMS_CONFIG);
+    const config = configForWorkspace(loadConfig(values.config ?? process.env.TEAMS_CONFIG), values.workspace);
     if ([values.human, values.overview, values.html].filter(Boolean).length > 1) throw new Error('Choose one of --human, --overview or --html');
     const snapshot = readSnapshot(config.workspace, values.id);
     if (values.human || values.overview || values.html) {
@@ -80,7 +82,8 @@ node src/cli.js run --config <file> --task <json>
     } else console.log(JSON.stringify(values.id ? snapshot.tasks[0] : snapshot.tasks, null, 2));
   } else if (['mcp', 'run', 'workspace', 'review', 'integrate', 'start', 'cancel', 'models'].includes(command)) {
     if (process.env.CODEX_TEAMS_MEMBER === '1') throw new Error('Members cannot start another team runtime');
-    const config = loadConfig(values.config ?? process.env.TEAMS_CONFIG);
+    const settings = loadConfig(values.config ?? process.env.TEAMS_CONFIG);
+    const config = command === 'mcp' ? settings : configForWorkspace(settings, values.workspace);
     const { TaskStore } = await import('./store.js');
     const { TaskRuntime } = await import('./runtime.js');
     const discoverModels = async () => {
@@ -90,11 +93,21 @@ node src/cli.js run --config <file> --task <json>
     const createRuntime = () => new TaskRuntime(new TaskStore(join(config.workspace, '.codex-teams', 'state.sqlite'), pluginIdentity()), new CodexBackend({ binary: config.codexBin }), config, { requireModelConfirmation: true });
     if (command === 'mcp') {
       const { serve } = await import('./mcp.js');
-      await serve(createRuntime, { observe: taskId => readSnapshot(config.workspace, taskId), discoverModels });
+      const { WorkspaceRouter } = await import('./workspace-router.js');
+      const router = new WorkspaceRouter(settings);
+      await serve(undefined, { route: args => router.resolve(args), closeAll: () => router.close() });
     } else {
       const runtime = createRuntime();
+      const terminalCancellation = new AbortController();
+      // Signal handling stops execution, but the foreground caller still needs the final receipt.
+      // Close the store only in finally, after it has read and printed that terminal state.
+      const stop = () => {
+        terminalCancellation.abort(new Error('Cancelled by operator'));
+        runtime.closing = true;
+        for (const id of runtime.active.keys()) void runtime.cancel(id).catch(error => console.error(error.message));
+        runtime.verification?.controller.abort(new Error('Cancelled by operator'));
+      };
       if (command === 'workspace') {
-        const stop = () => { void runtime.close().catch(error => console.error(error.message)); };
         process.once('SIGINT', stop); process.once('SIGTERM', stop);
         try {
           let result;
@@ -113,7 +126,6 @@ node src/cli.js run --config <file> --task <json>
           console.log(JSON.stringify(result, null, 2));
         } finally { process.removeListener('SIGINT', stop); process.removeListener('SIGTERM', stop); await runtime.close(); }
       } else {
-        const stop = () => { void runtime.close().catch(() => {}); };
         process.once('SIGINT', stop); process.once('SIGTERM', stop);
         try {
           if (command === 'models') {
@@ -129,7 +141,7 @@ node src/cli.js run --config <file> --task <json>
               catch (error) { console.error(`已保存分工不可复用：${error.message}`); }
             }
             if (!runtime.modelConfirmation) {
-              const selection = await confirmModelsInTerminal(catalog, config.workspace);
+              const selection = await confirmModelsInTerminal(catalog, config.workspace, { signal: terminalCancellation.signal });
               const refreshed = await discoverModels();
               assertWorkspace(target, workspaceIdentity(config.workspace));
               // Validate the latest catalog before persisting user input.
@@ -144,8 +156,9 @@ node src/cli.js run --config <file> --task <json>
             console.log(JSON.stringify(await runtime.cancel(values.id), null, 2));
           } else if (command === 'start') {
             if (!values.id) throw new Error('start requires --id');
-            runtime.start(values.id, { retry: values.retry ?? false, reason: values.reason ?? '' });
-            const result = await runtime.wait(values.id, config.taskTimeoutMs + 10000);
+            const started = runtime.start(values.id, { retry: values.retry ?? false, reason: values.reason ?? '' });
+            process.stderr.write(toolFeedback('teams_start', started) + '\n');
+            const result = await waitWithProgress(runtime, values.id);
             console.log(JSON.stringify(result, null, 2));
             if (result.status !== 'awaiting_review') process.exitCode = 1;
           } else if (command === 'review') {
@@ -154,19 +167,20 @@ node src/cli.js run --config <file> --task <json>
           } else if (command === 'integrate') {
             if (!values.id || !values.attempt) throw new Error('integrate requires --id and --attempt');
             runtime.integrate(values.id, values.attempt);
-            const result = await runtime.wait(values.id, config.taskTimeoutMs + 10000);
+            const result = await waitWithProgress(runtime, values.id);
             console.log(JSON.stringify(result, null, 2));
             if (result.status !== 'succeeded') process.exitCode = 1;
           } else {
             if (!values.task) throw new Error('run requires --task <json file>');
             const input = JSON.parse(readFileSync(values.task, 'utf8'));
             const task = runtime.create({ ...input, expectedWorkspace: input.expectedWorkspace ?? values.workspace ?? process.cwd() });
-            runtime.start(task.id);
-            const result = await runtime.wait(task.id, config.taskTimeoutMs + 10000);
+            const started = runtime.start(task.id);
+            process.stderr.write(toolFeedback('teams_start', started) + '\n');
+            const result = await waitWithProgress(runtime, task.id);
             console.log(JSON.stringify(result, null, 2));
             if (result.status !== 'awaiting_review') process.exitCode = 1;
           }
-        } finally { await runtime.close(); }
+        } finally { process.removeListener('SIGINT', stop); process.removeListener('SIGTERM', stop); await runtime.close(); }
       }
     }
   } else throw new Error(`Unknown command: ${command}`);

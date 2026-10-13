@@ -200,7 +200,7 @@ test('MCP write contract -> asynchronous integration stays available through the
   const client = new Client({ name: 'write-tools', version: '0.1.0' }, { capabilities: { elicitation: { form: {} } } });
   client.setRequestHandler('elicitation/create', async () => ({ action: 'accept', content: {
     expert: JSON.stringify({ model: 'test-model', effort: 'high' }),
-    simple: JSON.stringify({ model: 'configured-model', effort: 'high' }), confirm: true,
+    simple: JSON.stringify({ model: 'configured-model', effort: 'high' }), confirm: true, remember: false,
   } }));
   t.after(() => client.close());
   await client.connect(new StdioClientTransport({ command: process.execPath, args: [resolve('src/cli.js'), 'mcp', '--config', config], stderr: 'pipe' }));

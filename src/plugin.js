@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
-import { cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, renameSync, rmSync, writeFileSync } from 'node:fs';
-import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { accessSync, constants, cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { basename, delimiter, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadConfig } from './config.js';
 
@@ -9,6 +9,7 @@ const name = 'codex-agent-teams';
 const marketplaceName = 'codex-agent-teams-local';
 const json = path => JSON.parse(readFileSync(path, 'utf8'));
 const writeJson = (path, value) => writeFileSync(path, JSON.stringify(value, null, 2) + '\n');
+const shellQuote = value => `'${value.replaceAll("'", "'\\''")}'`;
 const contained = (root, path) => {
   const suffix = relative(root, path);
   return suffix === '' || (!isAbsolute(suffix) && suffix !== '..' && !suffix.startsWith(`..${sep}`));
@@ -16,7 +17,8 @@ const contained = (root, path) => {
 
 /** Prepare a machine-local package. No install, network access, or model call. */
 export function packPlugin({ configPath, out = resolve('dist/local-marketplace'), codexBin }) {
-  const config = loadConfig(configPath);
+  if (!['darwin', 'linux'].includes(process.platform)) throw new Error('Plugin packaging supports macOS/Linux only; Windows runtime is unsupported');
+  const config = loadConfig(configPath, { global: true });
   if (codexBin !== undefined) {
     if (typeof codexBin !== 'string' || !isAbsolute(codexBin)) throw new Error('Codex binary override must be an absolute path');
     config.codexBin = codexBin;
@@ -34,9 +36,21 @@ export function packPlugin({ configPath, out = resolve('dist/local-marketplace')
   const manifest = json(join(root, 'plugin.json'));
   const compatibility = json(join(root, '.codex-plugin/plugin.json'));
   const packageJson = json(join(root, 'package.json'));
-  if (manifest.name !== name || compatibility.name !== name || manifest.version !== packageJson.version || compatibility.version !== manifest.version) {
+  // Agent Plugins v1 discovers ./skills and ./mcp.json by convention. Only
+  // the Codex compatibility manifest declares these paths; share metadata.
+  if (manifest.name !== name || compatibility.name !== name || manifest.version !== packageJson.version || ['version', 'description'].some(key => compatibility[key] !== manifest[key]) || compatibility.skills !== './skills/' || compatibility.mcpServers !== './.mcp.json') {
     throw new Error('Plugin manifests and package version must agree');
   }
+  // Capture only the executable identity, never the builder's full PATH. Build
+  // already resolves the desktop fallback; direct pack resolves its own PATH.
+  const candidates = isAbsolute(config.codexBin) ? [config.codexBin]
+    : (process.env.PATH ?? '').split(delimiter).map(dir => resolve(dir, config.codexBin));
+  const executable = candidates.find(path => {
+    try { accessSync(path, constants.X_OK); return statSync(path).isFile(); }
+    catch { return false; }
+  });
+  if (!executable) throw new Error(`Codex executable unavailable: ${config.codexBin}; set codexBin to an executable absolute path or use npm run build -- --binary /path/to/codex`);
+  config.codexBin = realpathSync(executable);
   const lock = json(join(root, 'package-lock.json'));
   if (lock.lockfileVersion !== 3 || !lock.packages) throw new Error('Expected npm lockfile v3');
   const declared = packageJson.dependencies ?? {};
@@ -65,23 +79,27 @@ export function packPlugin({ configPath, out = resolve('dist/local-marketplace')
     }
     writeJson(join(pluginRoot, 'plugin.json'), manifest);
     mkdirSync(join(pluginRoot, '.codex-plugin'));
-    writeJson(join(pluginRoot, '.codex-plugin/plugin.json'), { ...compatibility, mcpServers: './.mcp.json' });
+    writeJson(join(pluginRoot, '.codex-plugin/plugin.json'), compatibility);
     for (const [path] of dependencies) cpSync(join(root, path), join(pluginRoot, path), { recursive: true, filter: source => basename(source) !== 'node_modules' });
     const sourceFiles = [...readdirSync(join(root, 'src')).filter(path => path.endsWith('.js')).sort().map(path => `src/${path}`), 'skills/team/SKILL.md', 'package.json'];
     const fingerprint = createHash('sha256');
     for (const path of sourceFiles) { fingerprint.update(path + '\0'); fingerprint.update(readFileSync(join(root, path))); }
     writeJson(join(pluginRoot, 'build-info.json'), { version: packageJson.version, createdAt: new Date().toISOString(), sourceDigest: fingerprint.digest('hex') });
     writeJson(join(pluginRoot, 'teams.config.json'), config);
-    const server = {
-      command: 'node', args: ['src/cli.js', 'mcp', '--config', 'teams.config.json'],
-      cwd: './', env: { PATH: [dirname(process.execPath), process.env.PATH].filter(Boolean).join(':') },
-    };
+    // The host supplies its current PATH (including custom dependency tools).
+    // Add this exact Node runtime for env-node scripts and verification commands.
+    writeFileSync(join(pluginRoot, 'mcp-launch.js'), `import { delimiter, dirname } from 'node:path';\nprocess.env.PATH = [dirname(process.execPath), process.env.PATH].filter(Boolean).join(delimiter);\nawait import('./src/cli.js');\n`);
+    // Agent Plugins v1 commands must be bare names or contained ./ paths.
+    // Shell expansion finds the sibling without relying on an external dirname.
+    writeFileSync(join(pluginRoot, 'mcp-launch'), `#!/bin/sh\nexec ${shellQuote(process.execPath)} "\${0%/*}/mcp-launch.js" "$@"\n`, { mode: 0o755 });
+    const args = ['mcp', '--config', 'teams.config.json'];
+    const server = { command: './mcp-launch', args, cwd: './' };
     writeJson(join(pluginRoot, 'mcp.json'), {
       $schema: 'https://agent-plugins.org/schemas/1.0.0/mcp.schema.json',
       mcpServers: { [name]: { type: 'stdio', ...server } },
     });
     // Older local hosts use the compatibility manifest and .mcp.json.
-    writeJson(join(pluginRoot, '.mcp.json'), { mcpServers: { [name]: { ...server, command: process.execPath } } });
+    writeJson(join(pluginRoot, '.mcp.json'), { mcpServers: { [name]: { ...server, command: process.execPath, args: ['mcp-launch.js', ...args] } } });
     const catalog = join(stage, '.agents', 'plugins');
     mkdirSync(catalog, { recursive: true });
     writeJson(join(catalog, 'marketplace.json'), {
@@ -89,7 +107,7 @@ export function packPlugin({ configPath, out = resolve('dist/local-marketplace')
       plugins: [{ name, source: { source: 'local', path: `./plugins/${name}` },
         policy: { installation: 'AVAILABLE', authentication: 'ON_USE' }, category: 'Productivity' }],
     });
-    writeFileSync(join(stage, 'README.md'), `# Codex Agent Teams 本机插件\n\n这是本机配置快照，包含运行依赖；没有执行安装或模型调用。\n\n目标工作区：${config.workspace}\n\n检查：\n\n\`\`\`sh\nnode plugins/${name}/src/cli.js doctor --plugin . --check-thread\n\`\`\`\n\n在支持本地 marketplace 的 Codex 中，手动添加本目录作为来源并安装插件。安装会改写宿主配置；请由用户明确执行。\n\n配置变化时生成新的目录。缓存副本需要在宿主中重新安装或刷新。不要与手工 MCP 配置同时启用，也不要为同一工作区启动多个运行时。\n\n本目录包含工作区路径和模型配置，面向本机使用，不能作为跨机器分发包。\n`);
+    writeFileSync(join(stage, 'README.md'), `# Codex Agent Teams 本机插件\n\n这是跨项目通用的本机插件包，包含运行依赖；没有执行安装或模型调用。\n\n不绑定项目：队长从当前聊天上下文自动传入目标目录，无需用户逐项目配置或重新打包。任务与模型偏好分别保存在各项目。\n\n检查（在实际项目目录执行）：\n\n\`\`\`sh\nnode ${shellQuote(join(out, 'plugins', name, 'src/cli.js'))} doctor --plugin ${shellQuote(out)} --check-thread\n\`\`\`\n\n在支持本地 marketplace 的 Codex 中，手动添加本目录作为来源并安装插件。安装会改写宿主配置；请由用户明确执行。\n\n通用配置或版本变化时生成新目录，再刷新宿主缓存。不要与手工 MCP 配置同时启用，也不要为同一工作区启动多个运行时。\n\n本目录包含 Node/Codex 绝对路径和初始模型配置，面向本机使用，不能作为跨机器分发包。不会保存构建终端的 PATH；启动时继承宿主当前 PATH 并添加打包所用 Node 的目录。自定义依赖命令必须在宿主 PATH 中可见，缺失时预检会拒绝启动。\n`);
     if (existsSync(out)) throw new Error(`Output already exists: ${out}`);
     renameSync(stage, out);
     return { ...pluginTarget(out), runtimeDependencies: dependencies.map(([path]) => path), installed: false, inferenceStarted: false };

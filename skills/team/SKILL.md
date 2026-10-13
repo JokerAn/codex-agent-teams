@@ -12,15 +12,22 @@ it; success fits testable acceptance criteria; evidence comes from something oth
 exit, files, a cited observation); the result changes the outcome.
 
 Otherwise do it directly — "Agent Teams 已检查；本次由主 Agent 直接处理，未启动成员。" — and never create a
-task to look busy. A status question ("插件工作了吗") is `teams_status({overview:true, limit:10})`, nothing
+task to look busy. A status question ("插件工作了吗") is `teams_status({workspace: cwd, overview:true, limit:10})`, nothing
 more, and so are a one-step edit, a lookup, an urgent decision and work the captain already has context for.
 If dispatch is blocked, name the blocker rather than calling it an optional delegation.
 
 ## 2. Minimum viable contract
 
-`teams_create` is strict; only `objective` and `acceptance` are required. `expectedWorkspace` must be the
-intended checkout path from the task context, never copied from plugin config — a mismatch means stop, not
-override.
+Derive `cwd` as the absolute intended checkout from this chat's current directory or an explicitly authorized
+target. Do not ask the user for a path already known, copy the plugin/cache directory, or claim the host
+supplies the chat cwd automatically: the captain passes it from context. A target mismatch means stop.
+
+Call `teams_models({workspace: cwd})`; if `confirmationRequired`, call
+`teams_models({workspace: cwd, confirm:true})` and let the HOST USER submit the form. Remembered choices reuse
+only this project's valid selection; a new project needs its own initial confirmation. Never supply answers.
+Selection changes require that project's member and verification processes to exit first.
+
+`teams_create` requires `objective`, `acceptance` and `expectedWorkspace`; the captain fills the known path:
 
 ```json
 { "objective": "Explain how src/runtime.js distinguishes a deadline overrun from a captain cancellation.",
@@ -36,9 +43,12 @@ into the confirmed simple model — retries always run expert. Write tasks add `
 declare files the member must create. `dependencies` must already be `succeeded`. Verified-worktree tasks run
 exclusively; read-only work uses concurrency (default 2, max 4).
 
-Before `teams_start`, call `teams_models`; if `confirmationRequired`, call `teams_models({confirm:true})` and
-let the HOST USER fill the form — you cannot supply the answer or accept it for them. Nothing can change the
-selection while a member or verification is active; wait for exit or cancel first.
+There are eight tools: creation binds via `expectedWorkspace`; the other seven accept optional `workspace`. In the same
+connection, a known `taskId` routes start/wait/status/review/integrate/cancel without repeating the path;
+after reconnecting, include `workspace: cwd`. For lists or overviews with multiple projects, always specify
+which workspace. State and model preferences belong to each project; owners are not shared across sessions.
+A global plugin has no fixed workspace and works across projects without repacking. Legacy configurations
+with `workspace` remain fixed to that checkout.
 
 ## 3. What to report
 

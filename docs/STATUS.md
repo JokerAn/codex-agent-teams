@@ -1,6 +1,69 @@
 # 当前状态
 
-日期：2026-10-13（Asia/Shanghai）。源码版本：0.4.0。**本机回归 182/182 通过。本轮修复四项状态一致性缺陷（含两个由上一批引入的回归）；真实宿主尚未重新安装验收。**
+日期：2026-10-13（Asia/Shanghai）。源码版本：0.5.0。**最终本机覆盖率回归 234/234 通过；真实 Codex 同一临时安装缓存/连接操作两个项目通过。新包不绑定项目；正式用户缓存尚未升级，桌面使用及真实模型效果未验收。**
+
+## 主目录同步（2026-10-13）
+
+前两轮修改发生在 Codex worktree `/Users/anshunli1/.codex/worktrees/83cf/codex-agent-teams`，未自动回写用户主目录。用户指出后，将 0.4.1 修复与 0.5.0 跨项目优化同步到 `/Users/anshunli1/asl/code/github/codex-agent-teams`。两个 checkout 的 HEAD 均为 `646f8f6`；主目录已有暂存的 `UPGRADE-PLAN.md` 和 `docs/UPGRADE-BRIEF.md`，保留原内容和 Git 暂存状态，仅在主目录计划工作副本补入当前交付记录。
+
+`docs/UPGRADE-BRIEF.md` 并非项目缺失，而是当时未随 worktree 带入的主目录暂存文件。已补读：简报提出的同项目并行写、逐任务 model/effort 覆盖、可选用户模型确认和真实协调耗时评测，**没有由 0.5.0 跨项目路由实现**，继续作为待办，不把本次目录同步视为这些目标完成。后续用户主目录工作使用上述实际路径。
+
+同步后直接在主目录运行 `npm test`：234/234 通过，0 fail/cancelled/skipped，52.44 秒；`git diff --check` 通过，package 版本为 0.5.0。35 份同步文件在复制后逐字节核对一致；主目录已有两份文档的暂存 blob 保持不变，升级简报工作文件也逐字节保持原样。验证日志为 `/tmp/codex-teams-main-sync-tests.log`。未提交、推送、构建产物或修改正式插件安装。
+
+## 0.5.0 安装一次，全项目通用（2026-10-13）
+
+用户指出固定 workspace 与“所有 Codex 项目通用”冲突，并明确授权优化。本轮延续 0.4.1 未提交改动，新增一层小型项目路由；没有新依赖、中央任务索引、跨项目依赖或共享 owner。三条车道分别负责 MCP、路由、技能示例，主 Agent 负责配置/CLI/打包/build、文档、复核与统一验证。
+
+**使用行为：** 在项目聊天中要求“用 Team 处理这个任务”，队长从当前聊天目录或已授权目标自动传入项目路径，用户无需手填已知目录。新插件包删除 workspace，安装一次后换项目不改配置、不重新打包。项目目标来自明确的工具参数，不声称宿主自动传 cwd；首次模型发现、列表与重连恢复由队长传 workspace，创建合同继续要求 expectedWorkspace。后续已知 taskId 在同连接已知项目中自动定位，多项目列表不猜最近目录。
+
+**实现与门禁：**
+
+- config.workspace 改为可选。CLI 无固定配置时用实际 cwd 或 --workspace；MCP 保留插件缓存启动目录但从不将其兜底为项目。build 新配置不保存 workspace，pack/build 从解析副本删除旧 workspace 后生成通用包，原本机文件保持不变，旧项目路径失效也不阻止全局打包。旧含 workspace 的直接 CLI/MCP 配置继续固定目标并拒绝覆盖。
+- `workspace-router.js` 按真实目录身份复用稳定 scope，分别提供模型发现、只读观察和延迟获取运行时；各项目保留原 `.codex-teams/state.sqlite`、worktree、偏好和唯一 owner。每次调用与异步发现返回后重验身份；符号链接别名不产生第二 owner。观察和发现不恢复旧任务、不创建状态或 owner。
+- MCP 每次请求捕获自己的局部 scope，七个工具增加可选绝对 workspace，create 的 expectedWorkspace 保持必填。确认进行中和会话选择按项目分别记录；项目 A 的授权/撤销/取消不会作用于 B，保存偏好仍需本项目真人明确提交。跨项目依赖被原项目 store 拒绝，任务执行/命令/独立审查/集成门禁保持。
+- taskId 仅查此连接已知项目的只读快照，不扫描任意目录。错误 workspace 拒绝；重复 ID 在未指定项目时拒绝歧义，明确 workspace + taskId 可定位各自记录。目录被替换时拒绝省略路径的自动查询，显式正确项目仍可操作未受影响的任务。
+- 关闭先阻止新路由，再等待所有已创建项目运行时退出并聚合错误；单个关闭失败不跳过其他项目。每个项目保留原并发限额与带计划任务独占规则，没有全局后台调度。
+- 技能、示例、README、原则和路线同步 0.5.0 用法，修正技能 MCP 必填字段说明；打包 Node/Codex 与 POSIX shim 沿用 0.4.1 真实宿主验证的规则。生成 README 的路径使用安全 shell 引用。
+
+**独立复核与修正：** 打包车道发现旧公开 `createMcpServer` 无 route 时会静默忽略新 workspace 参数，从而错误取消/撤销原项目。现旧直接构造 API 在获取 runtime 前明确拒绝显式 workspace；CLI 总通过 router，无此退路。另统一重复 ID 的消歧合同，避免测试与显式项目优先语义冲突。合同车道复核配置/CLI/打包/技能，确认车道复核路由与关闭，打包车道复核 MCP 与双项目写入验收；自述均待最终验证，未独立重复跑全量。
+
+**最终验证：**
+
+- `npm run test:coverage`：234 tests、234 pass、0 fail/cancelled/skipped，55.50 秒；源码行覆盖 97.34%、分支 89.46%、函数 96.11%，新路由模块行/分支/函数均 100%。这不替代身份、owner 与错误项目的语义验收。
+- 官方 SDK 的单连接双项目回归覆盖只读无 owner、模型/task/review/forget 隔离、并行表单与同项目异步竞态、重连偏好恢复、重复 ID 消歧、legacy 参数拒绝，以及真实 stdio 断连释放两个 owner。
+- 新双项目写入纵向回归使用真实 CLI stdio、两个真实 Git 仓库与用户 staged/unstaged 内容；并行受控 writer、独立 expert reviewer、真实 Node 测试、队长复核、错误项目集成拒绝、按任务 ID 逐项集成和源复验均通过。HEAD、原 index 与用户文件保持，另一项目不受先行集成影响。**模型均为受控协议 fixture，不是实际模型推理。**
+- `node scripts/smoke-plugin.js`：真实 Codex Desktop `0.162.0-alpha.17.2`，同一个临时 CODEX_HOME 安装缓存和同一个 MCP 连接操作两个项目成功，八工具与 skill 正常。包内不含 workspace，先删除 marketplace 源插件目录后缓存仍工作；模型目录/表单取消门禁/文本转发保持；两项目创建/查询/取消、错误目标拒绝、多目标歧义拒绝与 cache cwd 拒绝均通过，两项目运行时正常退出。`inferenceStarted:false`、`userConfigChanged:false`、`managedRuntimeExited:true`。
+- `git diff --check` 通过。最终日志：`/tmp/codex-teams-83cf-global-tests.log`、`/tmp/codex-teams-83cf-global-smoke.log`。临时测试与安装工作区在 owner 退出确认后清理；未更改正式 Codex 配置、删除旧 dist 或调用付费模型。
+
+**边界与下一步：** 正式缓存仍是已安装旧版，需要用户一次构建/显式更新到 0.5.0，之后不为换项目重打包。首次新项目仍需要该项目的真人模型确认，记住后本项目复用，不跨项目自动授权。MCP 不具有可信的当前聊天 cwd 自动注入；技能从已知聊天上下文传参，多个目标或项目无上下文时需要明确实际目标。新接口与双项目流程已通过 SDK/宿主协议，桌面自然语言使用与实际 UI 渲染、真实模型效果、远程平台矩阵未验收。既有 integration_failed 取消语义、孤儿进程边界保持。下一步在正式 0.5.0 新聊天验证“用 Team 处理”能自动传当前项目，之后再做真实模型质量/效率对照。
+
+## 0.4.1 委派、确认、前台进度与打包收口（2026-10-13）
+
+用户要求参考 `docs/UPGRADE-BRIEF.md` 和 `UPGRADE-PLAN.md` 修复一版，并授权子任务并行。前者在本 checkout 中不存在，本轮依据升级计划与最新原则、路线、状态工作。并行三条实现车道（合同、确认、打包），主 Agent 负责 CLI、统一复核、交叉独立审查及最终验证；子任务自述不作为通过证据。
+
+**完成内容：**
+
+- P2-C 收口：`executionPlan` 误填字段给出 `allowedPaths` 与 `preflight.requiredFiles` 的迁移提示，未知字段继续拒绝；示例增加可直接填写实际目标后调用的 MCP 合同模板。`complexity=uncertain` 保持，只有显式 simple 路由轻量；旧计划中的 bounded 默认值与 required 裁剪均已证伪，不实施。
+- 真人确认的“记住此工作区分工”默认勾选，可关闭和撤销；`remember` 为表单必填布尔字段，漏传或非法值拒绝且不改旧分工。终端回车默认记住、no 仅本次、最后 yes 才确认；取消不保存。每次启动仍重新校验目标、模型、强度、策略版本。
+- 官方 SDK 能力矩阵覆盖无声明、旧式 `elicitation: {}`、form、URL-only；前两种不等价，旧式空声明允许表单。缺表单能力/取消的 CLI 指引包含同配置、真实 stdin/stderr TTY 和先释放 workspace owner 的条件。
+- 新 `cli-progress.js` 只观察前台任务：阶段变化及每 30 秒回执写到 stderr，stdout 保持最终 JSON。最近记录不是心跳；等待快照不取消成员，运行时仍拥有截止时间与退出门禁。没有常驻进程、定时后台调度或新依赖。
+- 修复 CLI 信号关闭竞态：SIGINT/SIGTERM 先停止输入或取消执行、等待退出并读取输出终态，finally 才关数据库。readline 所有问题接外部取消信号，另监听 close 中止 EOF；保留 Node 默认 Ctrl+C 行为，不销毁真实 stdin。覆盖四个提示中止、EOF、Ctrl+C、实际 CLI 成员/输入期间 SIGTERM。
+- P3 可安全实施部分：版本元数据统一 0.4.1；两个 manifest 的共有字段一致且各自遵守官方格式；打包解析并检查 Codex 绝对可执行身份，不快照构建 PATH，启动继承宿主实时 PATH 并补 Node 目录。现代入口使用插件内 POSIX shim `./mcp-launch` 调用固定 Node，兼容入口直接调用固定 Node，两者共用 JS launcher。Node 路径含空格/单引号、缓存移动、宿主 PATH 无 Node 但有自定义验证工具均实测。Windows 在构建/打包入口提前拒绝。
+
+**验证中发现并修正：**
+
+- 此新 worktree 初次测试缺依赖而未进入业务用例；随后 `npm ci --ignore-scripts` 安装锁定依赖，14 packages、审计 0 vulnerabilities，无新增依赖。
+- 旧交互 fixture 匹配旧记住提示，导致等待并暴露 SIGTERM 未取消 readline；已更新 fixture 并修真实输入取消。写任务 MCP fixture 漏传新增必填 remember，被真实 SDK 拒绝，已补显式 false。独立复核进一步实测 EOF pending 并修复。中间失败/中断测试不作为最终验收。
+- 真实宿主最初拒绝现代 MCP 的绝对 command，提示 `Agent Plugins stdio command must be a bare executable name or a contained ./ path`，库存为空并最终启动超时；普通 SDK 不验证该宿主限制。补诊断后定位并改为插件内 shim，重新跑实际临时缓存 smoke 通过。这条修法依据本机实际 loader，官方实现见 [agent_plugin_config.rs](https://github.com/openai/codex/blob/main/codex-rs/codex-mcp/src/agent_plugin_config.rs)。
+
+**最终证据：**
+
+- Node v24.21.0，`npm run test:coverage`：214 tests、214 pass、0 fail/cancelled/skipped；源码行覆盖 97.27%、分支 88.32%、函数 95.48%。真实 Git、验证命令及进程退出路径均包含；成员模型使用受控协议 fixture，不能视为真实模型验收。
+- `node --test tests/plugin.test.js tests/build.test.js`：14/14；终端定向回归 9/9。主 Agent 复核所有车道 diff，合同车道独立复核 CLI，确认车道独立复核打包，打包车道独立复核确认；发现的关闭竞态、EOF、现代 command 约束均完成修复后再验证。
+- `node scripts/smoke-plugin.js`：真实 Codex Desktop `0.162.0-alpha.17.2`，临时 CODEX_HOME 中安装与缓存启动 ready。移除源码 marketplace 插件目录后缓存仍独立工作；skill 与八个工具发现成功，viewer/runtime 均 0.4.1，模型目录读取、表单 remember default/required、取消阻止启动、合同校验、owner 释放均通过。第二块人类文本通过宿主协议转发，**不等于桌面 UI 已渲染**。未启动 turn 推理，`inferenceStarted:false`、`userConfigChanged:false`、`managedRuntimeExited:true`。
+- `git diff --check` 通过。覆盖率及宿主证据保存在本机临时日志 `/tmp/codex-teams-83cf-final-tests.log`、`/tmp/codex-teams-83cf-final-smoke.log`；临时安装与测试工作区在退出确认后清理。
+
+**未解决边界与下一步：** 正式用户缓存未重装，未发布/提交/推送，未运行真实模型推理或远程 CI。未读取或删除旧 dist 副本；`integrate()` 取消仍按既有 recovery-required 语义记录 integration_failed 并保留已应用改动，本轮不改产品语义。events/features/qualified 的兼容清理与更激进哈希缓存不在本轮范围。下一步可由用户构建并显式重装 0.4.1 正式缓存，验收桌面表单与第二块回执的实际渲染；真实模型质量/效率需另做同条件交付评测。
 
 ## 0.4.0 状态一致性修复（2026-10-13）
 
