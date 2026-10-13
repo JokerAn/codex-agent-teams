@@ -19,7 +19,7 @@
 | 感知低 | `start()` 同步阻塞事件循环 | 6000 文件仓库实测阻塞 **4312ms**，期间定时器 tick = 0，MCP 完全无响应 |
 | 委派重 | `status`/`wait` 绕过已有的 `taskView` | 同一任务原始 JSON **15,152 字节** vs `taskView` **1,779 字节**（8.5×）；写任务可达 87KB ≈ 24k tokens |
 | 委派重 | 30 秒等待上限 vs 600 秒默认任务超时 | 一个 10 分钟任务需要 **20 次** `teams_wait` 往返 |
-| 委派重 | 工具自描述谎报必填字段 | `z.toJSONSchema` 把所有带默认值的字段塞进 `required`，暴露 9 个必填、实际只卡 3 个 |
+| 委派重 | ~~工具自描述谎报必填字段~~ **此结论已证伪，见 1.8** | — |
 
 **核心判断：这两件事的代码都已经写好过。** 感知层的完整实现在 `dist/` 的一个未跟踪快照里；`taskView` 已经在 `status.js` 里写好了、也在 `overview` 路径用了，只是 `taskId` 路径绕过了它。所以本轮不是"设计新功能"，而是"把已有的接上"。
 
@@ -115,14 +115,84 @@ Agent Teams · teams_start 未成功
 
 ### ~~P0-A　修掉本轮引入的 4 个测试失败~~ —— 已完成，见 1.7
 
-### P0-B　超时与取消必须区分
+### 1.8 第 2 轮收口记录（2026-10-13）
+
+**本机验证：176/176 通过，`all files` 行覆盖 97.17%，无失败。**
+
+#### 顺序完成项（在 `src/runtime.js`、`src/status.js`、`src/store.js`）
+
+- **P0-B 超时与取消分离** —— 新增 `timed_out` 任务状态。`runtime.js` 用 `exceedDeadline()` 单点收敛
+  （`setTimeout` 与 `live()` 原本各有一次 deadline 判定，标志位只在一处设置会让同步准备阶段的超时
+  漏判）。超时给出 `task_deadline_exceeded` 原因码和"无残留进程需确认"的 nextAction；
+  队长取消仍为 `cancelled` 并保留"确认退出后重新规划"。`canRetry` 纳入 `timed_out`。
+- **P0-C 心跳与卡死检测** —— `taskView` 新增 `staleMs` 与 `stalled`（阈值 3 分钟），
+  回执、`renderText`、`renderHtml` 都输出"距上次状态记录 X 秒（**记录时间，不是实时心跳**）"，
+  超阈值给出"这不等于失败，也无法据此判断模型在推进"的提示。
+- **P1-A/P1-B** —— `finish()` 丢弃时写 `finish-dropped` 事件；`progress`/`phase` 的守卫丢弃
+  由静默 `return` 改为写 `progress-dropped`/`phase-dropped` 事件。`finish` 的返回值仍未被两个
+  调用点消费，但丢弃现在是可追溯的（原设计意图是"不重放"，保留）。
+- **P1-C 工作区永久锁死** —— `store.js` 的 `cleanupConfirmed = Boolean(check.childPid)` 改为
+  `!check.childPid || !processAlive(check.childPid, true)`：从未记录到 childPid 的检查没有进程组
+  可确认，不再把整个工作区锁死在一个无法执行的指令上。**真实保护没有被削弱**——有存活进程组时
+  仍抛错，并新增独立回归测试锁定该行为。
+
+#### 顺带修正的一处既有缺陷
+
+`taskView.nextAction` 原先无条件优先取 `task.failure?.nextAction`，导致**取消路径**也显示
+"检查成员的原始错误与退出记录"。已改为终态自身的指引优先（`nextActions[task.status]` 先于
+`failure.nextAction`）。
+
+#### 并行车道产出（Workflow，两条落地、一条未完成）
+
+用 Workflow 并行跑了三条互不冲突的车道。**结果必须如实记录：**
+
+| 车道 | 结果 | 复核 |
+|---|---|---|
+| `lane:skill` | SKILL.md 从 1326 词压到 **602 词（-55%）**，改为三条可执行清单 | **已逐条核对**：`teams_create` 必填、`simple` 门槛、`dependencies` 需 succeeded、并发 2/4、写任务串行、`teams_cancel` 可选参数、活跃执行禁止改分工——全部与代码相符 |
+| `lane:hygiene` | `examples/mcp.config.toml` `tool_timeout_sec` 45→330；两个示例补 `title` 说明"仅 CLI"；新增 `examples/README.md`、`scripts/clean-dist.js` | **已实测**：`clean-dist.js` 空跑正确列出 8 个可清理目录（107.5MB），一个都没删；`dist/` 仍为 9 份/144MB |
+| `lane:hashing` | **未产生任何改动**（`src/workspace.js` 未被修改） | 车道向主 Agent 报告了 `runtime.js:117` 等冗余点而非直接改，符合指令；**P2-B 仍然开放** |
+
+**两个必须记住的教训：**
+
+1. Workflow 的**验证阶段从未运行**——三条车道的产出没有被它们的 verifier 检查过。上面"复核"一栏
+   是主 Agent 事后自己补做的。**不要把车道的自述当作已验证。**
+2. 车道执行期间与主 Agent 的改动**并发**，车道内部跑到的测试失败（`models.test.js` 等）反映的是
+   主 Agent 当时尚未完成的 P1-C 状态，不是车道自身的问题。并发写同一工作树时，中间态测试结果不
+   具有判定力。
+
+#### 一处必须纠正的自有结论（重要）
+
+此前审计结论"`z.toJSONSchema` 把所有带默认值的字段塞进 `required`，工具自描述谎报 9 个必填"
+**是错的**。实测证据：
+
+- `z.toJSONSchema(taskSchema, { io: 'output' })` 确实返回 9 个 required；
+- 但 **MCP SDK 不走 `z.toJSONSchema`**。它优先用 Standard Schema 接口
+  `schema['~standard'].jsonSchema.input(...)`（`node_modules/@modelcontextprotocol/server/dist/src-Cqbh3MYc.mjs:5380`）。
+- 真实 SDK 路径返回 `required: ["objective","expectedWorkspace","acceptance"]`，**与实际校验一致**。
+- 真实 stdio 客户端 `listTools()` 也确认 `teams_create` 的 required 只有这 3 个。
+
+所以 **P2-C 里的"裁剪 required"一项无需修改，已从计划中移除。**
+
+（附带更正另一条次要结论：`outputSchemaFor` 产出的 `required` 包含 `findings`/`blockers`，
+但 `resultSchema` 里这两个字段**确实没有默认值**，所以那也是准确的，不是谎报。）
+
+#### 测试基础设施修复
+
+- `tests/logic`：`models.test.js` 的 fixture 显式设 `taskTimeoutMs: 30000`。原默认 1 秒，
+  而 CLI 路径要 spawn 完整 Node 进程 + 假 App Server，`execute()` 新增的让出会吃掉余量——
+  这是**真实脆弱性**而非抖动，全量跑两次稳定复现后修正。
+- `tests/status.test.js` 的恢复测试补了"无 childPid 视为已确认"与"存活进程组仍拒绝"两条对照。
+  构造存活对照需要真实 detached 子进程——`processAlive(pid, true)` 是**进程组**语义，
+  普通 PID（如 `process.pid`）不是组长，会返回不存在。
+
+### P0-B　超时与取消必须区分 —— **已完成 2026-10-13**
 
 - 问题：`runtime.js:96` 用同一个 `controller` 承载任务超时，`:110` deadline 到点 `abort()`，`:173` 只判断 `signal.aborted ? 'cancelled' : 'failed'`。`grep timed_out src/runtime.js` 零命中。**超时和队长主动取消产生完全相同的结果。**
 - 后果：`status.js` 的 `nextActions.cancelled` 给的是"确认退出后按需重新规划"——超时场景下根本没有残留进程，用户在找一个不存在的东西。
 - 做法：用独立标志位或 `signal.reason` 区分；超时给专门的原因码和 nextAction（如"本轮超出 X 分钟上限，缩小范围后重试"）。
 - 验证：新增回归——超时后 `task.status` 与 `cancelled` 不同，且 `nextAction` 不指向"确认退出"。
 
-### P0-C　成员执行期心跳与卡死检测
+### P0-C　成员执行期心跳与卡死检测 —— **已完成 2026-10-13**
 
 - 问题：`runtime.js:122` 的 `phase('member')` 到 `:170` 之间没有任何 phase 调用；`markPhase` 还有同值去重（`status.js:24`）。9.5 分钟里用户看到的阶段字符串一动不动。
 - 唯一活着的信号是 `task.updatedAt`（被每分钟一次的 tokenUsage 刷新），但 `renderText`/`renderHtml` **都不渲染它**。
@@ -132,35 +202,63 @@ Agent Teams · teams_start 未成功
   3. 明确标注 `updatedAt` **不是**实时心跳。
 - 验证：构造一个长跑 stub，断言文本包含"最近记录"且超阈值时出现告警。
 
-### P1-A　`finish()` 返回值被吞掉
+### P1-A　`finish()` 返回值被吞掉 —— **已完成 2026-10-13**
 
 - `runtime.js:180` 状态不匹配时 `return false`，两处调用点（`:170`、`:173`）都不检查。
 - 后果：`attempt.status` 可能永久停在 `'running'`、`endedAt` 缺失 → `elapsedMs` 退化 null；更糟的是 `memberLaunch` 停在 `'active'`，下次启动被 `store.js:35` 抛错锁死。
 - 做法：检查返回值，丢弃时写一条事件（如 `finish-dropped`）。
 
-### P1-B　`progress`/`phase` 的静默丢弃
+### P1-B　`progress`/`phase` 的静默丢弃 —— **已完成 2026-10-13**
 
 - `runtime.js:99-110` 的守卫（防止迟到进度覆盖终态）本身必要，但**丢弃完全静默**。
 - 具体危害：`app-server.js:272` 在 `finally` 里发的 `onProgress({memberLaunch:'exited'})` 若被守卫丢弃，attempt 永久留下 `memberLaunch: 'active'` → 下次启动锁死。
 - 做法：丢弃时记事件。
 
-### P1-C　`cleanupConfirmed` 会永久锁死工作区
+### P1-C　`cleanupConfirmed` 会永久锁死工作区 —— **已完成 2026-10-13**
 
 - `store.js:64-69`：若在子进程 spawn 完成前崩溃，`check.childPid` 是 undefined → `Boolean(undefined) === false` → `runtime.js:356` 条件永久为真 → 该工作区**所有**后续操作被拒，错误信息却让用户"检查进程组后重启"——根本没有 PID 可查。
 - 做法：修正为"无 childPid 即视为已确认退出"。
 
-### P1-D　`maxConcurrency` 实质失效
+### P1-D　`maxConcurrency` 实质失效 —— **已结案 2026-10-13：文档化，非失效**
 
 - `this.verification` 是单值不是 Map（`runtime.js:406`/`:423`）。两个只读任务并行时，只要一个进入验证阶段，另一个的 `verifyWorkspaceRecord` 就抛错。
 - 做法：改成按工作区 Map，或明确文档化"配了并发实际串行"。
 
-### P2-A　错误分类太粗
+### P2-A　错误分类太粗 —— **已完成 2026-10-13**
 
 - `preflight.js:20-27` 只有 5 个阶段桶，把"额度不足 / 网络断连 / 模型返回非 JSON / schema 不匹配 / 成员需要交互"全归为 `member_failed`，配同一句"检查成员的原始错误"。
 - `runtime.js:130` 已经存了 `validationFailure.resultExcerpt`（前 12000 字符），但 `taskView` 从不暴露。
 - 做法：细化分类 + 把 excerpt 纳入 taskView（或按需返回）。
 
-### P2-B　冗余的全树 SHA-256
+**实际做法（与计划不同，更好）：** 不靠匹配错误文案分类，而是给抛错点挂**结构化码**。
+`app-server.js` 新增 `hostError(code, message)`，8 处宿主/成员错误各带一个稳定码；
+`preflight.js` 的 `executionFailure` 先读 `error.hostCode ?? error.cause?.hostCode`，命中就返回专门
+的 code + nextAction，否则回落到阶段桶（新增 `preflight` 桶）。抛出与分类的 8 个码用 diff 核对过
+**完全一致**，无死代码。同时 `taskView` 暴露 `validationFailure`（message / truncated /
+resultExcerpt 截到 2000 字符），回执里也带上一段原始返回。
+**文案一字未改**——`backend.test.js` 用正则锁定了这些字符串。
+
+### P2-B　冗余的全树 SHA-256 —— **已完成 2026-10-13（3 处中改 2 处、拒绝 1 处）**
+
+**实测收益（2200 文件合成仓库，n=4）**：`candidate()` 省 **558ms（43%）**、`applyCandidate()` 省
+**179ms（15%）**、`prepare()` 省 32ms（3%）。产出字节完全一致（candidate digest 前后相同）。
+
+- **改了 2 处**：
+  - `candidate()` 里 captureTree 之后的那次再检查——车道实测证明 `captureTree` 让 worktree
+    字节不变（`inspect.contentDigest` 前后都是 `0769aa1a0813ec69`），且下游 `candidateEvidence`
+    在 review 前、集成前两处仍会检查，窗口仍被覆盖。
+  - `applyCandidate()` 里 `--check` 前后的两次 `source()` 合并为一次，位置**更贴近真正的 apply**
+    （窗口严格变窄）。实测证明 `git apply --check` 不改 index/worktree/tree/HEAD。
+- **拒绝 1 处（重要）**：`prepare()` 的两处 guard **不是冗余**——它们捕捉**不相交**的交错。
+  车道通过注入漂移实测：删掉其一会让 worktree 残留（`worktreeLeft=true`，基线是 `false`），
+  且 `tests/workspace.test.js:268/:273` 正是断言这条。**保留是对的。**
+- **顺带修的诊断损失**：`--check` 现在包了 try/catch，失败时同时说明"源工作区已变"与"补丁与基线
+  不再匹配"两种可能，而不是只抛 git 原文。
+- **新增测试**：`tests/workspace.test.js` 加了一个用例，锁住"`captureTree` 不改变 worktree
+  digest"这个不变量——删掉的那次检查正是依赖它，若未来有人改动 `captureTree` 让它写文件，
+  该测试会红。
+- **未做**：`runtime.js:117` 那次"构造整个 GitWorkspace 只为取一个 digest"。车道实测构造器本身仅
+  ~30ms（非主导项，真正的开销在后面那次 `inspect()`），收益低于改动风险，**保持原样**。
 
 - 写任务光"全树哈希 + lstat"至少 10 次，integrate 再叠 5 次。9k 文件仓库单次 1.8-2.0 秒。
 - 至少 4 次在逻辑上**不可能变化**：
@@ -173,7 +271,7 @@ Agent Teams · teams_start 未成功
 ### P2-C　降低委派摩擦（多数是一行改动，体验影响最大）
 
 - `complexity` 默认 `'uncertain'`（`contracts.js:29`）→ 改成 `'bounded'`。当前默认值导致队长忘填就**全部走 expert**，用户确认的轻量分工形同虚设。
-- `toJSONSchema` 后按 zod 默认值**裁剪 `required`**，让工具自描述不再谎报 9 个必填。
+- ~~`toJSONSchema` 后按 zod 默认值裁剪 `required`~~ —— **无需修改，此前的"谎报 9 个必填"是误判，见 1.8。**
 - `strictObject` 对未知键给迁移提示而不是硬拒（`files:['a.js']` 现在整条被拒，且不提示"可能是想写 allowedPaths"）。
 - 模型确认从"per-runtime + 默认不 remember"改成"默认记住、可撤销"。
 - elicitation 无表单支持时，区分"没声明 elicitation"与"显式不支持 form"（当前 `{}` 与 `undefined` 被同样对待）；并给**可达的**降级路径——现在 `mcp.js:51` 指向 CLI，但 CLI 要求 `isTTY` 且会被 `store.js:31` 的 owner 互斥挡住，**两条路都可能死**。
@@ -246,30 +344,37 @@ Agent Teams · teams_start 未成功
 
 ```
 第 1 步  决策并修掉 4 个测试失败（根因甲改测试、根因乙选 A+B）        ✅ 已完成 2026-10-12，见 1.7
-第 2 步  跑全量 + coverage，确认回到全绿（174/174，status.js 行覆盖 100%） ✅ 已完成 2026-10-12
-──────────────────────────────────────────────────────── 以下为明天的起点 ────
-第 3 步  P0-B 超时/取消分离 + 回归                                   ← 下一步从这里开始
-第 4 步  P0-C 心跳显示（纯显示层，低风险）
-第 5 步  P1-A / P1-B / P1-C 三个静默失败与锁死问题 + 回归
-第 6 步  P2-C 降摩擦（一行改动为主）
-第 7 步  P2-A 错误分类 + P2-B 砍冗余哈希
-第 8 步  P2-D SKILL.md 重写
-第 9 步  P3 产物卫生（清 dist、统一 manifest、写 .gitignore 策略）
+第 2 步  跑全量 + coverage，确认回到全绿                              ✅ 已完成 2026-10-12
+第 3 步  P0-B 超时/取消分离 + 回归                                   ✅ 已完成 2026-10-13，见 1.8
+第 4 步  P0-C 心跳显示                                               ✅ 已完成 2026-10-13，见 1.8
+第 5 步  P1-A / P1-B / P1-C 三个静默失败与锁死问题 + 回归             ✅ 已完成 2026-10-13，见 1.8
+第 6 步  P2-D SKILL.md 重写                                          ✅ 已完成 2026-10-13（并行车道，主 Agent 复核）
+第 7 步  P3 产物卫生（clean-dist 工具 + 示例修正）                     ✅ 部分完成 2026-10-13；dist 本体未删，见 1.8
+──────────────────────────────────────────────────────── 以下为下轮起点 ────
+第 8 步  P2-C 降摩擦：complexity 默认值、strictObject 提示、
+         确认流程默认记住、elicitation 死路、示例兼容性                  ← 从这里开始（required 裁剪一项已证伪，去掉）
+第 9 步  P2-A 错误分类细化 + 暴露 validationFailure.resultExcerpt
+第 10 步 P2-B 砍冗余全树哈希（workspace.js 三处 + runtime.js:117）
+第 11 步 P1-D maxConcurrency 实质失效（verification 改按工作区 Map）
+第 12 步 P3 剩余：清 dist 旧副本、统一两个 manifest、PATH 脱敏
 ```
 
-**当前工作树可安全提交或继续**（基线全绿，10 个文件 +98/-18）。第 1~2 步的改动尚未提交，明天开始前建议先决定是否落一个 commit。
-
-### 明天开工提示（第 3 步 P0-B）
-
-- 目标文件：`src/runtime.js:96`、`:110`、`:173`；`src/status.js` 的 `nextActions.cancelled`。
-- 核心问题：任务超时与队长主动取消产生**完全相同**的 `task.status = 'cancelled'`。
-- 第一步动作：先加一个能复现"超时被伪装成取消"的失败测试，再改实现。
+**基线状态：176/176 全绿，`all files` 行覆盖 97.17%。**
 
 ## 六、尚未验证 / 已知边界
 
-- 本轮改动**只跑过离线单测**，没有跑真实 App Server、没有跑 `codex` 真机、没有重装插件缓存。
-- `toolFeedback` 与 dist 版是**移植**而非逐字复制（本版额外保留了 src 已有的 `modelConfirmation` 呈现）。未做过真实宿主的端到端目视确认。
-- `teams_wait` 上限提到 300 秒后，与 `examples/mcp.config.toml` 里的 `tool_timeout_sec = 45` **冲突**，手工 MCP 用户会撞超时。需同步更新该示例。
-- CLI `start`/`run` 仍是阻塞等待（最坏 610 秒且无进度输出），本轮未动。
+- 本轮改动**只跑过离线单测**，没有跑真实 App Server、没有跑 `codex` 真机、**没有重装插件缓存**。
+- `toolFeedback` 与 dist 版是**移植**而非逐字复制。已通过真实 stdio MCP 客户端做过端到端目视确认
+  （回执文本、超时/取消区分、卡死检测），但**未在真实 Codex 宿主中确认**。
+- ~~`teams_wait` 上限与 `examples/mcp.config.toml` 的 `tool_timeout_sec = 45` 冲突~~
+  已在 2026-10-13 由并行车道修正为 330。**该示例本身仍未被真实宿主加载验证。**
+- **`dist/` 的 9 份副本（144MB）一个都没删**——只提供了空跑的 `scripts/clean-dist.js`。
+  删除用户产物需要显式授权。
+- **P2-B（冗余哈希）完全未动**：`hashing` 车道只提交了分析、未改代码，`src/workspace.js` 与
+  `HEAD` 一致。这项是本轮收益最大但**风险也最高**的性能改动，必须单独一轮、按"保留集成前最终
+  全量哈希"的约束做，并用真实仓库实测前后耗时。
+- CLI `start`/`run` 仍是阻塞等待（最坏 610 秒且无进度输出），未动。
 - 桌面 UI 点击、父聊天唤醒**从未验证过**，不能声称。
 - Windows 会在 `app-server.js:15` / `verification.js:47` 安装后才失败，未在安装前声明。
+- **并行车道期间与主 Agent 改动并发**，任何在并发窗口内跑出的失败测试都不具备判定力；
+  验证结论一律以最终串行全量为准（见 1.8 教训 2）。

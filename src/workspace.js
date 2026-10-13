@@ -210,7 +210,6 @@ export class GitWorkspace {
     const dir = join(this.managed, 'patches'); safeDirectory(dir);
     const patchPath = join(dir, `${record.id}.patch`);
     writeFileSync(patchPath, patch, { flag: 'wx', mode: 0o600 });
-    if (this.inspect(record).contentDigest !== audit.contentDigest) throw new Error('Candidate changed while capturing patch');
     return { tree, digest: audit.contentDigest, paths: audit.inputPaths, patchPath, patchDigest: sha(patch) };
   }
   candidateEvidence(record, candidate) {
@@ -222,10 +221,14 @@ export class GitWorkspace {
   }
   applyCandidate(record, candidate) {
     const patch = this.candidateEvidence(record, candidate);
+    // --check writes nothing. A failure here is either source drift on a file this patch touches, or a
+    // patch that no longer matches its own baseline; say both instead of surfacing git's raw text alone.
+    try { git(this.root, ['apply', '--check', '--binary', '-'], { input: patch }); }
+    catch (error) {
+      throw new Error(`Integration preflight rejected the patch: the source workspace changed since baseline, or the patch no longer matches its baseline. Git said: ${error.message}`);
+    }
+    // Fingerprint immediately before the real apply; apply does not stage, commit or merge.
     if (this.source().digest !== record.baseline.sourceDigest) throw new Error('Source workspace changed since baseline; integrate refused without modifying it');
-    git(this.root, ['apply', '--check', '--binary', '-'], { input: patch });
-    // Repeat the fingerprint after preflight; apply does not stage, commit or merge.
-    if (this.source().digest !== record.baseline.sourceDigest) throw new Error('Source changed during integration preflight');
     git(this.root, ['apply', '--binary', '-'], { input: patch });
     const actual = this.source();
     if (actual.head !== record.baseline.head || actual.indexDigest !== record.baseline.indexDigest || this.captureTree(this.root, actual.head) !== candidate.tree) throw new Error('Integration content or index differs; changes retained for recovery');

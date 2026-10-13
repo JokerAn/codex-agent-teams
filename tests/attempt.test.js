@@ -187,7 +187,9 @@ test('the task deadline also covers its bound command and failed receipts cannot
   const f = setup(t, undefined, { taskTimeoutMs: 3000 });
   const input = contract('setInterval(()=>{},1000)'); input.executionPlan.verification.timeoutMs = 10000;
   const task = await runTask(f, input);
-  assert.equal(task.status, 'cancelled'); assert.match(task.error, /Task deadline exceeded/);
+  assert.equal(task.status, 'timed_out'); assert.match(task.error, /Task deadline exceeded/);
+  assert.equal(task.failure.code, 'task_deadline_exceeded');
+  assert.match(task.failure.nextAction, /未检测到需确认的残留进程/);
   const workspace = f.runtime.workspaceStatus(task.attempts[0].workspaceId);
   assert.equal(workspace.verifications[0].status, 'cancelled'); assert.equal(workspace.verifications[0].cleanupConfirmed, true);
   f.runtime.removeWorkspace(workspace.id);
@@ -316,7 +318,7 @@ test('a synchronous preparation that exhausts the deadline never launches a memb
   let task;
   try { task = await runTask(f); }
   finally { GitWorkspace.prototype.prepare = prepare; }
-  assert.equal(task.status, 'cancelled'); assert.match(task.error, /Task deadline exceeded/); assert.equal(called, false);
+  assert.equal(task.status, 'timed_out'); assert.match(task.error, /Task deadline exceeded/); assert.equal(called, false);
   const workspace = f.runtime.workspaceStatus(task.attempts[0].workspaceId);
   assert.equal(workspace.verifications, undefined); f.runtime.removeWorkspace(workspace.id);
 });

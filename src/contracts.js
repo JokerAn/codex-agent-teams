@@ -22,6 +22,10 @@ export const configSchema = z.strictObject({
   }),
 });
 
+// Unknown keys are still rejected: an unrecognized field is either a typo (silently dropped work) or an
+// attempt to smuggle parent-chat history into a fresh thread. But a bare "Unrecognized key" tells the
+// caller nothing about what to write instead, so the message names the valid top-level fields.
+const topLevelFields = ['title', 'objective', 'expectedWorkspace', 'kind', 'complexity', 'acceptance', 'context', 'dependencies', 'profile', 'mode', 'executionPlan'];
 export const taskSchema = z.strictObject({
   title: text.max(80).optional(),
   objective: text.max(8000),
@@ -34,8 +38,25 @@ export const taskSchema = z.strictObject({
   profile: z.enum(['auto', 'expert', 'simple', 'qualified']).default('auto'),
   mode: z.enum(['read-only', 'workspace-write']).default('read-only'),
   executionPlan: z.strictObject({ dirtyPolicy: z.enum(['reject', 'snapshot']).default('reject'), verification: verificationSchema, preflight: preflightSchema.optional(), allowedPaths: inspectWorkspaceSchema.shape.allowedPaths }).optional(),
-}).superRefine((task, ctx) => {
-  if (task.mode === 'workspace-write' && (!task.executionPlan?.allowedPaths?.length || task.profile === 'qualified')) ctx.addIssue({ code: 'custom', message: 'Write tasks require auto/expert/simple, executionPlan.verification and allowedPaths' });
+}, { error: issue => {
+  if (issue.code !== 'unrecognized_keys') return undefined;
+  const known = new Set(topLevelFields);
+  const hint = issue.keys.filter(key => !known.has(key));
+  return `Unknown field(s): ${hint.join(', ')}. Accepted top-level fields: ${topLevelFields.join(', ')}. `
+    + 'To limit which files a write task may change, use executionPlan.allowedPaths (repository-relative); '
+    + 'the objective itself belongs in "objective". Unknown fields are rejected rather than ignored.';
+} }).superRefine((task, ctx) => {
+  if (task.mode !== 'workspace-write') return;
+  // Report the exact field that is missing instead of one combined sentence naming three at once.
+  if (!task.executionPlan?.allowedPaths?.length) {
+    ctx.addIssue({ code: 'custom', path: ['executionPlan', 'allowedPaths'], message: 'Write tasks require a non-empty executionPlan.allowedPaths (repository-relative paths or directories the member may change).' });
+  }
+  if (!task.executionPlan?.verification) {
+    ctx.addIssue({ code: 'custom', path: ['executionPlan', 'verification'], message: 'Write tasks require executionPlan.verification (command, args, timeoutMs, maxOutputBytes) so the result can be re-checked.' });
+  }
+  if (task.profile === 'qualified') {
+    ctx.addIssue({ code: 'custom', path: ['profile'], message: 'Write tasks cannot use the legacy qualified profile; use auto, expert or simple.' });
+  }
 });
 
 const criterion = z.strictObject({

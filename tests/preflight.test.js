@@ -5,7 +5,7 @@ import { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSyn
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { workspaceIdentity, assertWorkspace } from '../src/workspace.js';
-import { inspectExecution } from '../src/preflight.js';
+import { inspectExecution, executionFailure } from '../src/preflight.js';
 import { TaskRuntime } from '../src/runtime.js';
 import { TaskStore } from '../src/store.js';
 import { validateModelSelection, modelPolicyVersion } from '../src/models.js';
@@ -88,4 +88,44 @@ test('task binding prevents starting in another checkout and legacy unbound task
   runtime.config.workspace = f.repo;
   delete task.target; store.save(task, 'legacy-fixture');
   assert.throws(() => runtime.start(task.id), /Legacy task/);
+});
+
+test('host failures classify by stable code, not by message text', () => {
+  // Same phase, different causes: the old single "member_failed" bucket told the captain nothing.
+  const member = executionFailure(new Error('something broke'), 'member');
+  assert.equal(member.code, 'member_failed');
+
+  const coded = (code, message) => { const error = new Error(message); error.hostCode = code; return error; };
+  const cases = [
+    ['host_model_changed', 'host_model_changed'],
+    ['host_cwd_unconfirmed', 'host_cwd_unconfirmed'],
+    ['host_permissions_unconfirmed', 'host_permissions_unconfirmed'],
+    ['model_unavailable', 'member_model_unavailable'],
+    ['effort_unsupported', 'member_effort_unsupported'],
+    ['skill_or_mcp_missing', 'host_setup_incomplete'],
+    ['turn_incomplete', 'member_turn_incomplete'],
+    ['no_structured_result', 'member_no_result'],
+  ];
+  const seen = new Set();
+  for (const [hostCode, expected] of cases) {
+    const failure = executionFailure(coded(hostCode, 'x'), 'member');
+    assert.equal(failure.code, expected, `${hostCode} should map to ${expected}`);
+    assert.equal(failure.phase, 'member');
+    assert.ok(failure.nextAction.length > 10, `${hostCode} needs actionable guidance`);
+    seen.add(failure.code);
+  }
+  assert.equal(seen.size, cases.length, 'each cause must produce a distinct code');
+
+  // AggregateError (member failure + cleanup failure) keeps the cause readable: app-server.js's
+  // stopPreservingFailure passes { cause: failure.error }, and classification relies on it.
+  const aggregated = new AggregateError([coded('turn_incomplete', 'x'), new Error('cleanup')], 'combined', { cause: coded('turn_incomplete', 'x') });
+  assert.equal(executionFailure(aggregated, 'member').code, 'member_turn_incomplete');
+  // Without that cause there is no stable code to read, so the honest phase fallback must apply.
+  assert.equal(executionFailure(new AggregateError([new Error('a'), new Error('b')], 'combined'), 'member').code, 'member_failed');
+
+  // Preflight details still win, and unknown phases keep the honest fallback.
+  const detail = new Error('x'); detail.detail = { code: 'verification_executable_missing', phase: 'preflight', nextAction: 'install it' };
+  assert.equal(executionFailure(detail, 'member').code, 'verification_executable_missing');
+  assert.equal(executionFailure(new Error('x'), 'mystery').code, 'execution_failed');
+  assert.equal(executionFailure(new Error('x'), 'preflight').code, 'preflight_failed');
 });

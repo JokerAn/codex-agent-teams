@@ -43,7 +43,7 @@ export function signalGroup(pid, signal) {
 }
 
 /** One explicit command, raw bounded logs, managed Unix process group. No implicit shell. */
-export async function runVerification(spec, { cwd, logDir, signal, onSpawn = () => {} }) {
+export async function runVerification(spec, { cwd, logDir, signal, onSpawn = () => {}, onLaunch = () => {} }) {
   if (!['darwin', 'linux'].includes(process.platform)) throw new Error('Command verification supports macOS/Linux only');
   spec = verificationSchema.parse(spec);
   const startedAt = new Date().toISOString();
@@ -57,6 +57,10 @@ export async function runVerification(spec, { cwd, logDir, signal, onSpawn = () 
     if (signal?.aborted) return { ...base, status: 'cancelled', exitCode: null, signal: null, error: String(signal.reason?.message ?? 'Cancelled'), stdoutBytes: 0, stderrBytes: 0, stdoutDigest: digest(''), stderrDigest: digest(''), outputTruncated: false, cleanupConfirmed: true, endedAt: new Date().toISOString() };
     return await new Promise(resolve => {
       const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_') && !['NODE_OPTIONS', 'NODE_PATH', 'PWD', 'INIT_CWD'].includes(key)));
+      // Record that a launch was ATTEMPTED before spawning: a crash between these two points would
+      // otherwise leave a record that looks identical to "never started", and recovery could not tell a
+      // possibly-live process group from an absent one.
+      onLaunch();
       const child = spawn(spec.command, spec.args, { cwd, shell: false, detached: true, stdio: ['ignore', 'pipe', 'pipe'], env: { ...env, PWD: cwd, INIT_CWD: cwd } });
       let closed = false, done = false, exitCode = null, exitSignal = null, reason, failure, cleanupError, outputTruncated = false;
       const counts = [0, 0], hashes = [createHash('sha256'), createHash('sha256')];

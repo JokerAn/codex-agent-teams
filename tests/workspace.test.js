@@ -348,3 +348,23 @@ test('workspaces can be prepared from an existing linked worktree without touchi
   runtime.removeWorkspace(prepared.id);
   await runtime.close();
 });
+
+test('capturing a patch tree does not itself change what the worktree digest reports', t => {
+  // candidate() no longer re-inspects after captureTree because captureTree cannot move the worktree.
+  // If captureTree ever starts touching worktree files, that removal would silently reopen the window,
+  // so pin the invariant here rather than relying on the comment.
+  const { runtime } = fixture(t), prepared = runtime.prepareWorkspace();
+  const record = runtime.workspaceStatus(prepared.id);
+  const manager = new GitWorkspace(runtime.config.workspace);
+  writeFileSync(join(record.worktreePath, 'tracked.txt'), 'member edit\n');
+
+  const before = manager.inspect(record).contentDigest;
+  manager.captureTree(record.worktreePath, record.baseline.commit);
+  const after = manager.inspect(record).contentDigest;
+  assert.equal(after, before, 'captureTree must not change the worktree content digest');
+
+  // And the downstream guard still catches a change that happens after the candidate was produced.
+  const candidate = manager.candidate(record, ['tracked.txt']);
+  writeFileSync(join(record.worktreePath, 'tracked.txt'), 'edit after capture\n');
+  assert.throws(() => manager.candidateEvidence(record, candidate), /Candidate or patch evidence changed/);
+});

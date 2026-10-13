@@ -4,4 +4,10 @@
 command = "/absolute/path/to/node"
 args = ["/absolute/path/to/codex-agent-teams/src/cli.js", "mcp", "--config", "/absolute/path/to/teams.local.json"]
 startup_timeout_sec = 20
-tool_timeout_sec = 45
+
+# 必须大于 teams_wait 的等待上限，否则工具本身没超时、传输层先断开。
+# teams_wait 的 timeoutMs 上限为 300000（5 分钟），默认 10000（10 秒）；
+# 宿主按整个工具调用计时，还要算上返回前读取任务记录的开销。
+# 330 = 300 秒上限 + 30 秒余量；填 45 会让一次合法的长等待在 45 秒时被传输层切断，
+# 而成员其实还在运行（teams_wait 超时不取消成员）。
+tool_timeout_sec = 330

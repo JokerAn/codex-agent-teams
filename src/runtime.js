@@ -59,6 +59,16 @@ export class TaskRuntime {
   start(id, { retry = false, reason = '' } = {}) {
     if (this.closing) throw new Error('Runtime is closing');
     if (this.requireModelConfirmation && !this.modelConfirmation) throw new Error('User model confirmation required. Call teams_models with confirm=true before starting members.');
+    // `this.verification` is a single slot, and what it actually serializes is narrow: a manually
+    // requested check (verifyWorkspace, CLI `workspace verify`) against a new member, and two manual
+    // checks on two different worktrees. It does NOT limit concurrency of ordinary read-only tasks: a
+    // read-only contract normally carries no executionPlan, so `workspace` stays undefined in execute()
+    // and the verification block is never entered. A read-only task that does carry an executionPlan is
+    // `workspaceBound`, so the exclusive rule below already refuses to overlap it with anything. Both
+    // in-attempt (execute) and integration callers pass a binding, and verifyWorkspaceRecord refuses a
+    // bound check unless it is the sole active attempt, so lifting the slot to a per-workspace map would
+    // not make any documented concurrent read-only work newly possible. The limit is deliberate and
+    // recorded in docs/WORKSPACES.md ("带计划的任务本轮独占执行阶段，不建验证队列").
     if (this.verification) throw new Error('Wait for command verification to exit before starting members');
     for (const task of this.store.list()) { const attempt = task.attempts.at(-1); if (attempt?.cleanupConfirmed === false) throw new Error('Previous member/reviewer exit is unconfirmed; reopen after checking its process group'); }
     for (const workspace of this.store.listWorkspaces()) this.assertVerificationExited(workspace);
@@ -69,7 +79,7 @@ export class TaskRuntime {
     else throw new Error('Legacy task has no bound target workspace; create a new task.');
     if (this.modelConfirmation) assertWorkspace(this.modelConfirmation.target, target);
     if ((task.executionPlan && this.active.size) || [...this.active.values()].some(entry => entry.workspaceBound)) throw new Error('Verified-worktree tasks run exclusively until member and command exit');
-    const canRetry = ['failed', 'blocked', 'interrupted', 'cancelled'].includes(task.status);
+    const canRetry = ['failed', 'blocked', 'interrupted', 'cancelled', 'timed_out'].includes(task.status);
     if (task.status !== 'pending' && !(canRetry && retry && reason.trim())) throw new Error('Task is not pending, or explicit retry reason is missing.');
     if (this.active.has(id)) throw new Error('Previous attempt is still stopping');
     if (retry && (processAlive(task.attempts.at(-1)?.childPid, true) || processAlive(task.attempts.at(-1)?.machineReview?.childPid, true))) throw new Error('Previous member process group exit is unconfirmed');
@@ -95,21 +105,36 @@ export class TaskRuntime {
   }
   async execute(task, attempt, dependencies, controller) {
     const deadline = Date.now() + this.config.taskTimeoutMs;
-    const timer = setTimeout(() => controller.abort(new Error('Task deadline exceeded')), this.config.taskTimeoutMs);
-    const progress = update => {
+    // Only the runtime sets this. Captain cancellation arrives through the same AbortController, so the
+    // reason string alone is not a reliable discriminator; the flag is owned by whoever aborted.
+    let timedOut = false;
+    const exceedDeadline = () => {
+      if (timedOut) return;
+      timedOut = true;
+      controller.abort(new Error('Task deadline exceeded'));
+    };
+    const timer = setTimeout(exceedDeadline, this.config.taskTimeoutMs);
+    // Late updates after the attempt reached a terminal state must not overwrite it, but dropping them
+    // silently hid the fact that a member's exit receipt never landed (leaving `memberLaunch: active`
+    // behind). Record the drop instead of returning quietly.
+    const writable = () => {
       const current = this.store.get(task.id);
-      if (current.status !== 'running' || current.attempts.at(-1)?.id !== attempt.id) return;
+      return current.status === 'running' && current.attempts.at(-1)?.id === attempt.id ? current : null;
+    };
+    const progress = update => {
+      const current = writable();
+      if (!current) return this.store.save(this.store.get(task.id), 'progress-dropped');
       Object.assign(current.attempts.at(-1), update);
       this.store.save(current, 'execution-metadata');
     };
     const phase = name => {
-      const current = this.store.get(task.id);
-      if (current.status !== 'running' || current.attempts.at(-1)?.id !== attempt.id) return;
+      const current = writable();
+      if (!current) return this.store.save(this.store.get(task.id), 'phase-dropped');
       markPhase(current.attempts.at(-1), name);
       this.store.save(current, 'phase-changed');
     };
     const live = () => {
-      if (Date.now() >= deadline) controller.abort(new Error('Task deadline exceeded'));
+      if (Date.now() >= deadline) exceedDeadline();
       if (controller.signal.aborted) throw controller.signal.reason;
     };
     let execution, result, workspace;
@@ -175,14 +200,21 @@ export class TaskRuntime {
       this.finish(task.id, attempt.id, result.blockers.length || result.criteria.some(criterion => !criterion.satisfied) ? 'blocked' : 'awaiting_review', {
         result, execution: { ...execution, result: undefined } });
     } catch (error) {
-      this.finish(task.id, attempt.id, controller.signal.aborted ? 'cancelled' : 'failed', { error: error.message,
-        failure: executionFailure(error, this.store.get(task.id).attempts.at(-1).phase),
+      // A deadline overrun is not a captain cancellation: reporting it as "cancelled" told users to go
+      // look for a leftover process that never existed.
+      const status = timedOut ? 'timed_out' : controller.signal.aborted ? 'cancelled' : 'failed';
+      this.finish(task.id, attempt.id, status, { error: error.message,
+        failure: timedOut ? { code: 'task_deadline_exceeded', phase: this.store.get(task.id).attempts.at(-1).phase,
+          nextAction: `本轮超出 ${Math.round(this.config.taskTimeoutMs / 1000)} 秒上限；缩小任务范围或提高 taskTimeoutMs 后显式重试；未检测到需确认的残留进程。` }
+          : executionFailure(error, this.store.get(task.id).attempts.at(-1).phase),
         ...(result ? { result, execution: { ...execution, result: undefined } } : {}) });
     } finally { clearTimeout(timer); }
   }
   finish(id, attemptId, status, payload) {
     const task = this.store.get(id);
-    if (task.status !== 'running' || task.attempts.at(-1)?.id !== attemptId) return false;
+    // Returning false used to be ignored by both callers, which could leave the attempt stuck at
+    // "running" with no endedAt (and a memberLaunch that never became "exited"). Record the drop.
+    if (task.status !== 'running' || task.attempts.at(-1)?.id !== attemptId) { this.store.save(task, 'finish-dropped'); return false; }
     const cleanupConfirmed = !processAlive(task.attempts.at(-1)?.childPid, true) && !processAlive(task.attempts.at(-1)?.machineReview?.childPid, true);
     if (!cleanupConfirmed && status === 'awaiting_review') { status = 'failed'; payload = { ...payload, error: 'Member/reviewer process group exit is unconfirmed' }; }
     task.status = status;
@@ -412,6 +444,7 @@ export class TaskRuntime {
     entry.done = (async () => {
       try {
         const result = await runVerification(spec, { cwd: binding?.phase === 'integration' ? manager.root : record.worktreePath, logDir: join(logs, check.id), signal: controller.signal,
+          onLaunch: () => { check.launchAttempted = true; save('verification-launch-attempted'); },
           onSpawn: update => { Object.assign(check, update); save('verification-child-started'); } });
         Object.assign(check, result);
         if (check.cleanupConfirmed) {

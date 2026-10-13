@@ -48,7 +48,9 @@ export function createMcpServer(runtime, { observe, discoverModels } = {}) {
     try {
       const catalog = await discoverModels(), target = workspaceIdentity(catalog.workspace);
       const capabilities = server.server.getClientCapabilities()?.elicitation;
-      if (!capabilities || (!capabilities.form && Object.keys(capabilities).length)) throw new Error('Host does not support MCP form confirmation. Use the interactive CLI start/run; no models selected and no inference started.');
+      // Only a form-capable elicitation can ask the host user to choose models. A client that declares
+      // elicitation with no form support (or offers only URL mode) cannot be asked, so this fails closed.
+      if (!capabilities || (!capabilities.form && Object.keys(capabilities).length)) throw new Error('Host does not support MCP form confirmation. An interactive terminal can confirm instead, but it must run in a separate terminal AND this MCP session must not hold the workspace: finish or cancel active tasks, then close this session (the state store allows one owner per workspace). No models selected and no inference started.');
       const current = getRuntime();
       if (current.active.size || current.verification) throw new Error('Wait for active execution to exit before changing models.');
       const response = await ctx.mcpReq.elicitInput(modelSelectionForm(catalog, catalog.workspace));

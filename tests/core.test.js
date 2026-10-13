@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { TaskStore } from '../src/store.js';
 import { taskPrompt } from '../src/policy.js';
 import { setup, contract, report, approve, config, tick } from './helpers.js';
+import { taskView } from '../src/status.js';
 
 test('completion requires captain review before unlocking a dependency', async t => {
   const { runtime } = setup(t);
@@ -96,8 +97,24 @@ test('deadline cancels backend and records failure honestly', async t => {
   const task = runtime.create(contract);
   runtime.start(task.id);
   const state = await runtime.wait(task.id, 1000);
-  assert.equal(state.status, 'cancelled');
+  // A deadline overrun is reported as its own outcome, not as a captain cancellation.
+  assert.equal(state.status, 'timed_out');
   assert.match(state.error, /deadline/);
+  assert.equal(state.failure.code, 'task_deadline_exceeded');
+  assert.ok(!/确认退出/.test(state.failure.nextAction));
+});
+
+test('a captain cancellation stays distinct from a deadline overrun', async t => {
+  // Same AbortController, two different causes: the recorded outcome must not be interchangeable.
+  const backend = { run: ({ signal }) => new Promise((resolve, reject) => signal.addEventListener('abort', () => reject(signal.reason), { once: true })) };
+  const { runtime } = setup(t, backend, { taskTimeoutMs: 60000 });
+  const task = runtime.create(contract);
+  runtime.start(task.id);
+  const cancelled = await runtime.cancel(task.id);
+  assert.equal(cancelled.status, 'cancelled');
+  assert.notEqual(cancelled.failure?.code, 'task_deadline_exceeded');
+  assert.equal(taskView(cancelled).phaseLabel, '已取消');
+  assert.match(taskView(cancelled).nextAction, /确认退出/);
 });
 
 test('state has one owner and survives reopening', async t => {

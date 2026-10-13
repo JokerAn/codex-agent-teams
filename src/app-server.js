@@ -8,6 +8,16 @@ import { processAlive } from './store.js';
 import { signalGroup } from './verification.js';
 import { MEMBER_INSTRUCTIONS, WRITE_INSTRUCTIONS, REVIEW_INSTRUCTIONS } from './policy.js';
 
+/**
+ * Attach a stable machine code so failure classification never has to pattern-match on message text.
+ * `executionFailure` (preflight.js) reads it; the message stays human-readable for the captain.
+ */
+function hostError(code, message) {
+  const error = new Error(message);
+  error.hostCode = code;
+  return error;
+}
+
 /** App Server's line-delimited protocol (not MCP). One client owns one process group. */
 export class AppServerClient extends EventEmitter {
   constructor({ binary = 'codex', args = ['app-server', '--stdio'], cwd = process.cwd(), requestTimeoutMs = 15000, env = {} } = {}) {
@@ -144,16 +154,16 @@ async function startMemberThread(client, cwd, selection, signal, { mode = 'read-
       'sandbox_workspace_write.exclude_tmpdir_env_var': true, 'sandbox_workspace_write.exclude_slash_tmp': true,
     } : {}) }, ephemeral: true,
   }, signal);
-  if (started.model !== selection.model) throw new Error(`Model changed unexpectedly: ${started.model}`);
+  if (started.model !== selection.model) throw hostError('host_model_changed', `Model changed unexpectedly: ${started.model}`);
   let sameDirectory = false;
   try { sameDirectory = typeof started.cwd === 'string' && realpathSync(started.cwd) === realpathSync(cwd); }
   catch { /* Missing or inaccessible paths must fail before inference. */ }
-  if (!sameDirectory) throw new Error('Host did not confirm the requested working directory; refusing to start inference.');
+  if (!sameDirectory) throw hostError('host_cwd_unconfirmed', 'Host did not confirm the requested working directory; refusing to start inference.');
   const safe = mode === 'workspace-write'
     ? started.sandbox?.type === 'workspaceWrite' && started.sandbox.writableRoots?.length === 0 && started.sandbox.excludeSlashTmp === true && started.sandbox.excludeTmpdirEnvVar === true
     : started.sandbox?.type === 'readOnly';
   if (!safe || started.sandbox.networkAccess !== false || started.approvalPolicy !== 'never') {
-    throw new Error(`Host did not confirm ${mode} permissions; refusing to start inference.`);
+    throw hostError('host_permissions_unconfirmed', `Host did not confirm ${mode} permissions; refusing to start inference.`);
   }
   return started;
 }
@@ -189,15 +199,15 @@ export class CodexBackend {
       const profileChecks = [];
       for (const [name, profile] of Object.entries(profiles ?? {})) {
         const model = models.find(candidate => candidate.model === profile.model);
-        if (!model) throw new Error(`Configured ${name} model is unavailable: ${profile.model}`);
-        if (profile.effort && !model.efforts.includes(profile.effort)) throw new Error(`Configured ${name} effort is unsupported: ${profile.effort} (${profile.model})`);
+        if (!model) throw hostError('model_unavailable', `Configured ${name} model is unavailable: ${profile.model}`);
+        if (profile.effort && !model.efforts.includes(profile.effort)) throw hostError('effort_unsupported', `Configured ${name} effort is unsupported: ${profile.effort} (${profile.model})`);
         profileChecks.push({ profile: name, model: profile.model, effort: profile.effort ?? null, available: true });
       }
       let pluginCheck;
       if (plugin) {
         const { plugin: detail } = await client.request('plugin/read', { marketplacePath: plugin.marketplacePath, pluginName: plugin.pluginName });
         if (detail?.summary?.name !== plugin.pluginName || !detail.skills?.some(skill => ['team', `${plugin.pluginName}:team`].includes(skill.name)) || !detail.mcpServers?.includes('codex-agent-teams')) {
-          throw new Error(`Host did not discover the prepared team skill and MCP server (skills: ${detail?.skills?.map(skill => skill.name).join(', ') ?? 'none'}; MCP: ${detail?.mcpServers?.join(', ') ?? 'none'})`);
+          throw hostError('skill_or_mcp_missing', `Host did not discover the prepared team skill and MCP server (skills: ${detail?.skills?.map(skill => skill.name).join(', ') ?? 'none'}; MCP: ${detail?.mcpServers?.join(', ') ?? 'none'})`);
         }
         pluginCheck = { name: detail.summary.name, marketplace: detail.marketplaceName, skills: detail.skills.map(skill => skill.name), mcpServers: detail.mcpServers, installed: detail.summary.installed, enabled: detail.summary.enabled, mcpConnectionChecked: false };
       }
@@ -253,10 +263,10 @@ export class CodexBackend {
         wake = undefined;
       }
       if (fatal) throw fatal;
-      if (finalTurn.status !== 'completed') throw new Error(`Turn ${finalTurn.status}: ${finalTurn.error?.message ?? 'no successful result'}`);
+      if (finalTurn.status !== 'completed') throw hostError('turn_incomplete', `Turn ${finalTurn.status}: ${finalTurn.error?.message ?? 'no successful result'}`);
       const finalMessage = [...(finalTurn.items ?? [])].reverse().find(item => item.type === 'agentMessage' && item.phase !== 'commentary');
       const text = finalMessage?.text ?? messages.get(turnId);
-      if (!text) throw new Error('Completed turn has no final structured result');
+      if (!text) throw hostError('no_structured_result', 'Completed turn has no final structured result');
       return { result: JSON.parse(text), usage, threadId, turnId, actualModel: started.model ?? null };
     } catch (error) {
       failure = { error };

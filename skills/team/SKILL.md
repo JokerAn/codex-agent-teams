@@ -3,41 +3,63 @@ name: team
 description: Delegate bounded repository tasks with explicit contracts, isolated edits, real verification, independent expert review and captain approval. Accuracy and completion efficiency first.
 ---
 
-Read PRINCIPLES.md in this plugin. Use this workflow when delegation advances the authorized objective; do tiny tasks directly and keep urgent blocking decisions local. Never duplicate a member's work or copy the parent conversation.
+Read PRINCIPLES.md in this plugin. The captain — this chat's model — owns objective, split and judgement.
 
-All eight teams_* tools (including teams_models) must be available. If absent, follow README to pack/check or configure MCP. Pack/doctor do not install or infer; changing the user's Codex configuration requires their authorization. One actual runtime owns a workspace; avoid enabling a manual copy and plugin together.
+## 1. Delegate, or answer directly
 
-## User-visible feedback
+Delegate only when all four hold: the work is separable from what the captain is doing and does not block
+it; success fits testable acceptance criteria; evidence comes from something other than the member (a command
+exit, files, a cited observation); the result changes the outcome.
 
-Make plugin participation visible in the user's language. Tool traces alone are not sufficient.
+Otherwise do it directly — "Agent Teams 已检查；本次由主 Agent 直接处理，未启动成员。" — and never create a
+task to look busy. A status question ("插件工作了吗") is `teams_status({overview:true, limit:10})`, nothing
+more, and so are a one-step edit, a lookup, an urgent decision and work the captain already has context for.
+If dispatch is blocked, name the blocker rather than calling it an optional delegation.
 
-- When invoked, query `teams_status({overview: true, limit: 10})` once, report the actual target workspace (unknown is not the chat cwd), and report the responding viewer version/source separately from the recorded runtime version/source. This is observation, not permission to start a task. If the installed tool lacks overview, use its existing status interface and say version/phase details are unavailable; do not assume the source version is installed.
-- If you decide no delegation is useful, explicitly state “Agent Teams 已检查；本次由主 Agent 直接处理，未启动成员。” Do not create a task just to show activity.
-- After `teams_start` returns, announce “Agent Teams 已启动” with task label, short task ID, chosen model and actual role. Describe which work the main agent keeps and which work is delegated.
-- At meaningful changes, show the recorded phase, elapsed time and blockers using overview or existing receipts. For long-running work, include status in the main agent's regular progress updates, without busy polling. Never invent percentage progress, completed stages or unavailable usage.
-- At the end, provide a compact result card/table: task, accepted status, elapsed time, model, verification result and evidence entry. Distinguish awaiting_review, awaiting_integration and succeeded. State the plugin's actual contribution; a review task is not implementation.
-- For “插件工作了吗 / 查看团队状态”, answer from status overview. Distinguish an available plugin, an owner process that exists, tasks recorded as running, and tasks actually observed progressing. Unknown legacy metadata remains unknown.
-- If the user wants a visual view, the CLI can export a local HTML snapshot: `node src/cli.js status --config <config> --html <new.html>`. Generate it only when an artifact is useful. Use a new output filename and link the result. The page is a snapshot with search/expand interactions; regenerating is required for new records. It does not auto-refresh or start agents. `status --human` works beside an active MCP owner.
+## 2. Minimum viable contract
 
-## User model confirmation
+`teams_create` is strict; only `objective` and `acceptance` are required. `expectedWorkspace` must be the
+intended checkout path from the task context, never copied from plugin config — a mismatch means stop, not
+override.
 
-- Before starting any member, call teams_models to read the live Codex catalog, supported efforts, effective configured model, target workspace, and current session selection. Catalog default and effective config may differ. Neither identifies the actual captain model with certainty.
-- If confirmationRequired=true, call teams_models({confirm:true}). The HOST USER fills the form selecting expert and optional simple model/effort pairs, then checks confirmation. Tool arguments cannot provide model choices or approval. Do not fabricate a user answer, automatically accept elicitation, edit confirmation state, or use direct runtime APIs to bypass it.
-- The form confirms dispatch within this model plan, not each task individually. By default it expires on runtime restart. Only the HOST USER can opt into remembering this exact workspace in the form; valid saved choices are rechecked against live models, policy version and target identity before reuse. Never edit saved preferences or turn a declined form into a remembered approval. teams_models(forget=true) revokes the selection when the user requests it. Call confirm=true to change choices; active execution must finish first. Cancelling a change leaves the prior confirmed selection unchanged; initial cancellation leaves execution blocked.
-- Explain this requested confirmation comes from the user's model-selection requirement. On unsupported hosts, report the limitation and point to interactive CLI start/run. Do not silently use the configured model, a different model or a yes flag. CLI models only lists choices.
-- The captain is the current chat model chosen in the host; this plugin does not upgrade/switch it or prove it is a strong model. Ask the user to select their preferred capable captain in the host when necessary. Never pretend choosing expert changes the captain.
-- Present the final split with task, complexity, selected profile/model and reason. Simple implementation may use the confirmed simple model; independent review and explicit retries use the confirmed expert. Complex/uncertain/review tasks cannot explicitly request simple. A user can request expert for any task. Availability failure never authorizes silent substitution.
-- There is no automatic price/quality ranking. User confirmation is permission for the stated split, not evaluation evidence or a claim of savings.
+```json
+{ "objective": "Explain how src/runtime.js distinguishes a deadline overrun from a captain cancellation.",
+  "expectedWorkspace": "/abs/path/to/checkout", "kind": "analysis", "complexity": "bounded",
+  "acceptance": ["Each branch is cited at file:line.", "The two statuses are contrasted."] }
+```
 
-## Delegation workflow
+`acceptance` is the contract: the member returns every criterion verbatim, in order, with evidence, and the
+captain reviews against those same strings. `kind` defaults to `analysis`; `review` evaluates,
+`implementation` edits. `complexity: simple` is only for clearly simple non-review work and is the sole gate
+into the confirmed simple model — retries always run expert. Write tasks add `mode: "workspace-write"`,
+`executionPlan.allowedPaths` and `.verification` (`command`, `args`, `timeoutMs`, `maxOutputBytes`); never
+declare files the member must create. `dependencies` must already be `succeeded`. Verified-worktree tasks run
+exclusively; read-only work uses concurrency (default 2, max 4).
 
-1. Define objective, original acceptance criteria, necessary context and existing dependencies. Use teams_create. Defaults are auto/read-only. First discover models and obtain the user form confirmation, or use a valid selection explicitly remembered by the user. Supply expectedWorkspace from the intended absolute task checkout; compare it with the reported target, and stop delegation on mismatch instead of copying the configured path to bypass it. Set complexity=simple only for a clearly simple task; bounded alone does not mean simple. auto routes simple non-review tasks to the confirmed simple model, otherwise to expert. profile=expert explicitly requests expert. Do not rank models by name or price. Legacy qualified routing still requires evaluation evidence.
-2. For edits, explicitly set mode=workspace-write, profile=auto (or expert when requested/needed), and executionPlan containing dirtyPolicy, allowedPaths and one verification command/args/deadline. Restrict paths to the intended files/directories. Default reject refuses dirty source; snapshot deliberately captures its current contents without changing index/HEAD. Only execute commands covered by the user's authorization. No dependency installation is implicit. executionPlan.preflight may declare requiredFiles and nodeModules that must already exist; runtime checks these and the verification executable in the prepared worktree before inference. Do not declare outputs the member is supposed to create.
-3. Use teams_start on ready tasks. The runtime creates a new worktree per attempt, runs the member, audits scope, runs verification and independently reviews write changes with expert in a fresh read-only thread. Workspace tasks currently run exclusively; ordinary read-only work can use the configured concurrency. Do separate useful work, then bounded teams_wait when necessary; do not busy-poll.
-4. awaiting_review is a report, not success. Inspect original evidence, current patch path, verification logs and machineReview. Use teams_review for the exact latest attemptId and EVERY original criterion with concrete evidence. Runtime checks current binding/files/logs too. A failing command/reviewer cannot be rubber-stamped. Passing a read-only task succeeds; passing a write task yields awaiting_integration.
-5. Integrate only when applying the patch is within the user's authorized objective. Inspect the concrete patch and call teams_integrate with latest taskId/attemptId. It refuses source drift, applies only this patch without staging/commit/push, then verifies source. Use teams_wait; succeeded now means captain-approved and integrated with passing source verification. Do not introduce extra human approval when session authorization already covers the change.
-6. Missing context needs a better contract. Explicit bounded retries require new reason, use expert, preserve old artifacts and capture a new worktree. Never replay stale review/results. integration_failed retains applied source edits; inspect source/logs before planning a repair, never blindly reapply. Cancel waits for managed execution; old live groups block recovery rather than being killed by PID alone.
-7. Cancel unneeded tasks. After terminal completion, teams_cancel with cleanup=true and discard=true explicitly removes the latest changed worktree, retaining records/logs and a succeeded task's status. Without discard, changed files are preserved. Old artifacts may be cleaned via CLI after the MCP runtime closes. Do not race a CLI owner against an active MCP owner.
-8. Report outcomes, evidence, uncertainty, elapsed time and host usage. Distinguish protocol fixtures, real model execution, command results and captain attestation. Never claim savings or general quality from one smoke.
+Before `teams_start`, call `teams_models`; if `confirmationRequired`, call `teams_models({confirm:true})` and
+let the HOST USER fill the form — you cannot supply the answer or accept it for them. Nothing can change the
+selection while a member or verification is active; wait for exit or cancel first.
 
-Worktree sharing is not filesystem virtualization. Host write sandbox limits the worktree; allowedPaths is an audited delivery gate, not per-file syscall permissions. No recursive agents, automatic commit/push, background captain or parent-chat wake guarantee. This workflow adds quality gates, not a per-task user approval ceremony.
+## 3. What to report
+
+Every tool returns raw JSON and then a receipt naming phase, next actor and next action. **Relay the
+receipt**, never reconstruct progress from raw fields, and never invent a percentage, stage or usage figure
+the record does not carry. The three sentences that matter:
+
+1. **Before starting** — what the captain keeps, what the member delivers, model and effort, and the
+   confirmation scope (this runtime, or a workspace the user chose to remember).
+2. **When it lands** — phase, elapsed time and next actor, verbatim from the receipt. `awaiting_review` is a
+   report, not success; `awaiting_integration` means an approved patch is not applied. Only `succeeded` is
+   accepted — for writes, applied and re-verified in the source.
+3. **Evidence** — command result, independent review result and captain verdict as three separate facts. A
+   review task is not implementation; captain attestation is not machine verification.
+
+`teams_status({taskId})` and `teams_wait` are compact by default (`verbose:true` for raw attempt fields);
+`teams_wait`'s timeout (max 300000) expiring does not cancel the member, and `timed_out` is not `cancelled`.
+`teams_review` takes the latest `attemptId` and every original criterion; `teams_integrate` only in the
+authorized objective (it refuses source drift, never commits or pushes); `teams_cancel` takes `cleanup:true`
+and `discard:true` only to discard the edits. `integration_failed` keeps the applied source edits — inspect
+before any repair.
+
+Worktrees are not filesystem virtualization; `allowedPaths` is a delivery gate, not per-file permissions.
+No recursive agents, automatic commit/push or background captain.

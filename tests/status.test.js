@@ -4,6 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { setTimeout as delay } from 'node:timers/promises';
 import { TaskStore } from '../src/store.js';
 import { TaskRuntime } from '../src/runtime.js';
 import { pluginIdentity, readSnapshot, overview, taskView, renderHtml, renderText, markPhase, toolFeedback } from '../src/status.js';
@@ -119,6 +120,29 @@ test('status separates member/reviewer usage, command receipts and captain autho
   assert.equal(view.captainReview,'pass'); assert.equal(view.evidence.patchPath,'/patch');
 });
 
+test('a member that broke the contract exposes what it actually returned', () => {
+  // runtime.js records validationFailure with the raw structured result; without surfacing it a schema
+  // mismatch left the captain with only "检查成员的原始错误" and no way to see what the member sent.
+  const task = { id:'t', objective:'audit', status:'failed', mode:'read-only', dependencies:[], error:'Result must address every acceptance criterion in the original order.',
+    failure:{ code:'member_failed', phase:'member', nextAction:'检查成员的原始错误与退出记录；明确新证据后再重试。' },
+    attempts:[{ id:'a', status:'failed', startedAt:'2026-10-13T00:00:00Z', endedAt:'2026-10-13T00:00:01Z', phase:'failed',
+      selection:{ model:'m', effort:'high' },
+      validationFailure:{ message:'Result must address every acceptance criterion in the original order.', resultExcerpt:'{"summary":"wrong shape","criteria":[]}', truncated:false } }] };
+  const view = taskView(task);
+  assert.equal(view.validationFailure.message, 'Result must address every acceptance criterion in the original order.');
+  assert.match(view.validationFailure.resultExcerpt, /wrong shape/);
+  const receipt = toolFeedback('teams_status', view);
+  assert.match(receipt, /成员返回的结构不合合同/);
+  assert.match(receipt, /wrong shape/);
+
+  // Long member output stays bounded in the compact view.
+  const long = taskView({ ...task, attempts:[{ ...task.attempts[0], validationFailure:{ message:'x', resultExcerpt:'y'.repeat(9000), truncated:true } }] });
+  assert.equal(long.validationFailure.resultExcerpt.length, 2000);
+  assert.equal(long.validationFailure.truncated, true);
+  // A task with no such failure keeps the field null rather than inventing one.
+  assert.equal(taskView({ id:'ok', objective:'o', status:'succeeded', mode:'read-only', dependencies:[], attempts:[] }).validationFailure, null);
+});
+
 test('HTML escapes repository-derived content, has no external requests and labels snapshots', () => {
   const task = {id:'x', objective:'<img src=x onerror=alert(1)>',status:'failed',mode:'read-only',dependencies:[],error:'</script><script>alert(2)</script>',result:{summary:'<b>untrusted</b>',blockers:[]},attempts:[]};
   const value=overview({tasks:[task],workspaces:[],owner:null,stateExists:true});
@@ -185,7 +209,12 @@ test('recovery preserves execution endpoints and records observation separately 
       }] }, 'fixture');
     }
   }
-  store.saveWorkspace({ id: 'w', status: 'ready', verifications: [{ id: 'v', status: 'running', startedAt }] }, 'fixture');
+  // Two recovery shapes: a verification that never recorded a child (the case that used to lock the
+  // workspace forever) and one whose recorded child group is already gone.
+  store.saveWorkspace({ id: 'w', status: 'ready', verifications: [
+    { id: 'v', status: 'running', startedAt },
+    { id: 'v-exited', status: 'running', startedAt, childPid: 2, cleanupConfirmed: false },
+  ] }, 'fixture');
   store.close();
   t.mock.timers.enable({ apis: ['Date'], now: Date.parse(observedAt) });
   const recovered = new TaskStore(f.path);
@@ -208,11 +237,15 @@ test('recovery preserves execution endpoints and records observation separately 
         assert.equal(attempt.integration.status, 'recovery_required');
       }
     }
-    const check = recovered.getWorkspace('w').verifications[0];
-    assert.equal(check.status, 'interrupted');
-    assert.equal(check.endedAt, undefined);
-    assert.equal(check.recoveryObservedAt, observedAt);
-    assert.equal(check.cleanupConfirmed, false);
+    const checks = recovered.getWorkspace('w').verifications;
+    for (const check of checks) {
+      assert.equal(check.status, 'interrupted');
+      assert.equal(check.endedAt, undefined);
+      assert.equal(check.recoveryObservedAt, observedAt);
+      // A check that never recorded a childPid has no process group left to confirm; leaving it false
+      // permanently locked the workspace behind an unactionable "inspect the process group" error.
+      assert.equal(check.cleanupConfirmed, true);
+    }
     const html = renderHtml(overview(readSnapshot(f.root)));
     assert.match(html, /恢复观察：2026-10-12T02:00:00.000Z/);
     assert.match(html, /中断，结束时间未知/);
@@ -220,6 +253,21 @@ test('recovery preserves execution endpoints and records observation separately 
   const reopened = new TaskStore(f.path);
   try { assert.equal(reopened.get('integrating-true').attempts[0].phases.length, 3); }
   finally { reopened.close(); }
+});
+
+test('recovery still refuses a verification whose recorded child is alive', async t => {
+  const { spawn } = await import('node:child_process');
+  const f = fixture(t), store = new TaskStore(f.path);
+  // processAlive(pid, true) probes the process GROUP, so the fixture needs a real detached leader.
+  const child = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 20000)'], { detached: true, stdio: 'ignore' });
+  t.after(() => { try { process.kill(child.pid, 'SIGKILL'); } catch { /* already gone */ } });
+  await delay(200);
+  store.saveWorkspace({ id: 'w', status: 'ready', verifications: [
+    { id: 'v-live', status: 'running', startedAt: new Date().toISOString(), childPid: child.pid, cleanupConfirmed: false },
+  ] }, 'fixture');
+  store.close();
+  // The fix must not weaken the real protection: a live recorded process group still blocks recovery.
+  assert.throws(() => new TaskStore(f.path), /may have a live process group/);
 });
 
 test('tool receipts describe recorded facts for every tool shape without inventing progress', () => {

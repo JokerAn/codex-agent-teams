@@ -76,7 +76,9 @@ async function mcpFixture(t, handler, mode = 'catalog-paged') {
   const binary = join(dir, 'fake-codex');
   writeFileSync(binary, `#!/usr/bin/env node\nprocess.argv[2]=${JSON.stringify(mode)};await import(${JSON.stringify(new URL('./fixtures/fake-app-server.js', import.meta.url).href)});\n`, { mode: 0o755 });
   const configPath = join(dir, 'config.json');
-  writeFileSync(configPath, JSON.stringify({ ...config, workspace: dir, codexBin: binary }));
+  // The CLI path spawns a full Node process plus the fake App Server, and execution now yields once
+  // before preparing. A 1s task deadline could expire mid-launch, turning this fixture into a flake.
+  writeFileSync(configPath, JSON.stringify({ ...config, workspace: dir, codexBin: binary, taskTimeoutMs: 30000 }));
   const clients = [];
   t.after(async () => { await Promise.all(clients.map(client => client.close())); rmSync(dir, { recursive: true, force: true }); });
   const connect = async () => {

@@ -65,7 +65,13 @@ export class TaskStore {
             if (check.status !== 'running' && check.cleanupConfirmed !== false) continue;
             if (processAlive(check.childPid, true)) throw new Error(`Verification ${check.id} may have a live process group (${check.childPid}); confirm exit before recovery.`);
             if (check.status === 'running') { check.status = 'interrupted'; check.error = 'Previous runtime exited; verification was not completed. No automatic replay.'; check.recoveryObservedAt = new Date().toISOString(); }
-            check.cleanupConfirmed = Boolean(check.childPid);
+            // A launch was attempted but its pid never reached disk: the process group may be alive, so
+            // fail closed exactly like an attempt with an unknown member launch identity. Permanently
+            // refusing every operation with no way out was the bug; silently assuming safety is worse.
+            if (check.launchAttempted && !Number.isSafeInteger(check.childPid)) {
+              throw new Error(`Verification ${check.id} has an unknown launch identity; inspect processes for this workspace before recovery. No automatic replay.`);
+            }
+            check.cleanupConfirmed = !processAlive(check.childPid, true);
             recovered = true;
           }
           if (recovered) this.saveWorkspace(workspace, 'verification-recovered', false);

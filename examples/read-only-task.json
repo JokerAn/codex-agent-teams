@@ -1,4 +1,5 @@
 {
+  "title": "仅 CLI 示例（MCP 需自行补 expectedWorkspace）：分析测试入口与验证缺口",
   "objective": "分析当前仓库的测试入口和一个最值得补充的验证点",
   "kind": "analysis",
   "complexity": "bounded",
