@@ -7,6 +7,11 @@ Read PRINCIPLES.md in this plugin. The captain — this chat's model — owns ob
 
 ## 1. Delegate, or answer directly
 
+First assess the requested change, dependencies and independent parts. Choose the member count from
+testable independent tasks and the available capacity (default 2, max 4), not a fixed team size. Keep an
+independent part for the captain when useful. Read-only work can run concurrently; write tasks remain
+exclusive, so do not promise simultaneous writers or modify their source baseline while they run.
+
 Delegate only when all four hold: the work is separable from what the captain is doing and does not block
 it; success fits testable acceptance criteria; evidence comes from something other than the member (a command
 exit, files, a cited observation); the result changes the outcome.
@@ -22,10 +27,15 @@ Derive `cwd` as the absolute intended checkout from this chat's current director
 target. Do not ask the user for a path already known, copy the plugin/cache directory, or claim the host
 supplies the chat cwd automatically: the captain passes it from context. A target mismatch means stop.
 
-Call `teams_models({workspace: cwd})`; if `confirmationRequired`, call
-`teams_models({workspace: cwd, confirm:true})` and let the HOST USER submit the form. Remembered choices reuse
-only this project's valid selection; a new project needs its own initial confirmation. Never supply answers.
-Selection changes require that project's member and verification processes to exit first.
+Call `teams_models({workspace: cwd})` to read live model identifiers and supported efforts. The captain can
+choose expert and optional simple roles explicitly and pass `models: {expert: {model, effort}, simple?:
+{model, effort}}` to `teams_start`. Human model selection is optional: `confirmationRequired` means there
+is no valid human preference, not that explicit captain dispatch is blocked. If a valid preference exists,
+reuse it by omitting models; otherwise choose and explain an expert model from the live catalog. Do not
+infer model quality from a route name or silently downgrade. The optional `teams_models(confirm:true)`
+form belongs to the HOST USER; never fill it in or treat decline as consent. Preferences are project scoped.
+Captain choices are recorded per attempt, not persisted as human preferences. Changing human preferences
+requires that project's member and verification processes to exit first.
 
 `teams_create` requires `objective`, `acceptance` and `expectedWorkspace`; the captain fills the known path:
 
@@ -38,7 +48,9 @@ Selection changes require that project's member and verification processes to ex
 `acceptance` is the contract: the member returns every criterion verbatim, in order, with evidence, and the
 captain reviews against those same strings. `kind` defaults to `analysis`; `review` evaluates,
 `implementation` edits. `complexity: simple` is only for clearly simple non-review work and is the sole gate
-into the confirmed simple model — retries always run expert. Write tasks add `mode: "workspace-write"`,
+into the selected simple role. Optional task `model`/`effort` explicitly overrides the member choice;
+effort requires model, and review tasks must match expert. Retries ignore task overrides and use the expert
+role supplied for that retry. Invalid model/effort combinations fail before inference. Write tasks add `mode: "workspace-write"`,
 `executionPlan.allowedPaths` and `.verification` (`command`, `args`, `timeoutMs`, `maxOutputBytes`); never
 declare files the member must create. `dependencies` must already be `succeeded`. Verified-worktree tasks run
 exclusively; read-only work uses concurrency (default 2, max 4).
@@ -57,7 +69,7 @@ receipt**, never reconstruct progress from raw fields, and never invent a percen
 the record does not carry. The three sentences that matter:
 
 1. **Before starting** — what the captain keeps, what the member delivers, model and effort, and the
-   confirmation scope (this runtime, or a workspace the user chose to remember).
+   selection source (explicit captain dispatch for this attempt, or a valid human preference and its scope).
 2. **When it lands** — phase, elapsed time and next actor, verbatim from the receipt. `awaiting_review` is a
    report, not success; `awaiting_integration` means an approved patch is not applied. Only `succeeded` is
    accepted — for writes, applied and re-verified in the source.

@@ -8,7 +8,7 @@ import { taskSchema, reviewSchema, validateResult, modelRolesSchema } from './co
 import { selectProfile, taskPrompt } from './policy.js';
 import { GitWorkspace, prepareWorkspaceSchema, inspectWorkspaceSchema, removeWorkspaceSchema, workspaceIdentity, assertWorkspace } from './workspace.js';
 import { inspectExecution, executionFailure } from './preflight.js';
-import { modelPolicyVersion, validateModelSelection } from './models.js';
+import { modelPolicyVersion, validateModelSelection, validateDispatchModels, validateDispatchModel } from './models.js';
 
 export class TaskRuntime {
   constructor(store, backend, config, { requireModelConfirmation = false } = {}) {
@@ -50,15 +50,19 @@ export class TaskRuntime {
     if (new Set(contract.dependencies).size !== contract.dependencies.length) throw new Error('Duplicate dependencies');
     // Dependencies can only reference existing immutable contracts: cycles cannot be introduced.
     for (const id of contract.dependencies) this.store.get(id);
-    if (!this.requireModelConfirmation || this.modelConfirmation) selectProfile(contract, this.config);
+    // Public dispatch may supply different attempt-local roles at start; old preferences must not
+    // reject a valid immutable contract before that explicit choice is known.
+    if (!contract.model && !this.requireModelConfirmation) selectProfile(contract, this.config);
     if (new Set(contract.acceptance).size !== contract.acceptance.length) throw new Error('Duplicate acceptance criteria');
     const task = { ...contract, target, id: randomUUID(), status: 'pending', attempts: [], createdAt: new Date().toISOString() };
     return this.store.save(task, 'created');
   }
   status(id) { return id ? this.store.get(id) : this.store.list(); }
-  start(id, { retry = false, reason = '' } = {}) {
+  start(id, { retry = false, reason = '', models, catalog } = {}) {
     if (this.closing) throw new Error('Runtime is closing');
-    if (this.requireModelConfirmation && !this.modelConfirmation) throw new Error('User model confirmation required. Call teams_models with confirm=true before starting members.');
+    if (this.requireModelConfirmation && !this.modelConfirmation && !models) throw new Error('User model confirmation or explicit captain models required. Pass models to teams_start, or optionally call teams_models with confirm=true.');
+    if (models && !catalog) throw new Error('Explicit captain models require a live catalog before starting members.');
+    const profiles = models ? validateDispatchModels(models, catalog) : this.config.profiles;
     // `this.verification` is a single slot, and what it actually serializes is narrow: a manually
     // requested check (verifyWorkspace, CLI `workspace verify`) against a new member, and two manual
     // checks on two different worktrees. It does NOT limit concurrency of ordinary read-only tasks: a
@@ -87,9 +91,13 @@ export class TaskRuntime {
     const dependencies = task.dependencies.map(dep => this.store.get(dep));
     if (dependencies.some(dep => dep.status !== 'succeeded')) throw new Error('Dependencies must pass review before execution.');
     // A rejected/failed cheaper run never silently repeats on a cheaper route.
-    const selection = selectProfile(retry ? { ...task, profile: 'expert' } : task, this.config);
+    const selection = selectProfile(retry ? { ...task, profile: 'expert', model: undefined, effort: undefined } : task, { ...this.config, profiles });
+    if (catalog) {
+      validateDispatchModel(selection, catalog);
+      validateDispatchModel(profiles.expert, catalog);
+    }
     const attempt = { id: randomUUID(), status: 'running', startedAt: new Date().toISOString(), selection, reason,
-      reviewerSelection: { ...this.config.profiles.expert }, ...(this.modelConfirmation ? { modelConfirmation: structuredClone(this.modelConfirmation) } : {}) };
+      reviewerSelection: { ...profiles.expert }, ...(models ? { dispatch: { source: 'captain-explicit', profiles: structuredClone(profiles), target, validatedAt: new Date().toISOString() } } : this.modelConfirmation ? { modelConfirmation: structuredClone(this.modelConfirmation) } : {}) };
     markPhase(attempt, task.executionPlan ? 'preparing' : 'member', attempt.startedAt);
     task.attempts.push(attempt);
     task.status = 'running';
@@ -101,7 +109,7 @@ export class TaskRuntime {
     entry.done = this.execute(task, attempt, dependencies, controller).finally(() => this.active.delete(id));
     return { taskId: id, attemptId: attempt.id, status: 'running', title: task.title ?? task.objective.slice(0, 80),
       kind: task.kind, selection, reviewerSelection: task.mode === 'workspace-write' ? attempt.reviewerSelection : null,
-      confirmationScope: attempt.modelConfirmation?.scope ?? null, target };
+      confirmationScope: attempt.modelConfirmation?.scope ?? null, dispatchSource: attempt.dispatch?.source ?? null, target };
   }
   async execute(task, attempt, dependencies, controller) {
     const deadline = Date.now() + this.config.taskTimeoutMs;

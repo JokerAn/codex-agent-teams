@@ -189,7 +189,7 @@ test('App Server enforces write permission echo and reviewer receives read-only 
   await assert.rejects(new CodexBackend({ binary: process.execPath, args: [fixturePath, 'unsafe-write'], requestTimeoutMs: 1000 }).run({ cwd: f.repo, selection: f.config.profiles.expert, acceptance, prompt: JSON.stringify({ acceptance }), signal: controller.signal, mode: 'workspace-write' }), /did not confirm/);
 });
 
-test('MCP write contract -> asynchronous integration stays available through the existing client tools', async t => {
+for (const captainModels of [false, true]) test(`MCP write contract -> asynchronous integration with ${captainModels ? 'explicit captain models without forms' : 'human preferences'}`, async t => {
   const { Client } = await import('@modelcontextprotocol/client');
   const { StdioClientTransport } = await import('@modelcontextprotocol/client/stdio');
   const f = fixture(t); await f.runtime.close();
@@ -197,8 +197,8 @@ test('MCP write contract -> asynchronous integration stays available through the
   const fixturePath = new URL('./fixtures/fake-app-server.js', import.meta.url).href;
   writeFileSync(binary, `#!/usr/bin/env node\nprocess.argv[2]='write-runtime';await import(${JSON.stringify(fixturePath)});\n`, { mode: 0o755 });
   const config = join(f.root, 'config.json'); writeFileSync(config, JSON.stringify({ ...f.config, codexBin: binary }));
-  const client = new Client({ name: 'write-tools', version: '0.1.0' }, { capabilities: { elicitation: { form: {} } } });
-  client.setRequestHandler('elicitation/create', async () => ({ action: 'accept', content: {
+  const client = new Client({ name: 'write-tools', version: '0.1.0' }, { capabilities: captainModels ? {} : { elicitation: { form: {} } } });
+  if (!captainModels) client.setRequestHandler('elicitation/create', async () => ({ action: 'accept', content: {
     expert: JSON.stringify({ model: 'test-model', effort: 'high' }),
     simple: JSON.stringify({ model: 'configured-model', effort: 'high' }), confirm: true, remember: false,
   } }));
@@ -207,13 +207,17 @@ test('MCP write contract -> asynchronous integration stays available through the
   const call = async (name, args) => { const response = await client.callTool({ name, arguments: args }); assert.ok(!response.isError, JSON.stringify(response.content)); return JSON.parse(response.content[0].text); };
   const tools = (await client.listTools()).tools; assert.equal(tools.length, 8);
   assert.equal(tools.find(tool => tool.name === 'teams_integrate').annotations.destructiveHint, true);
-  await call('teams_models', { confirm: true });
-  const task = await call('teams_create', { expectedWorkspace: f.repo, ...input(), complexity: 'simple' }); await call('teams_start', { taskId: task.id });
+  if (!captainModels) await call('teams_models', { confirm: true });
+  const task = await call('teams_create', { expectedWorkspace: f.repo, ...input(), complexity: 'simple' });
+  await call('teams_start', { taskId: task.id, ...(captainModels ? { models: { expert: { model: 'test-model', effort: 'high' }, simple: { model: 'configured-model', effort: 'high' } } } : {}) });
   const ready = await call('teams_wait', { taskId: task.id, timeoutMs: 30000, verbose: true }); assert.equal(ready.status, 'awaiting_review', ready.error);
   const attempt = ready.attempts[0];
   assert.equal(attempt.actualModel, 'configured-model');
   assert.equal(attempt.machineReview.actualModel, 'test-model');
-  assert.equal(attempt.modelConfirmation.source, 'mcp-elicitation');
+  if (captainModels) {
+    assert.equal(attempt.dispatch.source, 'captain-explicit');
+    assert.equal(attempt.modelConfirmation, undefined);
+  } else assert.equal(attempt.modelConfirmation.source, 'mcp-elicitation');
   assert.notEqual(attempt.threadId, attempt.machineReview.threadId);
   const approved = await call('teams_review', { taskId: task.id, attemptId: attempt.id, verdict: 'pass', evidence: [{ criterion: acceptance[0], evidence: 'Controlled fixture patch and independent fixture report + real sum tests checked' }] });
   assert.equal(approved.status, 'awaiting_integration');

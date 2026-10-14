@@ -5,6 +5,20 @@ import { assertWorkspace } from './workspace.js';
 // Bump when the scope/dispatch permissions of saved confirmations change.
 export const modelPolicyVersion = 1;
 
+/** Validate dispatch choices without manufacturing a human confirmation. */
+export function validateDispatchModels(profiles, catalog) {
+  const roles = modelRolesSchema.parse(profiles);
+  for (const role of Object.values(roles)) validateDispatchModel(role, catalog);
+  return roles;
+}
+
+export function validateDispatchModel(profile, catalog) {
+  const available = catalog.models.find(item => item.model === profile.model);
+  if (!available || (profile.effort !== undefined && !available.efforts.includes(profile.effort))) {
+    throw new Error(`Selected model/effort is not in the current Codex catalog: ${profile.model}/${profile.effort ?? 'default'}. No inference started.`);
+  }
+}
+
 export function validateModelSelection(selection, catalog, target) {
   if (!selection || selection.policyVersion !== modelPolicyVersion || !['mcp-elicitation', 'interactive-terminal'].includes(selection.source)
       || !Number.isFinite(Date.parse(selection.confirmedAt)) || !['runtime-session', 'workspace'].includes(selection.scope)) throw new Error('Model confirmation is missing or outdated; confirm again.');

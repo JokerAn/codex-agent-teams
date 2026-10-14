@@ -58,7 +58,7 @@ test('SDK form capability matrix distinguishes undeclared, legacy empty, explici
     const response = await client.callTool({ name: 'teams_models', arguments: { confirm: true } });
     assert.equal(Boolean(response.isError), !supported);
     assert.equal(forms, supported ? 1 : 0);
-    assert.equal(owners, supported ? 1 : 0, 'only a form-capable host may acquire the runtime before confirmation');
+    assert.equal(owners, 0, 'a cancelled form must not acquire the runtime');
     if (!supported) {
       assert.match(response.content[0].text, label === 'undeclared' ? /no elicitation capability was declared/ : /declared without form support/);
       assert.match(response.content[0].text, /close the MCP session holding this workspace/);

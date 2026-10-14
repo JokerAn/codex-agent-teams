@@ -13,7 +13,9 @@ import { packPlugin } from '../src/plugin.js';
 import { resolveCodexBin } from './codex-bin.js';
 
 // Explicit host integration check: no inference, no real user-home installation.
-const { values } = parseArgs({ options: { binary: { type: 'string', default: 'codex' } } });
+const { values } = parseArgs({ options: { binary: { type: 'string', default: 'codex' }, 'approval-policy': { type: 'string', default: 'on-request' } } });
+const approvalPolicy = values['approval-policy'];
+assert.ok(['never', 'on-request'].includes(approvalPolicy));
 const binary = resolveCodexBin(values.binary);
 const root = realpathSync(mkdtempSync(join(tmpdir(), 'teams-plugin-smoke-')));
 const home = join(root, 'codex-home');
@@ -56,7 +58,7 @@ try {
   void startup.catch(() => {});
   // The outer host must allow user requests to exercise elicitation; no turn is
   // started, and member threads still enforce approvalPolicy=never themselves.
-  const started = await client.request('thread/start', { cwd: workspace, sandbox: 'read-only', approvalPolicy: 'on-request', ephemeral: true, config: { 'features.plugins': true } });
+  const started = await client.request('thread/start', { cwd: workspace, sandbox: 'read-only', approvalPolicy, ephemeral: true, config: { 'features.plugins': true } });
   hostThread = started.thread.id;
   const ready = await startup;
   const skills = await client.request('skills/list', { cwds: [workspace], forceReload: true });
@@ -83,6 +85,9 @@ try {
   const catalog = JSON.parse(models.content[0].text);
   assert.ok(catalog.models.length > 0);
   assert.equal(catalog.confirmationRequired, true);
+  assert.equal(catalog.captainSelectionSupported, true);
+  assert.ok(mcp.tools.teams_start.inputSchema.properties.models);
+  assert.ok(mcp.tools.teams_create.inputSchema.properties.model);
   assert.equal(existsSync(join(workspace, '.codex-teams')), false, 'Model discovery must not acquire owner');
   let formObserved = false;
   const receive = client.receive.bind(client);
@@ -101,13 +106,18 @@ try {
   assert.ok(!declined.isError, JSON.stringify(declined.content));
   const confirmationAction = JSON.parse(declined.content[0].text).status;
   assert.ok(['cancel', 'decline'].includes(confirmationAction), `Unexpected confirmation outcome: ${confirmationAction}`);
-  assert.equal(formObserved, true);
+  assert.equal(formObserved, approvalPolicy === 'on-request');
+  if (approvalPolicy === 'never') assert.equal(confirmationAction, 'decline');
+  assert.equal(existsSync(join(workspace, '.codex-teams')), false, 'cancelled/declined confirmation must not acquire owner');
   const created = await call('teams_create', { expectedWorkspace: workspace, objective: 'Inspect isolated plugin installation', acceptance: ['Cite evidence'] });
   assert.ok(!created.isError, JSON.stringify(created.content));
   const task = JSON.parse(created.content[0].text);
   const unconfirmed = await call('teams_start', { taskId: task.id });
   assert.equal(unconfirmed.isError, true);
   assert.match(unconfirmed.content[0].text, /User model confirmation/);
+  const invalidCaptain = await call('teams_start', { taskId: task.id, models: { expert: { model: 'not-a-real-model-no-inference' } } });
+  assert.equal(invalidCaptain.isError, true);
+  assert.match(invalidCaptain.content[0].text, /current Codex catalog/);
   const activeInventory = await client.request('mcpServerStatus/list', { threadId: started.thread.id, limit: 100 });
   assert.equal(Object.keys(activeInventory.data.find(entry => entry.name === 'codex-agent-teams')?.tools ?? {}).length, 8);
   const status = await call('teams_status', { taskId: task.id });
@@ -150,7 +160,8 @@ try {
   result = { server, marketplace: marketplace.marketplaceName, installedInTemporaryHome: true,
     cachedPackageIndependent: true, cachedSkillDiscovered: true, inventoryWhileRuntimeActive: true, startupStatus: ready.status, tools: Object.keys(mcp.tools).sort(),
     statusBeforeOwner: true, observedPluginVersion: initial.viewer.version, observedRuntimeVersion: active.runtime.version,
-    modelCatalogRead: true, formRequestObserved: formObserved, rememberDefaultForwarded: true, textReceiptForwarded: true, confirmationAction, cancelledFormBlocksStart: true,
+    modelCatalogRead: true, outerApprovalPolicy: approvalPolicy, formRequestObserved: formObserved, rememberDefaultForwarded: formObserved, textReceiptForwarded: true, confirmationAction, cancelledFormBlocksStart: true,
+    declinedFormDoesNotAcquireOwner: true, captainDispatchSchemaAvailable: true, invalidCaptainModelBlocksStart: true,
     contractCreated: true, incompleteWriteContractRejected: true, taskCancelled: true, sameInstallationTwoProjects: true,
     perProjectState: true, wrongProjectRejected: true, ambiguousTargetRejected: true, cacheCwdRejected: true, inferenceStarted: false,
     userConfigChanged: false };

@@ -356,7 +356,7 @@ test('tool receipts describe recorded facts for every tool shape without inventi
   assert.match(started, /用户已选择记住此工作区/);
 
   const models = toolFeedback('teams_models', { status: 'confirm', confirmationRequired: true, selection: null });
-  assert.match(models, /等待模型确认/);
+  assert.match(models, /可由队长指定模型/);
   assert.match(models, /成员模型和推理强度尚未确认。/);
 
   assert.match(toolFeedback('teams_integrate', { taskId: 'abc12345-6789' }), /已请求集成 \[abc12345\]/);

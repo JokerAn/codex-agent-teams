@@ -2,7 +2,7 @@
 
 准确率与完成效率优先，成本其次。一个小型、本机运行的 Codex 插件，用于可验收的代码委派。
 
-**0.5.0 安装一次，随当前项目使用**。插件不再绑定构建时的项目，队长从当前聊天上下文自动填入目标目录，用户无需逐项目配置或重新打包。任务仍按合同 → 独立 worktree 修改 → 命令验证 → 全新强模型线程审查 → 队长复核 → 显式集成 → 源工作区再次验证执行。不会自动提交或推送。
+**0.5.1 队长直接指定模型，真人选择可选；安装一次，随当前项目使用**。插件不再绑定构建时的项目，队长从当前聊天上下文自动填入目标目录，用户无需逐项目配置或重新打包。任务仍按合同 → 独立 worktree 修改 → 命令验证 → 全新强模型线程审查 → 队长复核 → 显式集成 → 源工作区再次验证执行。不会自动提交或推送。
 
 0.2.1 补齐失败重试的执行信息归属、只读成员与 reviewer 的实际目录校验，以及协议致命错误后的缓冲释放；新增 macOS/Linux 离线 CI。
 
@@ -49,8 +49,8 @@ doctor 只做握手、模型/推理强度与可选只读线程权限检查，不
 ## 接入 Codex
 
 ```sh
-node src/cli.js pack --config ./teams.local.json --out ./dist/marketplace-v0.5.0
-node src/cli.js doctor --plugin ./dist/marketplace-v0.5.0 --check-thread
+node src/cli.js pack --config ./teams.local.json --out ./dist/marketplace-v0.5.1
+node src/cli.js doctor --plugin ./dist/marketplace-v0.5.1 --check-thread
 ```
 
 pack 生成本机 marketplace：包含 skill、MCP、源代码、配置快照和锁定的生产依赖，不包含测试或运行数据。需要先 npm ci；拒绝覆盖已有输出。插件根目录的相对路径可随宿主缓存搬迁，Node/Codex 仍依赖本机安装。
@@ -58,7 +58,7 @@ pack 生成本机 marketplace：包含 skill、MCP、源代码、配置快照和
 以下两条由用户明确选择执行，会修改宿主插件配置：
 
 ```sh
-codex plugin marketplace add /absolute/path/to/dist/marketplace-v0.5.0
+codex plugin marketplace add /absolute/path/to/dist/marketplace-v0.5.1
 codex plugin add codex-agent-teams@codex-agent-teams-local
 ```
 
@@ -109,7 +109,7 @@ node src/cli.js status --config ./teams.local.json --html ./.codex-teams/teams-s
 
 当前通过本地 marketplace 安装，宿主使用插件缓存副本。修改项目源码或 `teams.local.json` 后，先生成并检查新包，再卸载旧插件、切换来源并重新安装；仅修改 `src/` 不会更新已安装副本。
 
-以下以当前 **0.5.0** 为例。后续升级时替换为新版本号，并选择尚不存在的输出目录。
+以下以当前 **0.5.1** 为例。后续升级时替换为新版本号，并选择尚不存在的输出目录。
 
 1. 更新源码并同步版本号：`package.json`、`package-lock.json` 的顶层与根包版本、`plugin.json`、`.codex-plugin/plugin.json`。MCP 与 App Server 的版本元数据直接读取 `package.json`；pack 会检查包与两个插件 manifest 的版本一致。
 2. 在项目根目录先验证并生成新包。输出目录必须尚不存在；保留旧包，便于需要时恢复。
@@ -120,10 +120,10 @@ npm test
 
 node src/cli.js pack \
   --config ./teams.local.json \
-  --out ./dist/marketplace-v0.5.0
+  --out ./dist/marketplace-v0.5.1
 
 node src/cli.js doctor \
-  --plugin ./dist/marketplace-v0.5.0 \
+  --plugin ./dist/marketplace-v0.5.1 \
   --check-thread
 ```
 
@@ -135,7 +135,7 @@ codex plugin remove codex-agent-teams@codex-agent-teams-local
 
 # 新包目录变了，切换同名 marketplace 的来源
 codex plugin marketplace remove codex-agent-teams-local
-codex plugin marketplace add ./dist/marketplace-v0.5.0
+codex plugin marketplace add ./dist/marketplace-v0.5.1
 
 # 安装新插件
 codex plugin add codex-agent-teams@codex-agent-teams-local
@@ -200,21 +200,24 @@ MCP 连接仍持有 owner 时，调用 `teams_cancel({taskId, cleanup: true, dis
 
 写成员请求并核对 worktree 写沙箱、网络关闭、临时目录排除和禁止提权。allowedPaths 是路径审计与交付门禁，不是逐文件系统调用权限；宿主写沙箱限制工作区。独立审查为只读。worktree 共用 Git 对象且不是文件系统虚拟机，实际限制依赖宿主/OS；后台程序主动创建新 session 的完整治理、PID 复用和所有平台矩阵仍有限制。
 
-每个项目内，带工作区/写计划的任务当前串行，普通只读默认并发 2、最多 4。首次启动前必须确认模型分工，或复用用户主动记住且重新校验有效的分工；auto 只把明确 simple 的非审查任务交给已确认的简单任务模型，其他任务使用 expert。简单写任务仍经过 expert 独立审查，重试也固定 expert。旧 qualified 路由要求评测依据，不代表已获本次确认；不按价格自动降级，不声称未经对照评测的节省比例。
+每个项目内，带工作区/写计划的任务当前串行，普通只读默认并发 2、最多 4。启动时由队长显式指定模型分工，或复用重新校验有效的真人偏好；auto 只把明确 simple 的非审查任务交给所选 simple，其他任务使用 expert。简单写任务仍经过 expert 独立审查，重试也固定本次 expert。旧 qualified 路由要求评测依据；不按价格自动降级，不声称未经对照评测的节省比例。
 
 ## 模型发现、用户确认与任务路由
 
 在已更新插件的新会话中，先调用 `teams_models` 查看宿主实际 `model/list` 列表和 `config/read` 中的模型/推理强度。只返回模型相关字段，不展示密钥、完整配置或配置层。目录默认项可能不同于有效配置；自定义路由名称不说明底层模型或能力排名。
 
-调用 `teams_models({workspace: cwd, confirm:true})` 会请求宿主展示用户表单，选择“强模型及强度”“简单任务模型及强度”（可全部使用强模型），并显式勾选确认。实际控件样式由宿主决定，不承诺与宿主模型下拉完全相同。“记住此工作区分工”默认勾选，真人提交 `remember=true` 才持久保存，重启后重新核对目标、模型和强度后复用；取消勾选则仅本次运行时有效，重启重新确认。漏传 remember 会拒绝确认，取消首次确认不会启动成员，取消修改保留先前选择。工具参数不能提交模型或伪造同意；已确认后更改分工也走用户表单，执行中不允许切换。`teams_models({forget:true})` 或 `CLI models --forget` 可撤销。
+队长可直接在 `teams_start` 传入 `models: {expert: {model, effort}, simple?: {model, effort}}`，每次启动按实际模型目录检查；expert 负责复杂任务、独立审查与重试。选择仅作用于该 attempt，不修改其他成员或持久偏好。任务合同的可选 `model` / `effort` 可以单独指定成员模型与强度（effort 必须同时有 model）；review 必须匹配 expert，重试忽略任务覆盖。未知模型或不支持的强度在推理前拒绝，不静默替换。
+
+`teams_models({workspace: cwd, confirm:true})` 是可选的真人偏好表单。宿主负责展示，工具参数不能伪造同意；明确提交 `remember=true` 才保存本项目偏好，false 仅本会话，取消保留旧分工。表单等待/拒绝不会新建 runtime 或取得 owner；已有 runtime 的 owner 不受影响。`teams_models({forget:true})` 或 `CLI models --forget` 撤销偏好。启动时省略 models 可复用有效偏好；无偏好也无显式选择时返回可操作错误。
 
 | 合同 | 使用模型 |
 |---|---|
-| `profile=auto`，`complexity=simple`，非 review | 用户确认的 simple；未选择 simple 时使用 expert |
+| `profile=auto`，`complexity=simple`，非 review | 本次选择的 simple；未选择 simple 时使用 expert |
 | `profile=auto`，bounded/uncertain/complex 或 review | expert |
 | `profile=expert` | expert，即使任务简单 |
 | `profile=simple` | 仅允许明确 simple 的非 review 任务，且已选择 simple |
-| 写任务独立审查、显式失败重试 | expert |
+| 合同 `model` / `effort` | 显式成员覆盖，review 须匹配 expert |
+| 写任务独立审查、显式失败重试 | 本次派发的 expert，重试忽略任务覆盖 |
 
 [简单任务示例](examples/simple-task.json) 展示 simple/auto 用法。
 
@@ -222,14 +225,15 @@ MCP 连接仍持有 owner 时，调用 `teams_cancel({taskId, cleanup: true, dis
 
 队长仍是当前聊天模型，请在 Codex 中选择您希望使用的高级模型；插件不能替您改变当前聊天模型，也不把简单模型选择视为通过质量评测。模型不可用时明确失败，不静默替换。
 
-若宿主不支持 MCP 用户表单，插件返回明确错误并阻止模型启动。本机实测外层会话 approval_policy=never 会直接 decline 而不展示表单；允许用户交互的 on-request 会话能够转发表单请求。插件不代改宿主交互策略，成员自己的 approval=never 保持不变。切换到 CLI 前先结束/取消已有任务并关闭持有该工作区的 MCP 会话，避免与唯一运行时 owner 冲突。CLI 提供相同目的的交互式确认：
+宿主不支持表单或外层 approval_policy=never 时，表单可能直接 decline；此返回不构成真人同意。队长显式选择入口不依赖表单，成员自己的 approval=never 保持。CLI 可通过 `--models` 传入相同分工，支持无 TTY 执行：
 
 ```sh
 node src/cli.js models --config ./teams.local.json
-node src/cli.js run --config ./teams.local.json --task ./examples/read-only-task.json
+node src/cli.js run --config ./teams.local.json --task ./examples/read-only-task.json \
+  --models '{"expert":{"model":"实际模型标识","effort":"high"}}'
 ```
 
-`models` 只列出候选；`run`/`start` 在交互终端选择两类模型，记住选项回车默认开启、输入 `no` 仅本次生效，最后必须输入 `yes` 确认。非交互调用不会默认同意。恢复已有任务的 status/review/integrate/cancel 不启动新模型，不额外请求模型确认。直接嵌入 TaskRuntime 的受控测试/显式模型 smoke 不代表用户入口，可以通过构造选项要求确认；公开 MCP 与 CLI 启动入口始终要求用户确认。
+请用目录中实际存在的模型及支持强度替换示例值。不传 `--models` 时，CLI 优先复用有效偏好，否则保留交互式选择，最后输入 yes 才确认。CLI 与已持 owner 的 MCP 不能同时修改同一项目；先结束已有任务并关闭其连接。status/review/integrate/cancel 不启动新模型，也不需要额外模型确认。
 
 CLI `start/run/integrate` 的阶段变化和每 30 秒状态回执写到 stderr，stdout 保持一份最终 JSON。最近记录时间不是实时心跳，也不证明模型正在推进；结束时会标明等待队长复核或实际失败。SIGINT/SIGTERM 先取消执行、等待退出并输出终态，再释放数据库 owner，避免关闭数据库后读取结果。
 

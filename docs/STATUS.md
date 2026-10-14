@@ -1,6 +1,45 @@
 # 当前状态
 
-日期：2026-10-13（Asia/Shanghai）。源码版本：0.5.0。**最终本机覆盖率回归 234/234 通过；真实 Codex 同一临时安装缓存/连接操作两个项目通过。新包不绑定项目；正式用户缓存尚未升级，桌面使用及真实模型效果未验收。**
+## 0.5.1 交付目录纠正（2026-10-14）
+
+用户再次指出主目录看不到改动。核查发现上一轮 26 文件仅修改并暂存在聊天 cwd `/Users/anshunli1/.codex/worktrees/fc32/codex-agent-teams`，未同步到用户主目录 `/Users/anshunli1/asl/code/github/codex-agent-teams`。Git worktree 拥有各自文件与 index，不会自动同步。宿主 cwd 及 team skill 的默认目标解释了执行位置，但没有规则要求忽略用户主目录；本文件此前明确的主目录约定未落实，属于交付疏漏。
+
+本次两个 checkout 的 HEAD 都为 `d0bb4698b70f02c2343b5be62cfb679c18f31ee6`，同步前主目录工作树与 index 干净。将已验证的 0.5.1 改动及本次说明通过 Git patch 同步并暂存到主目录；AGENTS.md 新增开工核对执行/交付目录、保护用户内容、最终报告实际目录的规则。只同步源码及文档，不复制 ignored 环境/状态或插件缓存，不 commit、不 push。运行代码未再修改，沿用上一轮 239/239 和两组真实宿主证据；本轮验证 patch、暂存格式与两个目录交付文件逐字节一致。
+
+日期：2026-10-13（Asia/Shanghai）。源码版本：0.5.1。**本轮修复模型确认启动阻塞和逐任务模型/强度缺口；正式用户缓存仍为 0.5.0，待显式升级。同项目并行写、桌面自然语言使用和真实模型质量/效率尚未验收。**
+
+## 0.5.1 启动阻塞修复与仅暂存交付（2026-10-13）
+
+用户授权发现问题则修复、完成后暂存，不提交远程。本轮由主 Agent 直接实施与复核；已安装 0.5.0 的 team 入口仍受旧模型确认约束，没有启动付费成员或声称完成独立模型审查。
+
+- `teams_start` 增加显式 `models`（expert 与可选 simple），CLI start/run 增加 `--models <JSON>`。每次公开启动先发现实时模型目录，runtime 在记录 attempt 前检查角色和最终 model/effort；无效组合不调用成员推理，无偏好也无显式选择时仍返回操作指引。显式选择写入 `attempt.dispatch`（captain-explicit、分工、目标与校验时间），不改全局 profiles、不保存成真人偏好；并发只读成员可分别选择。
+- 合同增加可选 model/effort，effort 必须配 model。成员可显式覆盖，review 必须匹配 expert；重试清除覆盖并使用本轮 expert，写任务独立 reviewerSelection 固定在 attempt。旧真人偏好不会在创建合同阶段提前拒绝新派发分工，启动时统一路由校验。CLI 真人提交后使用刷新后的目录继续校验。
+- 真人表单继续可选保存/撤销本项目偏好。通过 peekRuntime 检查既有执行，不为等待/取消/拒绝新建 owner；明确有效 accept 后才获取 runtime。已存在的运行时及 owner 不随拒绝被关闭。旧式直接 SDK 工厂缓存已创建的 runtime，避免检查既有执行时另建 owner。独占写、退出确认、命令验证、独立 expert 审查、队长复核及集成复验门禁保持。
+- 版本与 lockfile/两 manifest 统一 0.5.1；principles 明确并行为减少总耗时的手段，skill 增加需求评估/人数选择及显式派发流程。README、路线、架构、示例、升级计划和简报同步新行为，旧诊断保留为历史。同项目多写者和源工作区共存机制仍未改造，不声称效率收益。
+
+验证过程：首轮定向 73/74，新增无表单测试误注册表单 handler，被 SDK 在执行前拒绝；修正 fixture。首轮覆盖率 237/238，既有 doctor 子进程在并行封装压力下触发 5 秒上限；该文件单独复跑通过，未改超时或断言。此后串行进行最终完整回归和宿主验证，以最终记录为准。真实宿主 smoke 使用临时安装与临时 CODEX_HOME、回复 cancel 或观察自动 decline；没有真人接受、真实模型推理、正式配置写入或缓存替换。
+
+**最终验证与交付：**
+
+- `npm run test:coverage`：239/239 通过，0 fail/cancelled/skipped，58.95 秒；源码行 97.35%、分支 89.59%、函数 96.17%。覆盖显式派发/任务覆盖/无效目录拒绝、重试 expert、并发选择隔离、旧偏好保留、CLI 无 TTY，以及两条 MCP 写任务完整命令/独立 reviewer/队长复核/集成复验路径。模型使用受控协议 fixture，不是实际模型质量验证。日志 `/tmp/codex-teams-0.5.1-final-coverage.log`。
+- 最终源码分别运行 `node scripts/smoke-plugin.js --approval-policy never` 和 `--approval-policy on-request`，退出码均 0；真实 Codex Desktop 0.162.0-alpha.17.2 临时缓存观察版本 0.5.1、八工具和新增 schema 正常，同一连接/安装双项目继续通过。never 自动 decline 未转发表单、on-request 转发表单并由测试 cancel；两者都不新建 owner，未知模型拒绝启动。均 `inferenceStarted:false`、`userConfigChanged:false`、`managedRuntimeExited:true`。日志 `/tmp/codex-teams-0.5.1-final-host-never.log`、`/tmp/codex-teams-0.5.1-final-host-on-request.log`。临时缓存和 fixture 在退出确认后清理。
+- 主 Agent 复核最终 diff，`git diff --check` 通过；交付只暂存本 worktree 的源码/测试/文档与版本文件，不 commit、不 push，不修改正式缓存或用户模型偏好。没有独立真实模型审查结果，不以协议 fixture 冒充。
+
+下一步：显式构建/更新用户缓存到 0.5.1，重开会话使工具 schema/skill 生效，再用真实任务验证模型质量及协调开销；源码暂存不会修改当前运行的 0.5.0 MCP。并行写仍按升级计划分阶段另行验证，不删旧 dist、不自动集成冲突，不自动发布。
+
+## 模型确认启动阻塞诊断（2026-10-13）
+
+用户要求沿本项目源码调查团队成员为何被模型确认挡住。本轮仅诊断及记录，未修改运行代码、用户配置或模型授权，未启动成员推理。
+
+- 当前聊天的 `teams_models(workspace)` 返回 `selection:null`、`confirmationRequired:true`；`confirm:true` 返回 `status:decline`，并非可据以认定的用户主动拒绝。`teams_status` 证实正式缓存与 runtime 已是 0.5.0，任务为 0、owner 进程存在；此前头部“正式缓存尚未升级”已被本次实时观察更新。
+- 源码路径：`src/mcp.js` 的 `selectionFor` 只复用本项目有效的会话或持久确认；确认通过 `ctx.mcpReq.elicitInput` 请求宿主，非 accept 不保存分工；`teams_start` 在无有效确认时拒绝启动。`src/workspace-router.js` 创建公开 runtime 时固定开启 `requireModelConfirmation:true`，`src/runtime.js` 再次检查。读取到 configuredModel/configuredEffort 不构成确认，也没有自动退回配置的公开启动路径。
+- 独立真实宿主对比：以当前源码、官方 SDK 和同版本 Codex Desktop 0.162.0-alpha.17.2，在两个独立临时 CODEX_HOME/安装缓存中执行无推理 smoke。外层 `approvalPolicy=never`：表单请求未转发、返回 decline；外层 `on-request`：表单请求转发成功，测试主动回复 cancel。两种策略均正确阻止未确认启动，退出码均 0，`inferenceStarted:false`、`userConfigChanged:false`、`managedRuntimeExited:true`。日志 `/tmp/codex-teams-confirmation-never.log`、`/tmp/codex-teams-confirmation-on-request.log`。当前聊天本身的有效 approvalPolicy 未由本工具协议暴露，因此其 decline 与 never 实测相符，但不能仅凭 decline 排除其他宿主拒绝原因。on-request 的协议转发不等于桌面表单已渲染。
+- 恢复障碍：确认入口在请求表单前调用 `scope.getRuntime()`，取得唯一 owner；decline 不关闭 runtime。因此新项目即使没有任务也可能持锁，CLI 不能与当前 MCP 同时完成确认。现有回归明确覆盖该行为，属于现行设计，不是状态库锁泄漏的证明。
+- 与 `docs/UPGRADE-BRIEF.md` 的差距仍在：可省略的模型选择依旧是必经门槛。建议将“队长显式指定并经 live catalog 校验的模型/强度”与“可选的真人偏好确认”分开设计；保留不静默降级、expert 独立审查/重试及 attempt 证据。不要把宿主 decline 当作授权，不以直接写 SQLite 或关闭安全门禁绕过。
+
+当前 worktree 初次 smoke 因缺少 zod 在加载阶段失败，未进入宿主检查；随后 `npm ci --ignore-scripts` 安装锁定依赖（14 packages，0 vulnerabilities），两组真实宿主对比才通过。临时安装缓存和 fixture 在退出确认后清理。`node --test tests/models.test.js tests/mcp.test.js`：32/32 通过，0 fail/cancelled/skipped，34.19 秒，日志 `/tmp/codex-teams-confirmation-unit.log`；包含未确认拒绝、表单能力、取消不授权、偏好复用及 owner 冲突回归。完整原始升级预期审查仍待继续。
+
+下一步：若实施可选模型确认，须同步 PRINCIPLES、skill、MCP/CLI 合同与测试，再构建并显式更新缓存；只改当前源码不会改变已运行的 0.5.0 MCP。临时宿主对比已定位策略影响，无需付费长跑或重复发起同一表单。
 
 ## 主目录同步（2026-10-13）
 

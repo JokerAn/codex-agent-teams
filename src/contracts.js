@@ -25,7 +25,7 @@ export const configSchema = z.strictObject({
 // Unknown keys are still rejected: an unrecognized field is either a typo (silently dropped work) or an
 // attempt to smuggle parent-chat history into a fresh thread. But a bare "Unrecognized key" tells the
 // caller nothing about what to write instead, so the message names the valid top-level fields.
-const topLevelFields = ['title', 'objective', 'expectedWorkspace', 'kind', 'complexity', 'acceptance', 'context', 'dependencies', 'profile', 'mode', 'executionPlan'];
+const topLevelFields = ['title', 'objective', 'expectedWorkspace', 'kind', 'complexity', 'acceptance', 'context', 'dependencies', 'profile', 'model', 'effort', 'mode', 'executionPlan'];
 export const taskSchema = z.strictObject({
   title: text.max(80).optional(),
   objective: text.max(8000),
@@ -36,6 +36,8 @@ export const taskSchema = z.strictObject({
   context: z.array(text.max(8000)).max(30).default([]),
   dependencies: z.array(text).max(20).default([]),
   profile: z.enum(['auto', 'expert', 'simple', 'qualified']).default('auto'),
+  model: text.optional(),
+  effort: text.optional(),
   mode: z.enum(['read-only', 'workspace-write']).default('read-only'),
   executionPlan: z.strictObject({
     dirtyPolicy: z.enum(['reject', 'snapshot']).default('reject'),
@@ -56,6 +58,7 @@ export const taskSchema = z.strictObject({
     + 'To limit which files a write task may change, use executionPlan.allowedPaths (repository-relative); '
     + 'the objective itself belongs in "objective". Unknown fields are rejected rather than ignored.';
 } }).superRefine((task, ctx) => {
+  if (task.effort && !task.model) ctx.addIssue({ code: 'custom', path: ['model'], message: 'Task effort requires an explicit model.' });
   if (task.mode !== 'workspace-write') return;
   // Report the exact field that is missing instead of one combined sentence naming three at once.
   if (!task.executionPlan?.allowedPaths?.length) {

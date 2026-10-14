@@ -40,8 +40,9 @@ JSON 不支持注释，而 `taskSchema` 是 `strictObject`，加任何 `_comment
 
 ## MCP `teams_create` 模板
 
-队长先用 `teams_models({workspace: cwd})` 读取当前项目分工；需要确认时调用
-`teams_models({workspace: cwd, confirm:true})` 让用户填写模型表单。`cwd` 来自当前聊天上下文。
+队长先用 `teams_models({workspace: cwd})` 读取实际模型及当前项目偏好。没有偏好时直接在
+`teams_start` 传入 `models: {expert: {model: "实际模型标识", effort: "支持的强度"}}`；真人表单是可选设置。
+`cwd` 来自当前聊天上下文。
 然后把下面的 `expectedWorkspace` 替换为同一个已知绝对路径，调用 `teams_create` 和 `teams_start`。
 同连接已知任务 ID 后无需重复路径，重连后补 `workspace`；多项目列表明确指定项目。
 

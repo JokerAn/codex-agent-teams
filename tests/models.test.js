@@ -289,17 +289,16 @@ test('missing or invalid remember cannot change an existing selection or its sav
   assert.deepEqual((await f.call('teams_models', {}, restarted)).value.selection, confirmed);
 });
 
-test('pending confirmation holds the workspace owner; decline saves nothing and does not authorize start', async t => {
+test('pending and declined confirmation do not acquire the workspace owner or authorize implicit start', async t => {
   let answer, opened;
   const formOpened = new Promise(resolve => { opened = resolve; });
   const f = await mcpFixture(t, () => { opened(); return new Promise(resolve => { answer = resolve; }); });
   const confirming = f.call('teams_models', { confirm: true });
   await formOpened;
+  assert.equal(existsSync(join(f.dir, '.codex-teams')), false);
   const competing = await f.connect();
-  const conflict = await f.call('teams_models', { confirm: true }, competing);
-  assert.equal(conflict.isError, true);
-  assert.match(conflict.value, /Another runtime owns this workspace/);
-  assert.equal((await f.call('teams_models', { forget: true })).isError, true);
+  const created = await f.call('teams_create', contract, competing);
+  assert.equal(created.isError, false, 'another connection can own the workspace while a form is pending');
   answer({ action: 'decline' });
   const declined = await confirming;
   assert.equal(declined.value.confirmationRequired, true);
@@ -310,6 +309,88 @@ test('pending confirmation holds the workspace owner; decline saves nothing and 
   assert.equal((await f.call('teams_models', {}, restarted)).value.confirmationRequired, true);
   const task = (await f.call('teams_create', contract, restarted)).value;
   assert.equal((await f.call('teams_start', { taskId: task.id }, restarted)).isError, true);
+});
+
+test('captain models start without forms; overrides are validated, recorded and retries use expert', async t => {
+  const f = await mcpFixture(t);
+  const roles = { expert, simple };
+  for (const input of [{ model: 'missing' }, { model: simple.model, effort: 'ultra' }]) {
+    const task = (await f.call('teams_create', { ...contract, ...input })).value;
+    const rejected = await f.call('teams_start', { taskId: task.id, models: roles });
+    assert.equal(rejected.isError, true);
+    assert.match(rejected.value, /current Codex catalog/);
+    const pending = (await f.call('teams_status', { taskId: task.id, verbose: true })).value;
+    assert.equal(pending.attempts.length, 0);
+  }
+  const invalidRoles = (await f.call('teams_create', contract)).value;
+  assert.equal((await f.call('teams_start', { taskId: invalidRoles.id, models: { expert: { ...expert, effort: 'low' } } })).isError, true);
+  assert.equal((await f.call('teams_create', { ...contract, effort: 'high' })).isError, true);
+  const review = (await f.call('teams_create', { ...contract, kind: 'review', model: simple.model, effort: simple.effort })).value;
+  assert.match((await f.call('teams_start', { taskId: review.id, models: roles })).value, /Review tasks must use/);
+
+  const task = (await f.call('teams_create', { ...contract, model: simple.model, effort: simple.effort })).value;
+  const started = await f.call('teams_start', { taskId: task.id, models: roles });
+  assert.equal(started.isError, false);
+  assert.equal(started.value.selection.model, simple.model);
+  assert.equal(started.value.dispatchSource, 'captain-explicit');
+  const ready = (await f.call('teams_wait', { taskId: task.id, timeoutMs: 5000, verbose: true })).value;
+  assert.equal(ready.status, 'awaiting_review');
+  assert.equal(ready.attempts[0].actualModel, simple.model);
+  assert.equal(ready.attempts[0].dispatch.source, 'captain-explicit');
+  assert.deepEqual(ready.attempts[0].reviewerSelection, expert);
+  assert.equal(ready.attempts[0].modelConfirmation, undefined);
+  assert.equal((await f.call('teams_models')).value.selection, null, 'captain choice is not a saved human preference');
+  assert.equal((await f.call('teams_status', { taskId: task.id })).value.dispatch.source, 'captain-explicit');
+  await f.call('teams_review', { taskId: task.id, attemptId: ready.attempts[0].id, verdict: 'reject', evidence: [{ criterion: contract.acceptance[0], evidence: 'Retry with expert' }] });
+  const retried = await f.call('teams_start', { taskId: task.id, models: roles, retry: true, reason: 'Expert follow-up' });
+  assert.equal(retried.value.selection.model, expert.model);
+  assert.equal((await f.call('teams_wait', { taskId: task.id, timeoutMs: 5000, verbose: true })).value.attempts[1].actualModel, expert.model);
+  await f.client.close();
+  const restarted = await f.connect();
+  assert.equal((await f.call('teams_models', {}, restarted)).value.selection, null);
+});
+
+test('CLI explicit models work without TTY and leave human preferences unset', async t => {
+  const f = await mcpFixture(t);
+  await f.client.close();
+  const taskPath = join(f.dir, 'task.json');
+  writeFileSync(taskPath, JSON.stringify({ ...contract, model: simple.model, effort: simple.effort }));
+  const result = JSON.parse(execFileSync(process.execPath, ['src/cli.js', 'run', '--config', f.configPath, '--workspace', f.dir, '--task', taskPath, '--models', JSON.stringify({ expert })], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }));
+  assert.equal(result.status, 'awaiting_review');
+  assert.equal(result.attempts[0].actualModel, simple.model);
+  assert.equal(result.attempts[0].dispatch.source, 'captain-explicit');
+  assert.equal((await f.call('teams_models', {}, await f.connect())).value.selection, null);
+});
+
+test('concurrent captain dispatches keep roles in their own attempts without changing runtime profiles', async t => {
+  const seen = [];
+  const { runtime, store } = setup(t, { run: async req => {
+    seen.push(req.selection.model);
+    return { result: report, actualModel: req.selection.model };
+  } });
+  runtime.requireModelConfirmation = true;
+  const originalProfiles = structuredClone(runtime.config.profiles);
+  const first = runtime.create(contract), second = runtime.create(contract);
+  runtime.start(first.id, { models: { expert }, catalog });
+  runtime.start(second.id, { models: { expert: simple }, catalog });
+  await Promise.all([runtime.wait(first.id), runtime.wait(second.id)]);
+  assert.deepEqual(seen, [expert.model, simple.model]);
+  assert.deepEqual(runtime.config.profiles, originalProfiles);
+  assert.equal(store.modelPreference(), null);
+  assert.deepEqual(runtime.status(first.id).attempts[0].reviewerSelection, expert);
+  assert.deepEqual(runtime.status(second.id).attempts[0].reviewerSelection, simple);
+});
+
+test('old expert-only preferences do not reject a contract using a new explicit simple role', async t => {
+  const { runtime } = setup(t);
+  runtime.requireModelConfirmation = true;
+  const previous = runtime.confirmModels({ expert }, 'mcp-elicitation', { remember: true });
+  const task = runtime.create({ ...contract, profile: 'simple', complexity: 'simple' });
+  const started = runtime.start(task.id, { models: { expert, simple }, catalog });
+  assert.equal(started.selection.model, simple.model);
+  await runtime.wait(task.id);
+  assert.deepEqual(runtime.modelConfirmation, previous);
+  assert.deepEqual(runtime.store.modelPreference(), previous);
 });
 
 test('saved selection fails closed if its model disappears, and session-only confirmation clears it', async t => {

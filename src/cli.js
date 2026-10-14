@@ -14,6 +14,7 @@ try {
     allowPositionals: true,
     options: {
       workspace: { type: 'string' }, forget: { type: 'boolean' }, config: { type: 'string' }, task: { type: 'string' }, binary: { type: 'string' },
+      models: { type: 'string' },
       out: { type: 'string' }, plugin: { type: 'string' }, help: { type: 'boolean' },
       reason: { type: 'string' }, retry: { type: 'boolean' }, attempt: { type: 'string' }, spec: { type: 'string' }, id: { type: 'string' }, dirty: { type: 'string' }, allow: { type: 'string', multiple: true }, discard: { type: 'boolean' },
       'check-thread': { type: 'boolean' },
@@ -30,6 +31,7 @@ node src/cli.js models --config <file>    List Codex model choices and target; n
 node src/cli.js models --config <file> --forget
                                          Revoke saved/session model choices
 --workspace <absolute path>              Target project (global config defaults to current directory)
+--models <JSON>                         Explicit expert/simple roles for start/run; no user form
 node src/cli.js pack --config <file> [--out <new directory>]
                                          Prepare machine-local plugin; does not install
 node src/cli.js doctor --plugin <prepared directory> [--check-thread]
@@ -128,6 +130,7 @@ node src/cli.js run --config <file> --task <json>
       } else {
         process.once('SIGINT', stop); process.once('SIGTERM', stop);
         try {
+          let dispatch;
           if (command === 'models') {
             runtime.forgetModels();
             console.log(JSON.stringify({ status: 'forgotten', confirmationRequired: true, inferenceStarted: false }));
@@ -135,12 +138,16 @@ node src/cli.js run --config <file> --task <json>
           if (['start', 'run'].includes(command)) {
             const target = workspaceIdentity(config.workspace);
             assertWorkspace(values.workspace ?? process.cwd(), target);
-            const catalog = await discoverModels(), saved = runtime.store.modelPreference();
-            if (saved?.scope === 'workspace') {
+            let catalog = await discoverModels();
+            const saved = runtime.store.modelPreference();
+            if (values.models) {
+              const { validateDispatchModels } = await import('./models.js');
+              dispatch = { models: validateDispatchModels(JSON.parse(values.models), catalog), catalog };
+            } else if (saved?.scope === 'workspace') {
               try { runtime.restoreModels(saved, catalog); }
               catch (error) { console.error(`已保存分工不可复用：${error.message}`); }
             }
-            if (!runtime.modelConfirmation) {
+            if (!dispatch && !runtime.modelConfirmation) {
               const selection = await confirmModelsInTerminal(catalog, config.workspace, { signal: terminalCancellation.signal });
               const refreshed = await discoverModels();
               assertWorkspace(target, workspaceIdentity(config.workspace));
@@ -148,15 +155,19 @@ node src/cli.js run --config <file> --task <json>
               const { acceptedModelRoles } = await import('./models.js');
               acceptedModelRoles({ expert: JSON.stringify(selection.profiles.expert), simple: selection.profiles.simple ? JSON.stringify(selection.profiles.simple) : 'none', confirm: true }, refreshed);
               runtime.confirmModels(selection.profiles, 'interactive-terminal', { remember: selection.remember });
+              catalog = refreshed;
             }
-            validateModelSelection(runtime.modelConfirmation, catalog, target);
+            if (!dispatch) {
+              validateModelSelection(runtime.modelConfirmation, catalog, target);
+              dispatch = { catalog };
+            }
           }
           if (command === 'models') { /* Revocation already completed. */ } else if (command === 'cancel') {
             if (!values.id) throw new Error('cancel requires --id');
             console.log(JSON.stringify(await runtime.cancel(values.id), null, 2));
           } else if (command === 'start') {
             if (!values.id) throw new Error('start requires --id');
-            const started = runtime.start(values.id, { retry: values.retry ?? false, reason: values.reason ?? '' });
+            const started = runtime.start(values.id, { retry: values.retry ?? false, reason: values.reason ?? '', ...dispatch });
             process.stderr.write(toolFeedback('teams_start', started) + '\n');
             const result = await waitWithProgress(runtime, values.id);
             console.log(JSON.stringify(result, null, 2));
@@ -174,7 +185,7 @@ node src/cli.js run --config <file> --task <json>
             if (!values.task) throw new Error('run requires --task <json file>');
             const input = JSON.parse(readFileSync(values.task, 'utf8'));
             const task = runtime.create({ ...input, expectedWorkspace: input.expectedWorkspace ?? values.workspace ?? process.cwd() });
-            const started = runtime.start(task.id);
+            const started = runtime.start(task.id, dispatch);
             process.stderr.write(toolFeedback('teams_start', started) + '\n');
             const result = await waitWithProgress(runtime, task.id);
             console.log(JSON.stringify(result, null, 2));

@@ -1,9 +1,15 @@
 /** Cost never causes an implicit model downgrade. Qualification is operator-supplied evidence. */
 export function selectProfile(task, config) {
+  if (task.model) {
+    if (task.kind === 'review' && (task.model !== config.profiles.expert.model || (task.effort !== undefined && task.effort !== config.profiles.expert.effort))) {
+      throw new Error('Review tasks must use the expert model and effort.');
+    }
+    return { model: task.model, ...(task.effort !== undefined ? { effort: task.effort } : task.kind === 'review' ? { effort: config.profiles.expert.effort } : {}), profile: 'explicit', reason: 'captain explicitly selected the task model/effort' };
+  }
   const simple = task.complexity === 'simple' && task.kind !== 'review';
   if (task.profile === 'simple') {
-    if (!simple || !config.profiles.simple) throw new Error('Simple model requires a simple non-review task and user-confirmed model selection.');
-    return { ...config.profiles.simple, profile: 'simple', reason: 'user-selected simple model for an explicitly simple task' };
+    if (!simple || !config.profiles.simple) throw new Error('Simple model requires a simple non-review task and a selected simple role.');
+    return { ...config.profiles.simple, profile: 'simple', reason: 'selected simple role for an explicitly simple task' };
   }
   if (task.profile === 'auto' && simple && config.profiles.simple) return selectProfile({ ...task, profile: 'simple' }, config);
   if (task.profile === 'expert' || task.profile === 'auto') return { ...config.profiles.expert, profile: 'expert', reason: task.profile === 'expert' ? 'explicit expert selection' : 'complex, uncertain, review or no simple model selected' };

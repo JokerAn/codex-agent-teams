@@ -90,6 +90,8 @@ models 保留真人确认来源/时间、策略版本与目标绑定。表单 re
 
 ## 0.5.0 项目路由
 
+0.5.1 启动增加可选 `models`（expert/simple）显式派发。该选择不改 runtime 全局 profiles；成员/reviewer 的分工和 captain-explicit 来源只写入本 attempt。合同 model/effort 覆盖成员选择，review 必须匹配 expert；重试清除覆盖并使用 expert。MCP/CLI 在每次启动前发现实时目录，runtime 在开始记录 attempt 前检查角色与最终选择。用户偏好仍按原真人确认路径复用，显式派发不保存为偏好；未显式指定且无有效偏好时继续拒绝，不从配置静默替换。表单通过 peekRuntime 只检查既有运行时，明确 accept 且提交有效后才获取 owner。
+
 打包与 build 删除包内 workspace，保留原配置文件。CLI 无固定 workspace 时以实际 cwd 或 --workspace 选项目；MCP 不使用 cwd 兜底，因为进程通常位于插件缓存。队长从聊天上下文填写 models/status 的 workspace 和 create 的 expectedWorkspace，其他工具增加可选 workspace。单连接已知任务 ID 可省略路径，重连需上下文；多项目无任务 ID 时不猜最近目录。
 
 workspace-router 以真实目录身份复用稳定 scope，每次访问与异步发现返回后核对身份，符号链接别名不产生第二 owner。scope 提供各项目 getRuntime/observe/discoverModels；MCP 每次请求保留其局部 scope，不共享可变的当前目录。确认进行中与会话选择分别按项目记录，持久偏好在原项目 SQLite 中保存，另一项目无法复用。每个项目继续有独立并发限额与串行验证门禁，没有跨项目依赖或全局后台调度。

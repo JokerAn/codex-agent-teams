@@ -43,6 +43,7 @@ export class WorkspaceRouter {
     const record = { runtime: null, check, scope: null };
     record.scope = Object.freeze({
       workspace: target.root,
+      peekRuntime: () => { check(); return record.runtime; },
       getRuntime: () => {
         check();
         return record.runtime ??= this.createRuntime({ ...structuredClone(this.config), workspace: target.root });
