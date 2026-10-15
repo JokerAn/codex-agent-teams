@@ -6,18 +6,19 @@ import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { TaskStore } from '../src/store.js';
 import { packPlugin } from '../src/plugin.js';
+import { packNativePlugin } from '../src/plugin-package.js';
 import { assertUpdateIdle, installPreparedPlugin } from '../scripts/update.js';
 
 const selector = 'codex-agent-teams@codex-agent-teams-local';
 const marketplaceName = 'codex-agent-teams-local';
 const json = path => JSON.parse(readFileSync(path, 'utf8'));
-function fixture(t, { fresh = false, fail, corrupt = false, onRestore, onInstall, legacy = false, withoutInstalledPath = false } = {}) {
+function fixture(t, { fresh = false, fail, corrupt = false, onRestore, onInstall, legacy = false, withoutInstalledPath = false, native = false } = {}) {
   const root = mkdtempSync(join(tmpdir(), "teams-update-' 空格-"));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const workspace = join(root, 'workspace'); mkdirSync(workspace);
   const configPath = join(root, 'config.json');
   writeFileSync(configPath, JSON.stringify({ codexBin: process.execPath, profiles: { expert: { model: 'fixture' } } }));
-  const packed = packPlugin({ configPath, out: join(root, 'new-marketplace') });
+  const packed = native ? packNativePlugin({ out: join(root, 'new-marketplace') }) : packPlugin({ configPath, out: join(root, 'new-marketplace') });
   const codexHome = join(root, 'home');
   const previousVersion = withoutInstalledPath ? json('package.json').version : '0.5.2';
   const cache = withoutInstalledPath ? join(codexHome, 'plugins', 'cache', marketplaceName, 'codex-agent-teams', previousVersion) : join(root, 'cache');
@@ -53,6 +54,19 @@ function fixture(t, { fresh = false, fail, corrupt = false, onRestore, onInstall
   return { root, workspace, packed, calls, previous, previousPlugin, state: () => ({ current, installed }),
     update: () => installPreparedPlugin({ binary: process.execPath, marketplaceRoot: packed.marketplaceRoot, workspace, codexHome, command }) };
 }
+
+test('native installation and rollback verify a dependency-free cache without requiring src', async t => {
+  const f = fixture(t, { native: true });
+  assert.equal((await f.update()).version, json('package.json').version);
+  const failed = fixture(t, { native: true, fail: args => args[1] === 'add' });
+  await assert.rejects(failed.update(), /原 marketplace 与插件安装状态已恢复/);
+});
+
+test('native update rejects leftover runtime source instead of reporting a lightweight installation', async t => {
+  const f = fixture(t, { native: true, onInstall: cache => { mkdirSync(join(cache, 'src')); writeFileSync(join(cache, 'src/cli.js'), '// leftover runtime'); },
+    onRestore: cache => rmSync(join(cache, 'src'), { recursive: true, force: true }) });
+  await assert.rejects(f.update(), /残留外置运行时[\s\S]*安装状态已恢复/);
+});
 
 for (const drift of [false, true]) {
   test(`official list without installedPath uses exact home/version cache identity; drift=${drift}`, async t => {
@@ -201,7 +215,7 @@ test('CLI help and invalid binary never invoke build or installation', () => {
 });
 
 test('build failure stops the update before marketplace mutation', () => {
-  const failed = spawnSync(process.execPath, ['scripts/update.js', '--config', '/missing-teams-update-config-fixture.json',
+  const failed = spawnSync(process.execPath, ['scripts/update.js', '--strict', '--config', '/missing-teams-update-config-fixture.json',
     '--binary', process.execPath], { encoding: 'utf8' });
   assert.equal(failed.status, 1);
   assert.match(failed.stderr, /未切换插件来源或缓存|请先关闭|尚未交接/);

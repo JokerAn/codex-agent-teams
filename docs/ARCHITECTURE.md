@@ -1,5 +1,11 @@
 # 实现说明
 
+## 0.8.0 默认安装边界
+
+默认包仅包含team skill和元数据，依靠宿主原生子Agent，不注册MCP/hooks、不创建外置进程或项目数据库。`plugin-package.js`用内置Node API打该包，build无需依赖安装或Codex配置。CLI仅在非pack/help命令才导入严格运行时。
+
+以下外置合同、状态、工作区、退出与集成实现均保留为显式`--strict`包，通过strict-delivery skill按需使用；严格包仍包含原生team，但普通调用不自动进入严格链路。不是一套新双后端调度系统。模块退出默认清单与验证见 [0.8.0精简记录](SIMPLIFY-0.8.0-2026-10-15.md)。
+
 ## 0.6.2 宿主停止与进程清理
 
 官方命令 hooks 通过 host-hook 向 MCP 连接内 host-lifecycle 控制器登记真实 session/turn，取得一次性票据并绑定 attempt。Interrupt/SessionEnd 先写中断标记，再按归属取消，异步发现后重新检查，避免迟到启动和误停新轮。控制器仅使用当前用户可访问的 Unix socket，hook 不直接写任务状态；任务状态及退出确认仍由 runtime 拥有。纯观察不获取 owner，重连使用零等待调用显式恢复 owner/端点。

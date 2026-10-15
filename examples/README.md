@@ -1,3 +1,7 @@
+# 严格交付模板（可选）
+
+默认原生team无需这些合同或配置。以下内容只用于显式 `--strict` 包/源码严格CLI，操作技能为 `strict-delivery`。默认构建与使用见 [主README](../README.md)。
+
 # examples 目录说明
 
 本目录是手工模板。`teams.config.json` 默认不含 `workspace`，可供一个全局插件跨项目使用，

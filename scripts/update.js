@@ -34,10 +34,13 @@ function installationIdentity(path) {
   const build = json(join(path, 'build-info.json'));
   if (typeof build.version !== 'string' || !/^[a-f0-9]{64}$/.test(build.sourceDigest ?? '')) return null;
   // Validate src itself before enumerating it.
-  regular('src', true);
-  const files = [...readdirSync(join(path, 'src')).filter(name => name.endsWith('.js')).map(name => `src/${name}`),
+  const src = regular('src', true);
+  const files = [...(src ? readdirSync(join(path, 'src')).filter(name => name.endsWith('.js')).map(name => `src/${name}`) : []),
     'build-info.json', 'package.json', 'PRINCIPLES.md', 'skills/team/SKILL.md', 'plugin.json', '.codex-plugin/plugin.json',
-    'hooks/hooks.json', 'teams.config.json', 'mcp.json', '.mcp.json', 'mcp-launch', 'mcp-launch.js'].sort();
+    'skills/strict-delivery/SKILL.md', 'hooks/hooks.json', 'teams.config.json', 'mcp.json', '.mcp.json', 'mcp-launch', 'mcp-launch.js'].sort();
+  if (build.mode === 'native') {
+    if (src || existsSync(join(path, 'node_modules'))) throw new Error('原生skill缓存残留外置运行时或依赖');
+  } else if (!src) throw new Error('严格交付缓存缺少源码目录');
   const hash = createHash('sha256');
   for (const file of files) {
     hash.update(file + '\0');
@@ -92,7 +95,7 @@ function codexCommand(binary, args) {
 
 /** Called only by the explicitly invoked update command, after a successful build/doctor. */
 export async function installPreparedPlugin({ binary, marketplaceRoot, workspace = root, codexHome = process.env.CODEX_HOME ?? join(homedir(), '.codex'), command = args => codexCommand(binary, args) }) {
-  const { pluginTarget } = await import('../src/plugin.js');
+  const { pluginTarget } = await import('../src/plugin-package.js');
   const target = pluginTarget(marketplaceRoot);
   const expectedIdentity = installationIdentity(target.pluginRoot);
   assert(expectedIdentity, '候选包缺少有效关键文件身份');
@@ -165,19 +168,21 @@ export async function installPreparedPlugin({ binary, marketplaceRoot, workspace
 async function main() {
   if (!['darwin', 'linux'].includes(process.platform)) throw new Error('更新仅支持 macOS/Linux。');
   if (Number(process.versions.node.split('.')[0]) < 24) throw new Error('需要 Node.js 24 或更新版本。');
-  const { values } = parseArgs({ options: { config: { type: 'string' }, out: { type: 'string' }, binary: { type: 'string' }, help: { type: 'boolean' } } });
+  const { values } = parseArgs({ options: { strict: { type: 'boolean' }, config: { type: 'string' }, out: { type: 'string' }, binary: { type: 'string' }, help: { type: 'boolean' } } });
   if (values.help) {
-    console.log('npm run update [-- --config <file> --binary <codex path> --out <new directory>]\n构建并检查新包，通过官方 CLI 更新本机插件安装；不运行模型推理。完成后重启 Codex。');
+    console.log('npm run update [-- --strict --config <file> --binary <codex path> --out <new directory>]\n默认更新原生skill包；--strict显式安装外置交付链路。通过官方CLI安装，不运行推理，完成后重启Codex。');
     return;
   }
   assertUpdateIdle(root);
   const configPath = resolve(root, values.config ?? process.env.TEAMS_CONFIG ?? 'teams.local.json');
-  const settings = existsSync(configPath) ? json(configPath) : null;
+  if (values.config && !values.strict) throw new Error('--config requires --strict; native update needs no model configuration.');
+  const settings = values.strict && existsSync(configPath) ? json(configPath) : null;
   const binary = resolveCodexBin(values.binary ?? settings?.codexBin ?? 'codex', { cwd: values.binary ? process.cwd() : dirname(configPath) });
   const { version } = json(join(root, 'package.json'));
-  const out = values.out ? resolve(root, values.out) : join(root, 'dist', `marketplace-v${version}-update-${Date.now()}-${randomUUID().slice(0, 8)}`);
+  const out = values.out ? resolve(root, values.out) : join(root, 'dist', `marketplace-v${version}${values.strict ? '-strict' : ''}-update-${Date.now()}-${randomUUID().slice(0, 8)}`);
   console.log('更新 Codex Agent Teams：构建并检查新包 → 切换来源 → 重装缓存 → 核对版本。\n请先结束其他项目的 Team 任务并关闭对应会话；本命令只检查当前项目的运行状态。');
-  const args = [join(root, 'scripts/build.js'), '--out', out, '--binary', binary];
+  const args = [join(root, 'scripts/build.js'), '--out', out];
+  if (values.strict) args.push('--strict', '--binary', binary);
   if (values.config) args.push('--config', configPath);
   const built = spawnSync(process.execPath, args, { cwd: root, stdio: 'inherit' });
   if (built.error) throw built.error;

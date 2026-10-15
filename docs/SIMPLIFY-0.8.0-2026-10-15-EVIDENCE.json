@@ -1,0 +1,233 @@
+{
+  "version": "0.8.0",
+  "capturedAt": "2026-10-15T06:04:39.734Z",
+  "workspace": "/Users/anshunli1/asl/code/github/codex-agent-teams",
+  "baseHead": "af6d79b",
+  "preservedIndexTree": "227dbb151a1c80b448b9741c143426a401a7c0f6",
+  "defaultPackage": {
+    "mode": "native",
+    "files": 4,
+    "bytes": 3052,
+    "build": {
+      "version": "0.8.0",
+      "mode": "native",
+      "createdAt": "2026-10-15T06:03:07.966Z",
+      "sourceDigest": "294c18c38c16e80ce1b388b1592189289564bdade8da0e75c1b93641fbf4553f"
+    },
+    "marketplaceRoot": "/Users/anshunli1/asl/code/github/codex-agent-teams/dist/marketplace-v0.8.0-native-final-20261015",
+    "externalMcpServers": 0,
+    "pluginHooks": 0,
+    "runtimeDependencies": 0,
+    "defaultSkillLines": 19
+  },
+  "strictPackage": {
+    "files": 983,
+    "bytes": 14219720,
+    "build": {
+      "version": "0.8.0",
+      "mode": "strict",
+      "createdAt": "2026-10-15T06:03:44.314Z",
+      "sourceDigest": "08ed62d7c1d7973dba54c9b45940327f838ce867c67474631b16a3f5cdceb666"
+    },
+    "marketplaceRoot": "/Users/anshunli1/asl/code/github/codex-agent-teams/dist/marketplace-v0.8.0-strict-final-20261015",
+    "sourceEquality": true
+  },
+  "validation": {
+    "targeted": {
+      "passed": 65,
+      "failed": 0,
+      "durationMs": 14868.919708
+    },
+    "full": {
+      "passed": 339,
+      "failed": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "durationMs": 97725.593709
+    },
+    "node": "v24.21.0",
+    "platform": "darwin",
+    "logs": [
+      {
+        "path": "/tmp/teams-slim-targeted-20261015.log",
+        "sha256": "1eaf4b24b58982f4e5e6403409613a566304a999f5ce9cf0a76b81caf0d251e5"
+      },
+      {
+        "path": "/tmp/teams-slim-targeted-final-20261015.log",
+        "sha256": "3b25cdb2598907ceaf06fc0d7bf9d7b6eb17b5f20fda35765f857f80be9403f9"
+      },
+      {
+        "path": "/tmp/teams-slim-full-20261015.log",
+        "sha256": "892a129a69dbeb8033d0d78ce5537cfaa8f220f0aefd4374e782e46a55392bb0"
+      },
+      {
+        "path": "/tmp/teams-slim-native-cli-before-20261015.log",
+        "sha256": "7211d7a7eedeaa6076f7628ec1c62b838eeb14353aa66772abcedf2030f01670"
+      }
+    ],
+    "skillValidator": {
+      "officialQuickValidate": "unavailable: Python yaml module missing",
+      "manualFrontmatter": "passed",
+      "skillBodyBehavior": "native members read and applied; captain reviewed outcomes"
+    }
+  },
+  "nativeHost": {
+    "version": "0.8.0",
+    "mode": "native",
+    "cachedSkillDiscovered": true,
+    "sourceRemoved": true,
+    "externalMcpServers": 0,
+    "pluginHooks": 0,
+    "projectStateCreated": false,
+    "packageFiles": 4,
+    "packageBytes": 3052,
+    "inferenceStarted": false,
+    "userConfigChanged": false,
+    "appServerExited": true
+  },
+  "strictHost": {
+    "server": {
+      "userAgent": "Codex Desktop/0.162.0-alpha.17.2 (Mac OS 26.6.2; arm64) dumb (codex_agent_teams; 0.8.0)",
+      "codexHome": "/private/var/folders/ds/crz3lj6n3vnf2q4kx5xhnzpm0000gp/T/teams-plugin-smoke-JUifx1/codex-home",
+      "platformFamily": "unix",
+      "platformOs": "macos"
+    },
+    "marketplace": "codex-agent-teams-local",
+    "installedInTemporaryHome": true,
+    "cachedPackageIndependent": true,
+    "cachedSkillDiscovered": true,
+    "inventoryWhileRuntimeActive": true,
+    "startupStatus": "ready",
+    "tools": [
+      "teams_cancel",
+      "teams_create",
+      "teams_integrate",
+      "teams_models",
+      "teams_review",
+      "teams_start",
+      "teams_status",
+      "teams_wait"
+    ],
+    "statusBeforeOwner": true,
+    "observedPluginVersion": "0.8.0",
+    "observedRuntimeVersion": "0.8.0",
+    "modelCatalogRead": true,
+    "outerApprovalPolicy": "on-request",
+    "formRequestObserved": true,
+    "rememberDefaultForwarded": true,
+    "textReceiptForwarded": true,
+    "confirmationAction": "cancel",
+    "declinedFormDoesNotAcquireOwner": true,
+    "captainDispatchSchemaAvailable": true,
+    "missingHostBindingBlocksStart": true,
+    "contractCreated": true,
+    "incompleteWriteContractRejected": true,
+    "taskCancelled": true,
+    "sameInstallationTwoProjects": true,
+    "perProjectState": true,
+    "wrongProjectRejected": true,
+    "ambiguousTargetRejected": true,
+    "cacheCwdRejected": true,
+    "inferenceStarted": false,
+    "userConfigChanged": false,
+    "pluginHookDefinitionsDiscovered": [
+      "preToolUse",
+      "sessionEnd",
+      "interrupt"
+    ],
+    "pluginHooksInGlobalInventory": 3,
+    "hostHookExecutionVerified": false,
+    "managedRuntimeExited": true
+  },
+  "migration": {
+    "version": "0.8.0",
+    "strictInstall": true,
+    "failedNativeSwitchRestoredStrictIdentity": true,
+    "strictToNative": true,
+    "nativeToStrict": true,
+    "finalNative": true,
+    "sameVersionCacheReplaced": true,
+    "cliCalls": 39,
+    "userConfigChanged": false,
+    "inferenceStarted": false
+  },
+  "pilot": {
+    "cases": [
+      {
+        "file": "cart.js",
+        "current": 30,
+        "expected": 10,
+        "proposedFixPassed": true
+      },
+      {
+        "file": "scope.js",
+        "current": true,
+        "expected": false,
+        "proposedFixPassed": true
+      }
+    ],
+    "model": "krill/gpt-6.1-sol",
+    "effort": "high",
+    "native": {
+      "reports": 2,
+      "findingsCorrect": 2,
+      "correctionsRequired": 0,
+      "followups": 2,
+      "followupReason": "captain clarified that reading skill was permitted",
+      "fullComparableTiming": null,
+      "skillReadConfirmed": true
+    },
+    "strict": {
+      "reports": 2,
+      "findingsCorrect": 2,
+      "correctionsRequired": 0,
+      "elapsedMs": [
+        41129,
+        27342
+      ],
+      "exitConfirmed": true,
+      "runtimeTerminalStatus": "awaiting_review",
+      "captainEvidenceAccepted": true,
+      "persistentDatabase": false
+    },
+    "comparable": {
+      "sameFiles": true,
+      "sameRequirement": true,
+      "sameModelEffort": true,
+      "limitations": [
+        "Two tiny synthetic static review cases",
+        "Native full timing not supplied",
+        "Runs were sequential by approach and unrandomized; cache/order uncontrolled",
+        "Strict pilot used TaskRuntime with in-memory store; excludes public MCP/hooks overhead",
+        "Not an end-to-end implementation benchmark; no speed/cost conclusion"
+      ]
+    },
+    "projectFilesModified": false
+  },
+  "review": {
+    "backend": "host native subagent",
+    "task": "/root/native_package_review",
+    "model": "krill/gpt-6.1-sol",
+    "effort": "high",
+    "initialFinding": "CLI pack loads strict dependencies before native branch",
+    "fix": "strict imports deferred to execution commands",
+    "followupVerdict": "original issue resolved; no new specific blocker in reviewed scope",
+    "captain": "accepted after source check, dependency-free CLI regression and full suite",
+    "notRunByReviewer": [
+      "filesystem fixtures",
+      "tests",
+      "real host installation"
+    ]
+  },
+  "boundaries": {
+    "formalInstall": false,
+    "userConfigChanged": false,
+    "commit": false,
+    "push": false,
+    "strictRuntimeRemovedFromRepository": false,
+    "automaticNativeBackendAdapter": false,
+    "matchedTimingBenchmark": false,
+    "realDesktopStop": false,
+    "remotePlatformMatrix": false
+  }
+}

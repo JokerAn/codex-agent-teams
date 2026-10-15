@@ -210,7 +210,7 @@ export class CodexBackend {
       let pluginCheck;
       if (plugin) {
         const { plugin: detail } = await client.request('plugin/read', { marketplacePath: plugin.marketplacePath, pluginName: plugin.pluginName });
-        if (detail?.summary?.name !== plugin.pluginName || !detail.skills?.some(skill => ['team', `${plugin.pluginName}:team`].includes(skill.name)) || !detail.mcpServers?.includes('codex-agent-teams')) {
+        if (detail?.summary?.name !== plugin.pluginName || !detail.skills?.some(skill => ['team', `${plugin.pluginName}:team`].includes(skill.name)) || (plugin.mode !== 'native' && !detail.mcpServers?.includes('codex-agent-teams'))) {
           throw hostError('skill_or_mcp_missing', `Host did not discover the prepared team skill and MCP server (skills: ${detail?.skills?.map(skill => skill.name).join(', ') ?? 'none'}; MCP: ${detail?.mcpServers?.join(', ') ?? 'none'})`);
         }
         pluginCheck = { name: detail.summary.name, marketplace: detail.marketplaceName, skills: detail.skills.map(skill => skill.name), mcpServers: detail.mcpServers, installed: detail.summary.installed, enabled: detail.summary.enabled, mcpConnectionChecked: false };

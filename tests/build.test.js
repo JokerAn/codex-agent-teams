@@ -24,7 +24,7 @@ test('binary discovery prefers PATH, falls back to desktop and respects explicit
 });
 
 test('build rejects a missing explicit binary before npm bootstrap or package writes', () => {
-  const result = spawnSync(process.execPath, ['scripts/build.js', '--binary', '/missing-codex-build-test/codex'], { encoding: 'utf8' });
+  const result = spawnSync(process.execPath, ['scripts/build.js', '--strict', '--binary', '/missing-codex-build-test/codex'], { encoding: 'utf8' });
   assert.equal(result.status, 1);
   assert.match(result.stderr, /找不到可执行/);
   assert.doesNotMatch(result.stdout, /安装锁定依赖|打包插件/);
@@ -33,6 +33,7 @@ test('build rejects a missing explicit binary before npm bootstrap or package wr
 test('build rejects Windows before dependency installation or configuration reads', () => {
   const result = spawnSync(process.execPath, ['--input-type=module', '-e', `
     Object.defineProperty(process, 'platform', { value: 'win32' });
+    process.argv = [process.execPath, '--strict'];
     await import('./scripts/build.js');
   `], { encoding: 'utf8' });
   assert.equal(result.status, 1);
