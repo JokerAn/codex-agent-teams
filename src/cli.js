@@ -18,6 +18,7 @@ try {
       out: { type: 'string' }, plugin: { type: 'string' }, help: { type: 'boolean' },
       reason: { type: 'string' }, retry: { type: 'boolean' }, attempt: { type: 'string' }, spec: { type: 'string' }, id: { type: 'string' }, dirty: { type: 'string' }, allow: { type: 'string', multiple: true }, discard: { type: 'boolean' },
       'check-thread': { type: 'boolean' },
+      'host-lifecycle': { type: 'boolean' },
       human: { type: 'boolean' }, overview: { type: 'boolean' }, html: { type: 'string' }, limit: { type: 'string' },
     },
   });
@@ -97,7 +98,7 @@ node src/cli.js run --config <file> --task <json>
       const { serve } = await import('./mcp.js');
       const { WorkspaceRouter } = await import('./workspace-router.js');
       const router = new WorkspaceRouter(settings);
-      await serve(undefined, { route: args => router.resolve(args), closeAll: () => router.close() });
+      await serve(undefined, { route: args => router.resolve(args), closeAll: () => router.close(), hostLifecycle: values['host-lifecycle'] === true });
     } else {
       const runtime = createRuntime();
       const terminalCancellation = new AbortController();

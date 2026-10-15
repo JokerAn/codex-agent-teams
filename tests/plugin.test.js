@@ -129,13 +129,19 @@ test('prepared package includes production dependencies, supports cache relocati
   assert.equal(build.version, json(resolve('package.json')).version);
   assert.match(build.sourceDigest, /^[a-f0-9]{64}$/);
   assert.equal(packed.inferenceStarted, false);
-  const manifest = json(join(packed.pluginRoot, 'plugin.json'));
+  const manifest = json(resolve('plugin.json'));
   const compatibility = json(join(packed.pluginRoot, '.codex-plugin/plugin.json'));
+  assert.equal(existsSync(join(packed.pluginRoot, 'plugin.json')), false, 'portable manifest must not shadow hooks on this Codex alpha');
+  assert.equal(packed.manifestFormat, 'codex-compatibility');
   for (const field of ['name', 'version', 'description']) assert.equal(manifest[field], compatibility[field]);
   assert.equal(manifest.skills, undefined); // Agent Plugins v1 uses ./skills and ./mcp.json defaults.
   assert.equal(manifest.mcpServers, undefined);
   assert.equal(compatibility.skills, './skills/');
   assert.equal(compatibility.mcpServers, './.mcp.json');
+  const hooks = json(join(packed.pluginRoot, 'hooks/hooks.json')).hooks;
+  assert.deepEqual(Object.keys(hooks).sort(), ['Interrupt', 'PreToolUse', 'SessionEnd']);
+  assert.match(hooks.PreToolUse[0].hooks[0].command, /\$PLUGIN_ROOT\/src\/host-hook\.js/);
+  assert.equal(hooks.Interrupt[0].hooks[0].timeout, 3);
   assert.deepEqual(packed.runtimeDependencies.sort(), ['node_modules/@modelcontextprotocol/core', 'node_modules/@modelcontextprotocol/server', 'node_modules/zod']);
   assert.equal(existsSync(join(packed.pluginRoot, 'node_modules/@modelcontextprotocol/client')), false);
   assert.equal(existsSync(join(packed.pluginRoot, 'tests')), false);
@@ -145,6 +151,7 @@ test('prepared package includes production dependencies, supports cache relocati
   renameSync(out, moved);
   const target = pluginTarget(moved);
   const server = json(join(target.pluginRoot, 'mcp.json')).mcpServers['codex-agent-teams'];
+  assert(server.args.includes('--host-lifecycle'));
   const transport = new StdioClientTransport({ command: server.command, args: server.args, cwd: target.pluginRoot, env: { ...process.env, ...server.env }, stderr: 'pipe' });
   const client = new Client({ name: 'packaged-plugin-tests', version: '0.1.0' });
   t.after(async () => { await client.close(); });

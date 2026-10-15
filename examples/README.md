@@ -10,6 +10,7 @@
 |---|---|
 | CLI 配置不含 `workspace` | `--workspace`，缺省为当前目录；任务中的 `expectedWorkspace` 仍须匹配 |
 | MCP `teams_create` | 必填 `expectedWorkspace`，由队长从任务上下文自动传入 |
+| 带hooks的MCP启动/集成 | 必须传任务目标的绝对workspace，由队长从target.root填写 |
 | MCP 模型、列表或重连后的任务操作 | 传 `workspace`；同一连接已知 `taskId` 可直接路由 |
 | 旧配置含 `workspace` | 保留固定目标语义，不会随聊天项目切换 |
 
@@ -44,7 +45,7 @@ JSON 不支持注释，而 `taskSchema` 是 `strictObject`，加任何 `_comment
 `teams_start` 传入 `models: {expert: {model: "实际模型标识", effort: "支持的强度"}}`；真人表单是可选设置。
 `cwd` 来自当前聊天上下文。
 然后把下面的 `expectedWorkspace` 替换为同一个已知绝对路径，调用 `teams_create` 和 `teams_start`。
-同连接已知任务 ID 后无需重复路径，重连后补 `workspace`；多项目列表明确指定项目。
+带hooks的start/integrate必须显式传任务target.root作为workspace；已知taskId的查询/复核/取消可省略路径，重连后补workspace；多项目列表明确指定项目。
 
 ```json
 {
@@ -92,3 +93,19 @@ node scripts/clean-dist.js            # 列出将删除的目录，保留最近 
 node scripts/clean-dist.js --keep 3   # 保留最近 3 个
 node scripts/clean-dist.js --yes      # 确认后真正删除
 ```
+# 0.6.0 报告与观察
+
+`analysis-result.json` 演示满足验收的静态报告如何记录 `limitations`，它是格式示例，不是运行证据。
+真正的 `blockers` 必须影响未满足的 criterion，并在其 evidence 中说明；所有 criterion 都满足却有 blocker
+会被诊断为矛盾报告。旧报告省略 limitations 仍可读取，不自动改变旧 blocked 状态。
+
+需要复现的 finding 应包含 file:line、触发条件、预期/实际、可审阅步骤或代码、实际执行者和验证边界。
+只读成员不创建真实 Git fixture；队长承担已声明的验证及 STATUS 文档。不要自动执行报告中的代码。
+
+首次查询 `teams_status({workspace,taskId,incremental:true})` 获取连接内 cursor，后续
+`teams_wait({taskId,timeoutMs:10000,afterCursor:cursor})` 或 status 返回无变化回执/变化摘要。
+游标跨项目、任务、attempt 或 MCP 重连失效，按错误指引重新取完整快照；`verbose:true` 获取原始证据。
+旧缓存无这些字段时沿用旧观察接口，先完成源码/候选包验证再单独更新正式安装。
+
+`evaluation-record.json` 是未来同条件评测记录模板，不调用模型、不证明速度收益。
+主任务总时长来自宿主/评测器，不能用成员并行时长代替；所有方案均记录完整主子用量，null 保持未知。

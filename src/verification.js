@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto';
-import { execFileSync, spawn } from 'node:child_process';
+import { spawnManaged } from './managed-process.js';
+import { signalGroup } from './process-group.js';
+export { signalGroup } from './process-group.js';
 import { closeSync, lstatSync, mkdirSync, openSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { z } from 'zod';
@@ -26,22 +28,6 @@ export const verificationSchema = z.strictObject({
   maxOutputBytes: z.number().int().min(1024).max(16 * 1024 * 1024).default(2 * 1024 * 1024),
 });
 
-// macOS can deny group signals; match Codex's member fallback without native dependencies.
-export function signalGroup(pid, signal) {
-  try { process.kill(-pid, signal); }
-  catch (error) {
-    if (error.code === 'ESRCH') return;
-    if (process.platform !== 'darwin' || error.code !== 'EPERM') throw error;
-    const ps = args => execFileSync('/bin/ps', args, { encoding: 'utf8', timeout: 1000, maxBuffer: 1024 * 1024, stdio: 'pipe' });
-    const members = ps(['-axo', 'pid=,pgid=']).trim().split('\n').map(row => row.trim().split(/\s+/).map(Number))
-      .filter(([, group]) => group === pid).map(([member]) => member).sort((a, b) => (a === pid) - (b === pid));
-    for (const member of members) {
-      try { if (Number(ps(['-p', String(member), '-o', 'pgid=']).trim()) === pid) process.kill(member, signal); }
-      catch (failure) { if (failure.code !== 'ESRCH' && failure.status !== 1) throw failure; }
-    }
-  }
-}
-
 /** One explicit command, raw bounded logs, managed Unix process group. No implicit shell. */
 export async function runVerification(spec, { cwd, logDir, signal, onSpawn = () => {}, onLaunch = () => {} }) {
   if (!['darwin', 'linux'].includes(process.platform)) throw new Error('Command verification supports macOS/Linux only');
@@ -61,7 +47,7 @@ export async function runVerification(spec, { cwd, logDir, signal, onSpawn = () 
       // otherwise leave a record that looks identical to "never started", and recovery could not tell a
       // possibly-live process group from an absent one.
       onLaunch();
-      const child = spawn(spec.command, spec.args, { cwd, shell: false, detached: true, stdio: ['ignore', 'pipe', 'pipe'], env: { ...env, PWD: cwd, INIT_CWD: cwd } });
+      const child = spawnManaged(spec.command, spec.args, { cwd, stdio: ['ignore', 'pipe', 'pipe'], env: { ...env, PWD: cwd, INIT_CWD: cwd } });
       let closed = false, done = false, exitCode = null, exitSignal = null, reason, failure, cleanupError, outputTruncated = false;
       const counts = [0, 0], hashes = [createHash('sha256'), createHash('sha256')];
       let written = 0, deadline, force, drain, poll;
@@ -91,10 +77,17 @@ export async function runVerification(spec, { cwd, logDir, signal, onSpawn = () 
       const abort = () => stop('cancelled', String(signal.reason?.message ?? 'Cancelled'));
       child.on('error', error => { failure = error.message; });
       child.on('exit', (code, terminatedBy) => {
-        exitCode = code; exitSignal = terminatedBy;
+        exitCode = child.guardReport?.spawnError ? null : code; exitSignal = terminatedBy;
+        if (child.guardReport?.descendants && !reason) stop('failed', 'Command exited while descendants were still running');
         if (!reason && alive()) stop('failed', 'Command exited while descendants were still running');
       });
-      child.on('close', () => { closed = true; if (alive()) stop('failed', 'Command left descendants running'); check(); });
+      child.on('close', () => {
+        closed = true;
+        if (child.guardReport?.spawnError) exitCode = null;
+        if (child.guardReport?.descendants && !reason) stop('failed', 'Command exited while descendants were still running');
+        if (alive()) stop('failed', 'Command left descendants running');
+        check();
+      });
       [child.stdout, child.stderr].forEach((stream, index) => {
         stream.on('error', error => stop('failed', `Output stream failed: ${error.message}`));
         stream.on('data', chunk => {

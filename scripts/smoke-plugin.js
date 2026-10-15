@@ -34,9 +34,9 @@ try {
   const marketplace = command(['plugin', 'marketplace', 'add', packed.marketplaceRoot, '--json']);
   const installed = command(['plugin', 'add', 'codex-agent-teams@codex-agent-teams-local', '--json']);
   assert.ok(installed.installedPath.startsWith(home + '/'));
-  // Test the host cache, not the source marketplace directory.
-  rmSync(packed.pluginRoot, { recursive: true });
-  client = new AppServerClient({ binary, cwd: workspace, env });
+  // Compare the installed definitions before removing the marketplace source.
+  assert.deepEqual(readFileSync(join(installed.installedPath, 'hooks/hooks.json')), readFileSync(join(packed.pluginRoot, 'hooks/hooks.json')));
+  client = new AppServerClient({ binary, cwd: workspace, env, args: ['app-server', '--stdio', '-c', 'features.hooks=true', '-c', 'features.plugins=true'] });
   const server = await client.initialize(undefined, { experimentalApi: true });
   client.on('notification', (method, params) => {
     if (method.startsWith('mcpServer/')) startupEvents.push({ method, name: params.name, status: params.status, error: params.error });
@@ -64,6 +64,11 @@ try {
   const skills = await client.request('skills/list', { cwds: [workspace], forceReload: true });
   const team = skills.data.flatMap(entry => entry.skills ?? []).find(skill => skill.name === 'codex-agent-teams:team');
   assert.ok(team && team.path.startsWith(installed.installedPath + '/') && existsSync(team.path), 'Cached skill must be discoverable from installed plugin');
+  const hookInventory = await client.request('hooks/list', { cwds: [workspace] });
+  const pluginHooks = hookInventory.data.flatMap(entry => entry.hooks).filter(hook => hook.source === 'plugin' && hook.sourcePath.startsWith(installed.installedPath + '/'));
+  const pluginDetails = await client.request('plugin/read', { marketplacePath: packed.marketplacePath, pluginName: 'codex-agent-teams' });
+  assert.deepEqual(pluginDetails.plugin.hooks.map(hook => hook.eventName).sort(), ['interrupt', 'preToolUse', 'sessionEnd'], JSON.stringify({ inventory: hookInventory, hooks: pluginDetails.plugin.hooks }));
+  rmSync(packed.pluginRoot, { recursive: true });
   assert.equal(ready.threadId, started.thread.id);
   const inventory = await client.request('mcpServerStatus/list', { threadId: started.thread.id, limit: 100 });
   const mcp = inventory.data.find(entry => entry.name === 'codex-agent-teams');
@@ -112,12 +117,12 @@ try {
   const created = await call('teams_create', { expectedWorkspace: workspace, objective: 'Inspect isolated plugin installation', acceptance: ['Cite evidence'] });
   assert.ok(!created.isError, JSON.stringify(created.content));
   const task = JSON.parse(created.content[0].text);
-  const unconfirmed = await call('teams_start', { taskId: task.id });
+  const unconfirmed = await call('teams_start', { workspace, taskId: task.id });
   assert.equal(unconfirmed.isError, true);
-  assert.match(unconfirmed.content[0].text, /User model confirmation/);
-  const invalidCaptain = await call('teams_start', { taskId: task.id, models: { expert: { model: 'not-a-real-model-no-inference' } } });
+  assert.match(unconfirmed.content[0].text, /Host lifecycle binding missing/);
+  const invalidCaptain = await call('teams_start', { workspace, taskId: task.id, models: { expert: { model: 'not-a-real-model-no-inference' } } });
   assert.equal(invalidCaptain.isError, true);
-  assert.match(invalidCaptain.content[0].text, /current Codex catalog/);
+  assert.match(invalidCaptain.content[0].text, /Host lifecycle binding missing/);
   const activeInventory = await client.request('mcpServerStatus/list', { threadId: started.thread.id, limit: 100 });
   assert.equal(Object.keys(activeInventory.data.find(entry => entry.name === 'codex-agent-teams')?.tools ?? {}).length, 8);
   const status = await call('teams_status', { taskId: task.id });
@@ -160,11 +165,14 @@ try {
   result = { server, marketplace: marketplace.marketplaceName, installedInTemporaryHome: true,
     cachedPackageIndependent: true, cachedSkillDiscovered: true, inventoryWhileRuntimeActive: true, startupStatus: ready.status, tools: Object.keys(mcp.tools).sort(),
     statusBeforeOwner: true, observedPluginVersion: initial.viewer.version, observedRuntimeVersion: active.runtime.version,
-    modelCatalogRead: true, outerApprovalPolicy: approvalPolicy, formRequestObserved: formObserved, rememberDefaultForwarded: formObserved, textReceiptForwarded: true, confirmationAction, cancelledFormBlocksStart: true,
-    declinedFormDoesNotAcquireOwner: true, captainDispatchSchemaAvailable: true, invalidCaptainModelBlocksStart: true,
+    modelCatalogRead: true, outerApprovalPolicy: approvalPolicy, formRequestObserved: formObserved, rememberDefaultForwarded: formObserved, textReceiptForwarded: true, confirmationAction,
+    declinedFormDoesNotAcquireOwner: true, captainDispatchSchemaAvailable: true, missingHostBindingBlocksStart: true,
     contractCreated: true, incompleteWriteContractRejected: true, taskCancelled: true, sameInstallationTwoProjects: true,
     perProjectState: true, wrongProjectRejected: true, ambiguousTargetRejected: true, cacheCwdRejected: true, inferenceStarted: false,
     userConfigChanged: false };
+  result.pluginHookDefinitionsDiscovered = pluginDetails.plugin.hooks.map(hook => hook.eventName);
+  result.pluginHooksInGlobalInventory = pluginHooks.length;
+  result.hostHookExecutionVerified = false;
 } catch (error) {
   let inventory;
   if (client && hostThread) {

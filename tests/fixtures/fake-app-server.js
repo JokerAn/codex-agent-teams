@@ -6,6 +6,13 @@ let model, cwd, writable;
 const thread = mode === 'write-runtime' ? `thread-${process.pid}` : 'thread-test';
 const emit = frame => process.stdout.write(JSON.stringify(frame) + '\n');
 const notify = (method, params) => emit({ method, params });
+// Exercise strict generation constraints separately from legacy report parsing.
+const invalidOutputSchema = schema => {
+  if (!schema || typeof schema !== 'object') return false;
+  if (schema.type === 'object' && (schema.additionalProperties !== false ||
+    Object.keys(schema.properties ?? {}).some(key => !schema.required?.includes(key)))) return true;
+  return Object.values(schema).some(invalidOutputSchema);
+};
 const rl = createInterface({ input: process.stdin });
 rl.on('line', line => {
   const req = JSON.parse(line);
@@ -57,10 +64,27 @@ rl.on('line', line => {
     }
     if (mode === 'crash') return process.exit(7);
     if (mode === 'bad-json') return process.stdout.write('not-json\n');
+    if (['bad-request', 'unclassified-turn-error'].includes(mode)) {
+      notify('turn/completed', { ...common, turn: { id: 'turn-test', status: 'failed', items: [],
+        error: { message: 'Invalid schema: controlled rejection', codexErrorInfo: mode === 'bad-request' ? 'badRequest' : null } } });
+      return reply({ turn: { id: 'turn-test' } });
+    }
+    if (invalidOutputSchema(req.params.outputSchema)) return emit({ id: req.id, error: { message: 'Strict output schema requires every object property and additionalProperties=false' } });
     if (mode === 'write-runtime' && writable) writeFileSync(join(cwd, 'sum.js'), 'export const sum = (a,b) => a+b;\n');
     const packet = JSON.parse(req.params.input[0].text);
     if (req.params.outputSchema.properties.criteria.items.properties.criterion.enum[0] !== packet.acceptance[0]) return emit({ id: req.id, error: { message: 'Per-task acceptance schema missing' } });
-    const result = { summary: 'Protocol fixture completed', criteria: packet.acceptance.map(criterion => ({ criterion, satisfied: true, evidence: 'fixture:1' })), findings: [], blockers: [] };
+    const result = { summary: 'Protocol fixture completed', criteria: packet.acceptance.map(criterion => ({ criterion, satisfied: true, evidence: 'fixture:1' })), findings: [], blockers: [], limitations: [] };
+    if (mode === 'action-overflow') {
+      notify('item/started', { ...common, item: { id: '\0'.repeat(96), type: 'commandExecution', status: 'inProgress', cwd } });
+    }
+    if (['actions', 'action-overflow'].includes(mode)) {
+      const item = { id: 'cmd', type: 'commandExecution', command: 'SECRET_ARGUMENT', aggregatedOutput: 'SECRET_OUTPUT', cwd, status: 'inProgress' };
+      notify('item/started', { ...common, item, startedAtMs: 1000 });
+      notify('item/completed', { ...common, item: { ...item, status: 'failed', exitCode: 7, durationMs: 200 }, completedAtMs: 1200 });
+      notify('item/started', { ...common, item }); // late reopening must be ignored
+      notify('item/completed', { ...common, turnId: 'other-turn', item: { ...item, id: 'other' } });
+      notify('item/started', { ...common, item: { id: 'tool', type: 'dynamicToolCall', tool: mode === 'action-overflow' ? '中'.repeat(1000) : 'fixture-tool', arguments: 'SECRET_ARGUMENT', status: 'inProgress' } });
+    }
     notify('thread/tokenUsage/updated', { ...common, tokenUsage: { total: { inputTokens: 10, outputTokens: 5, totalTokens: 15 } } });
     notify('item/completed', { ...common, item: { type: 'agentMessage', text: JSON.stringify(result), phase: 'final_answer' } });
     // Deliberately complete BEFORE the turn/start response to exercise notification races.

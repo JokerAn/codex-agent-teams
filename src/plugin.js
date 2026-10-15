@@ -38,7 +38,7 @@ export function packPlugin({ configPath, out = resolve('dist/local-marketplace')
   const packageJson = json(join(root, 'package.json'));
   // Agent Plugins v1 discovers ./skills and ./mcp.json by convention. Only
   // the Codex compatibility manifest declares these paths; share metadata.
-  if (manifest.name !== name || compatibility.name !== name || manifest.version !== packageJson.version || ['version', 'description'].some(key => compatibility[key] !== manifest[key]) || compatibility.skills !== './skills/' || compatibility.mcpServers !== './.mcp.json') {
+  if (manifest.name !== name || compatibility.name !== name || manifest.version !== packageJson.version || ['version', 'description'].some(key => compatibility[key] !== manifest[key]) || compatibility.skills !== './skills/' || compatibility.mcpServers !== './.mcp.json' || compatibility.hooks !== './hooks/hooks.json' || manifest.extensions?.['com.openai']?.hooks !== './hooks/hooks.json') {
     throw new Error('Plugin manifests and package version must agree');
   }
   // Capture only the executable identity, never the builder's full PATH. Build
@@ -77,14 +77,15 @@ export function packPlugin({ configPath, out = resolve('dist/local-marketplace')
     for (const path of ['src', 'skills', 'PRINCIPLES.md', 'package.json']) {
       cpSync(join(root, path), join(pluginRoot, path), { recursive: true });
     }
-    writeJson(join(pluginRoot, 'plugin.json'), manifest);
+    // This machine's 0.162 alpha parses portable metadata but drops its hooks.
+    // Ship only the official Codex compatibility manifest: a root plugin.json
+    // would shadow it and silently remove Interrupt/SessionEnd from discovery.
     mkdirSync(join(pluginRoot, '.codex-plugin'));
     writeJson(join(pluginRoot, '.codex-plugin/plugin.json'), compatibility);
     for (const [path] of dependencies) cpSync(join(root, path), join(pluginRoot, path), { recursive: true, filter: source => basename(source) !== 'node_modules' });
-    const sourceFiles = [...readdirSync(join(root, 'src')).filter(path => path.endsWith('.js')).sort().map(path => `src/${path}`), 'skills/team/SKILL.md', 'package.json'];
+    const sourceFiles = [...readdirSync(join(root, 'src')).filter(path => path.endsWith('.js')).sort().map(path => `src/${path}`), 'skills/team/SKILL.md', 'package.json', 'plugin.json', '.codex-plugin/plugin.json'];
     const fingerprint = createHash('sha256');
     for (const path of sourceFiles) { fingerprint.update(path + '\0'); fingerprint.update(readFileSync(join(root, path))); }
-    writeJson(join(pluginRoot, 'build-info.json'), { version: packageJson.version, createdAt: new Date().toISOString(), sourceDigest: fingerprint.digest('hex') });
     writeJson(join(pluginRoot, 'teams.config.json'), config);
     // The host supplies its current PATH (including custom dependency tools).
     // Add this exact Node runtime for env-node scripts and verification commands.
@@ -92,7 +93,9 @@ export function packPlugin({ configPath, out = resolve('dist/local-marketplace')
     // Agent Plugins v1 commands must be bare names or contained ./ paths.
     // Shell expansion finds the sibling without relying on an external dirname.
     writeFileSync(join(pluginRoot, 'mcp-launch'), `#!/bin/sh\nexec ${shellQuote(process.execPath)} "\${0%/*}/mcp-launch.js" "$@"\n`, { mode: 0o755 });
-    const args = ['mcp', '--config', 'teams.config.json'];
+    // The packed plugin requires genuine host binding; direct CLI integrations
+    // retain their explicit cancellation API when no host lifecycle is enabled.
+    const args = ['mcp', '--config', 'teams.config.json', '--host-lifecycle'];
     const server = { command: './mcp-launch', args, cwd: './' };
     writeJson(join(pluginRoot, 'mcp.json'), {
       $schema: 'https://agent-plugins.org/schemas/1.0.0/mcp.schema.json',
@@ -100,6 +103,14 @@ export function packPlugin({ configPath, out = resolve('dist/local-marketplace')
     });
     // Older local hosts use the compatibility manifest and .mcp.json.
     writeJson(join(pluginRoot, '.mcp.json'), { mcpServers: { [name]: { ...server, command: process.execPath, args: ['mcp-launch.js', ...args] } } });
+    mkdirSync(join(pluginRoot, 'hooks'));
+    const hook = { type: 'command', command: `${shellQuote(process.execPath)} "$PLUGIN_ROOT/src/host-hook.js"`, timeout: 3 };
+    writeJson(join(pluginRoot, 'hooks/hooks.json'), { hooks: {
+      PreToolUse: [{ matcher: '^mcp__codex[-_]agent[-_]teams__teams_(start|integrate)$', hooks: [hook] }],
+      Interrupt: [{ hooks: [hook] }], SessionEnd: [{ hooks: [hook] }],
+    } });
+    fingerprint.update('hooks/hooks.json\0'); fingerprint.update(readFileSync(join(pluginRoot, 'hooks/hooks.json')));
+    writeJson(join(pluginRoot, 'build-info.json'), { version: packageJson.version, createdAt: new Date().toISOString(), sourceDigest: fingerprint.digest('hex') });
     const catalog = join(stage, '.agents', 'plugins');
     mkdirSync(catalog, { recursive: true });
     writeJson(join(catalog, 'marketplace.json'), {
@@ -110,7 +121,7 @@ export function packPlugin({ configPath, out = resolve('dist/local-marketplace')
     writeFileSync(join(stage, 'README.md'), `# Codex Agent Teams 本机插件\n\n这是跨项目通用的本机插件包，包含运行依赖；没有执行安装或模型调用。\n\n不绑定项目：队长从当前聊天上下文自动传入目标目录，无需用户逐项目配置或重新打包。任务与模型偏好分别保存在各项目。\n\n检查（在实际项目目录执行）：\n\n\`\`\`sh\nnode ${shellQuote(join(out, 'plugins', name, 'src/cli.js'))} doctor --plugin ${shellQuote(out)} --check-thread\n\`\`\`\n\n在支持本地 marketplace 的 Codex 中，手动添加本目录作为来源并安装插件。安装会改写宿主配置；请由用户明确执行。\n\n通用配置或版本变化时生成新目录，再刷新宿主缓存。不要与手工 MCP 配置同时启用，也不要为同一工作区启动多个运行时。\n\n本目录包含 Node/Codex 绝对路径和初始模型配置，面向本机使用，不能作为跨机器分发包。不会保存构建终端的 PATH；启动时继承宿主当前 PATH 并添加打包所用 Node 的目录。自定义依赖命令必须在宿主 PATH 中可见，缺失时预检会拒绝启动。\n`);
     if (existsSync(out)) throw new Error(`Output already exists: ${out}`);
     renameSync(stage, out);
-    return { ...pluginTarget(out), runtimeDependencies: dependencies.map(([path]) => path), installed: false, inferenceStarted: false };
+    return { ...pluginTarget(out), manifestFormat: 'codex-compatibility', runtimeDependencies: dependencies.map(([path]) => path), installed: false, inferenceStarted: false };
   } finally { rmSync(stage, { recursive: true, force: true }); }
 }
 

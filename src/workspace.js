@@ -81,8 +81,11 @@ function fileManifest(root, paths) {
       parent = dirname(parent);
     }
     let stat;
-    try { stat = lstatSync(absolute); } catch (error) { if (error.code !== 'ENOENT') throw error; }
-    if (!stat) { result.set(path, { type: 'missing' }); continue; }
+    try { stat = lstatSync(absolute); } catch (error) { if (!['ENOENT', 'ENOTDIR'].includes(error.code)) throw error; }
+    // Git stores file paths, not directories. A directory at an old file path,
+    // or a regular file replacing an old parent, means that Git file was deleted.
+    // New descendants are separately enumerated; parent symlinks were refused above.
+    if (!stat || stat.isDirectory()) { result.set(path, { type: 'missing' }); continue; }
     if (stat.isSymbolicLink()) {
       const target = readlinkSync(absolute);
       if (isAbsolute(target) || !inside(root, resolve(dirname(absolute), target))) throw new Error(`Symlink target cannot be isolated: ${path}`);

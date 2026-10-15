@@ -2,7 +2,7 @@
 
 准确率与完成效率优先，成本其次。一个小型、本机运行的 Codex 插件，用于可验收的代码委派。
 
-**0.5.1 队长直接指定模型，真人选择可选；安装一次，随当前项目使用**。插件不再绑定构建时的项目，队长从当前聊天上下文自动填入目标目录，用户无需逐项目配置或重新打包。任务仍按合同 → 独立 worktree 修改 → 命令验证 → 全新强模型线程审查 → 队长复核 → 显式集成 → 源工作区再次验证执行。不会自动提交或推送。
+**0.6.1 补齐严格输出 schema 与发送前检查、请求拒绝指引和动作角色摘要；队长指定模型，真人选择可选**。插件不再绑定构建时的项目，队长从当前聊天上下文自动填入目标目录，用户无需逐项目配置或重新打包。任务仍按合同 → 独立 worktree 修改 → 命令验证 → 全新强模型线程审查 → 队长复核 → 显式集成 → 源工作区再次验证执行。不会自动提交或推送。
 
 0.2.1 补齐失败重试的执行信息归属、只读成员与 reviewer 的实际目录校验，以及协议致命错误后的缓冲释放；新增 macOS/Linux 离线 CI。
 
@@ -49,8 +49,8 @@ doctor 只做握手、模型/推理强度与可选只读线程权限检查，不
 ## 接入 Codex
 
 ```sh
-node src/cli.js pack --config ./teams.local.json --out ./dist/marketplace-v0.5.1
-node src/cli.js doctor --plugin ./dist/marketplace-v0.5.1 --check-thread
+node src/cli.js pack --config ./teams.local.json --out ./dist/marketplace-v0.6.1
+node src/cli.js doctor --plugin ./dist/marketplace-v0.6.1 --check-thread
 ```
 
 pack 生成本机 marketplace：包含 skill、MCP、源代码、配置快照和锁定的生产依赖，不包含测试或运行数据。需要先 npm ci；拒绝覆盖已有输出。插件根目录的相对路径可随宿主缓存搬迁，Node/Codex 仍依赖本机安装。
@@ -58,7 +58,7 @@ pack 生成本机 marketplace：包含 skill、MCP、源代码、配置快照和
 以下两条由用户明确选择执行，会修改宿主插件配置：
 
 ```sh
-codex plugin marketplace add /absolute/path/to/dist/marketplace-v0.5.1
+codex plugin marketplace add /absolute/path/to/dist/marketplace-v0.6.1
 codex plugin add codex-agent-teams@codex-agent-teams-local
 ```
 
@@ -81,7 +81,7 @@ node src/cli.js mcp --config /absolute/path/to/teams.local.json
 | teams_start | 用户确认模型分工后启动成员；可选工作区/验证计划；失败重试须明确理由，统一 expert，最多三次 |
 | teams_status | 只读状态、attempt 与证据；overview 显示版本、阶段、耗时及验收摘要 |
 | teams_wait | 最多等待 30 秒，超时不取消 |
-| teams_review | 队长逐项复核指定 attempt；写任务通过后仍等待显式集成 |
+| teams_review | 队长逐项复核指定 attempt，返回精简回执；完整报告/复核证据用 status(verbose=true) 查询；写任务通过后仍等待显式集成 |
 | teams_integrate | 应用已复核补丁并验证源工作区；不提交、不推送 |
 | teams_cancel | 取消并等待退出；可显式 cleanup/discard 清理最新目录，保留记录和日志 |
 
@@ -107,9 +107,27 @@ node src/cli.js status --config ./teams.local.json --html ./.codex-teams/teams-s
 
 ## 升级代码后重装插件
 
-当前通过本地 marketplace 安装，宿主使用插件缓存副本。修改项目源码或 `teams.local.json` 后，先生成并检查新包，再卸载旧插件、切换来源并重新安装；仅修改 `src/` 不会更新已安装副本。
+在项目根目录的一般终端执行：
 
-以下以当前 **0.5.1** 为例。后续升级时替换为新版本号，并选择尚不存在的输出目录。
+```sh
+npm run update
+```
+
+无需先执行 `npm run build`。`update` 会安装锁定依赖、构建新包、检查模型与只读线程权限，再通过官方 Codex CLI 切换本地 marketplace 来源、重装插件，并核对实际缓存版本、源码摘要及文件内容。首次安装也可使用。该命令会修改当前 Codex 用户配置和插件缓存；`build` 继续只打包，不执行安装。检查不启动模型推理，也不代替开发时的完整测试。
+
+执行前结束所有项目的 Team 任务并关闭对应会话；命令会检查本项目的 owner、未完成交接和退出记录，无法扫描其他项目。构建/检查失败时不触碰安装；替换失败时尝试恢复原来源和安装状态，恢复未完成会明确报错。新旧包均保留，项目任务数据不删除。完成后重启 Codex 并开启新聊天，让新的 skill/MCP 生效。
+
+需要指定配置、CLI 或输出目录时：
+
+```sh
+npm run update -- --config ./teams.local.json --binary /完整路径/codex --out ./dist/marketplace-v0.7.0-custom
+```
+
+输出目录必须尚不存在；默认自动生成唯一新目录。现有同名 marketplace 是非本地来源、包含其他已安装插件或目标插件已禁用时，命令会要求先手动核对，不覆盖这些状态。
+
+以下是分步操作入口。当前通过本地 marketplace 安装，宿主使用插件缓存副本；仅修改 `src/` 不会更新已安装副本。
+
+以下以当前 **0.7.0** 为例。后续升级时替换为新版本号，并选择尚不存在的输出目录。准备包和正式安装分别验收；源码或新包出现不会热替换已加载的旧 MCP 连接。
 
 1. 更新源码并同步版本号：`package.json`、`package-lock.json` 的顶层与根包版本、`plugin.json`、`.codex-plugin/plugin.json`。MCP 与 App Server 的版本元数据直接读取 `package.json`；pack 会检查包与两个插件 manifest 的版本一致。
 2. 在项目根目录先验证并生成新包。输出目录必须尚不存在；保留旧包，便于需要时恢复。
@@ -120,10 +138,10 @@ npm test
 
 node src/cli.js pack \
   --config ./teams.local.json \
-  --out ./dist/marketplace-v0.5.1
+  --out ./dist/marketplace-v0.7.0
 
 node src/cli.js doctor \
-  --plugin ./dist/marketplace-v0.5.1 \
+  --plugin ./dist/marketplace-v0.7.0 \
   --check-thread
 ```
 
@@ -135,7 +153,7 @@ codex plugin remove codex-agent-teams@codex-agent-teams-local
 
 # 新包目录变了，切换同名 marketplace 的来源
 codex plugin marketplace remove codex-agent-teams-local
-codex plugin marketplace add ./dist/marketplace-v0.5.1
+codex plugin marketplace add ./dist/marketplace-v0.7.0
 
 # 安装新插件
 codex plugin add codex-agent-teams@codex-agent-teams-local
@@ -184,6 +202,18 @@ node src/cli.js integrate --config ./teams.local.json --id '<taskId>' --attempt 
 
 ## 工作区、验证与边界
 
+0.6.2 的本机插件带有 `PreToolUse`、`Interrupt` 和 `SessionEnd` hooks。安装后必须在宿主中启用 hooks 并审查、信任这组定义；安装本身不会代替信任。启动和集成前，hook 将真实宿主 session/turn 绑定到任务，注入一次性 `hostTicket`；这是内部字段，不由队长编造。缺少有效绑定时拒绝启动/集成，避免退回无法跟随聊天停止的运行方式。目标项目与聊天 cwd 不同时，start/integrate 要显式带 workspace。
+
+本机 `0.162.0-alpha.17.2` 的实际协议对照发现：根 portable `plugin.json` 会遮蔽兼容 manifest 的 hooks，返回空定义。因此本机包只交付官方 `.codex-plugin/plugin.json` 入口，避免静默丢失停止联动；仓库 portable 定义仍维护。后续恢复 portable 产物前必须重新验证真实 hook 发现，不能仅看线上文档或schema。
+
+中断活跃聊天轮时，只取消该轮绑定的工作；会话结束时取消该会话绑定的工作。中断标记先于取消写入，防止模型发现结束后迟到启动，旧轮事件不能取消新轮重试。取消会等待成员、reviewer 和验证退出；超过 hook 时限或退出未知时提示检查状态，禁止直接重派。集成已经写入源的改动保持现场。
+
+MCP 重连后，status/models 仍然只读，不会自动创建 owner。继续已有任务前先调用 `teams_wait({workspace, taskId, timeoutMs: 0})` 初始化该项目 owner 和控制端点，再执行 start/integrate；旧进程退出未确认时先排查，不重复建任务绕过。控制端点不可达只代表连接失效，停止 hook 会提示“退出未确认”，不会据此宣称成员已退出。
+
+成员和验证命令各由短生命周期进程守护，使用独立控制管道检测运行时死亡。即使 MCP 收到 SIGKILL，守护也会清理其管理的进程组；没有后台自主队长或模型调用。该保障限于受管理进程组，不涵盖自行脱离组的进程、同时强杀守护或系统故障。直接 CLI 的 run/start/integrate 仍使用显式取消和进程信号；打包插件自动启用 `--host-lifecycle`，不要删除该参数绕过门禁。
+
+委派普通探索前，应明确队长立即执行的独立交付及成员产物；队长只剩等待、转述或重复探索时直接处理。默认并发 2 是容量，不要求两名成员。独立审查可因质量收益使用一名成员。成员不继承父线程的 MCP/插件，所需工具不可用时应调整分工。
+
 工作区使用 `.codex-teams/worktrees/<id>`；证据保存在 `.codex-teams/`，将这个目录加入目标仓库自己的忽略文件。原 index/文件不会因基线捕获被 stash 或覆盖。用以下命令查看和清理：
 
 ```sh
@@ -201,6 +231,24 @@ MCP 连接仍持有 owner 时，调用 `teams_cancel({taskId, cleanup: true, dis
 写成员请求并核对 worktree 写沙箱、网络关闭、临时目录排除和禁止提权。allowedPaths 是路径审计与交付门禁，不是逐文件系统调用权限；宿主写沙箱限制工作区。独立审查为只读。worktree 共用 Git 对象且不是文件系统虚拟机，实际限制依赖宿主/OS；后台程序主动创建新 session 的完整治理、PID 复用和所有平台矩阵仍有限制。
 
 每个项目内，带工作区/写计划的任务当前串行，普通只读默认并发 2、最多 4。启动时由队长显式指定模型分工，或复用重新校验有效的真人偏好；auto 只把明确 simple 的非审查任务交给所选 simple，其他任务使用 expert。简单写任务仍经过 expert 独立审查，重试也固定本次 expert。旧 qualified 路由要求评测依据；不按价格自动降级，不声称未经对照评测的节省比例。
+
+## 实时查看成员进度
+
+首次启动成员后，队长调用 `teams_status({workspace: target, panel:true, taskIds: [taskId]})`，取得本项目实时状态页 URL；宿主支持时打开到 Codex 右侧浏览器面板，否则在聊天提供链接。插件不会自动打开外部浏览器，也不能将 App Server 成员挂到 Codex 原生子 Agent 面板。旧缓存没有 panel 参数时需按上面的升级流程重装并重开会话，源码修改不会更新正在运行的插件。
+
+页面明确区分“本次选定任务”和“项目累计任务”；taskIds是队长显式选择的集合，不代表自动识别当前聊天。可切换到项目全部，默认收起项目历史终态；展开不会改写原终态或删除证据。搜索覆盖当前范围全部记录，再按limit展示（最多100条），超过上限会明确提示。
+
+常规版本与计数查询优先用 `teams_status({workspace: target, overview:true, projection:"summary"})`；任务目录用 `projection:"catalog"`，按taskId再取报告。省略projection仍返回原完整overview。taskIds仅用于panel，投影仅用于无taskId的overview；两者不与verbose或增量观察混用。
+
+页面每 2 秒读取阶段、任务、模型、耗时、最近记录、下一步及验证证据，并保留筛选和展开状态。读取失败明确显示上次记录，owner 缺失时耗时保持未知；没有新记录或耗时增长不代表模型正在推进。队长前台等待每次最多 10 秒，并至少每 30 秒报告一次观察，阶段变化及时反馈。
+
+状态服务只绑定 `127.0.0.1` 的随机端口和随机访问路径，按项目、选定集合与连接复用，MCP 连接关闭时退出。它不取得任务 owner、不写状态、不派发/取消任务，不提供模型思维流或队长后台唤醒。原 `status --html` 仍是离线快照。
+
+## 0.7.0 调用迁移
+
+启用hooks的官方路由MCP中，`teams_start`与`teams_integrate`现在要求显式绝对路径`workspace`。队长从任务`target.root`填入，跨项目任务不能用聊天cwd代替；用户无需重复输入路径。hook与SDK schema均在推理/集成前拒绝缺失目标。已知taskId的status/wait/review/cancel继续允许省略workspace；无hooks CLI和直接legacy MCP保持原入口合同。升级后重开连接以刷新工具schema。
+
+更新命令的成功与回退均核对启动关键文件的实际内容、文件类型和launcher执行位；未逐文件核对运行依赖的边界保持。页面任务历史、安装来源cache、模型cached input为不同概念，项目累计任务数不代表本轮成员数，也不是磁盘清理依据。
 
 ## 模型发现、用户确认与任务路由
 
@@ -275,3 +323,14 @@ CLI 使用不含 workspace 的全局配置时，所有项目操作默认目标�
 `requiredFiles` 检查可读普通文件，`nodeModules` 只用 Node 的 require 解析规则定位声明的包入口，不加载模块；纯 ESM/import 条件不由此保证。记录实际 worktree、可执行文件、文件及依赖解析来源，包含可能的向上解析。不会执行基线测试、复制 ignored 依赖或自动联网安装；预检通过不代替后续真实验证。
 
 失败保留原始 error，并在 task/attempt 的 failure 中记录 code、phase 和 nextAction；预检提供三类具体原因，其他执行失败按准备、成员、审计、验证和独立审查阶段分类。退出未确认等原有门禁继续生效。完整质量/效率对照仍待执行，不因本次升级宣称更快或更省钱。
+# 0.6.0 正确性与交接升级
+
+本版修复四项已确认边界，增加报告 `limitations` 与一致性诊断、有限动作观察、增量 status/wait。
+首次 `teams_status({workspace,taskId,incremental:true})` 取得 cursor，随后传 `afterCursor` 获取无变化回执
+或变化摘要；游标跨项目、任务、attempt 或连接失效时重新取完整快照。`verbose:true` 查看完整证据。
+
+动作只记录官方生命周期元数据，不保存命令参数/输出，不证明测试通过；缺失字段保持未知。
+成员的验证局限不自动阻塞已完成报告，真实 blocker 必须说明未满足的验收。静态/复现示例与未来效率
+评测模板见 [examples](examples/README.md)。同条件总交付收益尚未验证，不承诺提速比例。
+
+源码、候选包与已安装缓存分别验证；按下方流程显式重装后新能力才对正式会话生效。

@@ -1,0 +1,177 @@
+{
+  "version": "0.6.1",
+  "workspace": "/Users/anshunli1/asl/code/github/codex-agent-teams",
+  "candidate": {
+    "marketplaceRoot": "/Users/anshunli1/asl/code/github/codex-agent-teams/dist/marketplace-v0.6.1-blockers-20261014",
+    "pluginRoot": "/Users/anshunli1/asl/code/github/codex-agent-teams/dist/marketplace-v0.6.1-blockers-20261014/plugins/codex-agent-teams",
+    "build": {
+      "version": "0.6.1",
+      "createdAt": "2026-10-14T06:09:04.140Z",
+      "sourceDigest": "ede7058f95b8f05dabc74587ffa273dd8de72c4095fd9eb1525884cec962ca80"
+    },
+    "checkedFiles": 24,
+    "model": {
+      "model": "krill/gpt-6.1-sol",
+      "effort": "high"
+    },
+    "doctor": {
+      "inferenceStarted": false,
+      "threadCheck": {
+        "created": true,
+        "model": "krill/gpt-6.1-sol",
+        "sandbox": {
+          "type": "readOnly",
+          "networkAccess": false
+        },
+        "approvalPolicy": "never"
+      }
+    }
+  },
+  "verification": {
+    "targeted": {
+      "tests": 93,
+      "pass": 92,
+      "fail": 1,
+      "log": "/tmp/teams-061-blockers-targeted-20261014.log",
+      "limitation": "Restricted environment launcher exited only after timeout; reproduced test passed outside sandbox."
+    },
+    "launcherOutsideSandbox": {
+      "tests": 1,
+      "pass": 1,
+      "fail": 0,
+      "durationMs": 1682.515708,
+      "log": "/tmp/teams-061-launcher-recheck-20261014.log"
+    },
+    "full": {
+      "tests": 285,
+      "pass": 285,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "durationMs": 81193.436333,
+      "log": "/tmp/teams-061-blockers-full-20261014.log"
+    }
+  },
+  "temporaryHostSmoke": {
+    "server": {
+      "userAgent": "Codex Desktop/0.162.0-alpha.17.2 (Mac OS 26.6.2; arm64) dumb (codex_agent_teams; 0.6.1)",
+      "codexHome": "/private/var/folders/ds/crz3lj6n3vnf2q4kx5xhnzpm0000gp/T/teams-plugin-smoke-dOdpIC/codex-home",
+      "platformFamily": "unix",
+      "platformOs": "macos"
+    },
+    "marketplace": "codex-agent-teams-local",
+    "installedInTemporaryHome": true,
+    "cachedPackageIndependent": true,
+    "cachedSkillDiscovered": true,
+    "inventoryWhileRuntimeActive": true,
+    "startupStatus": "ready",
+    "tools": [
+      "teams_cancel",
+      "teams_create",
+      "teams_integrate",
+      "teams_models",
+      "teams_review",
+      "teams_start",
+      "teams_status",
+      "teams_wait"
+    ],
+    "statusBeforeOwner": true,
+    "observedPluginVersion": "0.6.1",
+    "observedRuntimeVersion": "0.6.1",
+    "modelCatalogRead": true,
+    "outerApprovalPolicy": "never",
+    "formRequestObserved": false,
+    "rememberDefaultForwarded": false,
+    "textReceiptForwarded": true,
+    "confirmationAction": "decline",
+    "cancelledFormBlocksStart": true,
+    "declinedFormDoesNotAcquireOwner": true,
+    "captainDispatchSchemaAvailable": true,
+    "invalidCaptainModelBlocksStart": true,
+    "contractCreated": true,
+    "incompleteWriteContractRejected": true,
+    "taskCancelled": true,
+    "sameInstallationTwoProjects": true,
+    "perProjectState": true,
+    "wrongProjectRejected": true,
+    "ambiguousTargetRejected": true,
+    "cacheCwdRejected": true,
+    "inferenceStarted": false,
+    "userConfigChanged": false,
+    "managedRuntimeExited": true
+  },
+  "liveSchemaCheck": {
+    "status": "passed",
+    "source": "/Users/anshunli1/asl/code/github/codex-agent-teams/dist/marketplace-v0.6.1-blockers-20261014/plugins/codex-agent-teams",
+    "version": "0.6.1",
+    "sourceDigest": "ede7058f95b8f05dabc74587ffa273dd8de72c4095fd9eb1525884cec962ca80",
+    "workspace": "/private/var/folders/ds/crz3lj6n3vnf2q4kx5xhnzpm0000gp/T/teams-061-schema-check-GP6XOE",
+    "startedAt": "2026-10-14T06:20:18.210Z",
+    "endedAt": "2026-10-14T06:20:26.932Z",
+    "selection": {
+      "model": "krill/gpt-6.1-sol",
+      "effort": "high"
+    },
+    "acceptance": [
+      "Identify this as the 0.6.1 schema compatibility check and return a structured report."
+    ],
+    "schemaRequired": [
+      "summary",
+      "criteria",
+      "findings",
+      "blockers",
+      "limitations"
+    ],
+    "execution": {
+      "result": {
+        "summary": "0.6.1 schema accepted",
+        "criteria": [
+          {
+            "criterion": "Identify this as the 0.6.1 schema compatibility check and return a structured report.",
+            "satisfied": true,
+            "evidence": "The task prompt explicitly identifies this as the 0.6.1 schema compatibility check and requests this structured report."
+          }
+        ],
+        "findings": [],
+        "blockers": [],
+        "limitations": []
+      },
+      "usage": {
+        "total": {
+          "totalTokens": 10890,
+          "inputTokens": 10801,
+          "cachedInputTokens": 0,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 89,
+          "reasoningOutputTokens": 0
+        },
+        "last": {
+          "totalTokens": 10890,
+          "inputTokens": 10801,
+          "cachedInputTokens": 0,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 89,
+          "reasoningOutputTokens": 0
+        },
+        "modelContextWindow": 950000
+      },
+      "threadId": "01a13911-9e67-7af0-9e90-72eb688eecd7",
+      "turnId": "01a13911-9ec9-7a43-a60d-6e5db5f68281",
+      "actualModel": "krill/gpt-6.1-sol"
+    },
+    "cleanupConfirmed": true,
+    "officialUserInstallationChanged": false
+  },
+  "installation": {
+    "status": "not_executed",
+    "actualCachedVersion": "0.6.0",
+    "automaticApproval": "rejected",
+    "reason": "Explicit approval required for changing the real Codex marketplace source and removing/reinstalling the plugin under the project instructions.",
+    "preparedInstallScript": "/tmp/teams-061-install-20261014.mjs"
+  },
+  "boundaries": [
+    "Real inference was a single schema compatibility check from the candidate package, not a code review or writer/reviewer cycle.",
+    "Temporary host installation did not change the real user configuration.",
+    "Current chat MCP connection still runs old cached code; source/candidate changes do not hot reload it."
+  ]
+}

@@ -10,6 +10,7 @@ import { TaskRuntime } from '../src/runtime.js';
 import { TaskStore } from '../src/store.js';
 import { validateModelSelection, modelPolicyVersion } from '../src/models.js';
 import { readSnapshot, overview, renderText, renderHtml } from '../src/status.js';
+import { runVerification } from '../src/verification.js';
 
 function fixture(t) {
   const root = realpathSync(mkdtempSync(join(tmpdir(), 'teams-preflight-'))), repo = join(root, 'repo');
@@ -46,6 +47,41 @@ test('preflight records upward dependency resolution without executing module co
   assert.equal(result.executable, realpathSync(process.execPath));
   assert.equal(result.nodeModules[0].resolvedPath, join(module, 'index.js'));
   assert.equal(result.files[0].resolvedPath, join(f.repo, 'proof.txt'));
+});
+
+test('preflight PATH resolution agrees with real verification launches', async t => {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'teams-preflight-path-')));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  mkdirSync(join(root, 'bin'));
+  symlinkSync(process.execPath, join(root, 'local-tool'));
+  symlinkSync(process.execPath, join(root, 'bin', 'path-tool'));
+  const savedPath = process.env.PATH;
+  const cases = [
+    { path: undefined, command: 'sh', args: ['-c', 'exit 0'], passes: true },
+    { path: '', command: 'sh', passes: false },
+    { path: '', command: 'local-tool', passes: true },
+    { path: 'bin', command: 'path-tool', passes: true },
+    { path: '', command: './bin/path-tool', passes: true },
+    { path: '', command: process.execPath, passes: true },
+    { path: undefined, command: 'missing-preflight-executable-unique', passes: false },
+  ];
+  try {
+    for (const [index, item] of cases.entries()) {
+      if (item.path === undefined) delete process.env.PATH;
+      else process.env.PATH = item.path;
+      const verification = { command: item.command, args: item.args ?? ['-e', 'process.exit(0)'] };
+      if (item.passes) assert.ok(inspectExecution({ verification }, root).executable);
+      else assert.throws(() => inspectExecution({ verification }, root), error => error.detail?.code === 'verification_executable_missing');
+      const actual = await runVerification(verification, { cwd: root, logDir: join(root, `logs-${index}`) });
+      assert.equal(actual.status, item.passes ? 'passed' : 'failed', `${item.command}, PATH=${item.path}`);
+      assert.equal(actual.exitCode, item.passes ? 0 : null);
+      assert.equal(actual.cleanupConfirmed, true);
+      if (!item.passes) assert.match(actual.error, /ENOENT/);
+    }
+  } finally {
+    if (savedPath === undefined) delete process.env.PATH;
+    else process.env.PATH = savedPath;
+  }
 });
 
 test('missing executable, file or module fails before member inference and preserves structured evidence', async t => {
@@ -103,6 +139,8 @@ test('host failures classify by stable code, not by message text', () => {
     ['model_unavailable', 'member_model_unavailable'],
     ['effort_unsupported', 'member_effort_unsupported'],
     ['skill_or_mcp_missing', 'host_setup_incomplete'],
+    ['output_schema_invalid', 'member_output_schema_invalid'],
+    ['request_rejected', 'member_request_rejected'],
     ['turn_incomplete', 'member_turn_incomplete'],
     ['no_structured_result', 'member_no_result'],
   ];

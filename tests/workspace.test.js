@@ -33,6 +33,44 @@ function origin(repo) {
     text: readFileSync(join(repo, 'tracked.txt')) };
 }
 
+test('bidirectional file/directory changes support snapshot, candidate, apply and explicit discard', async t => {
+  for (const direction of ['file-to-directory', 'directory-to-file']) for (const staged of [false, true]) {
+    await t.test(`${direction}, staged=${staged}`, async t => {
+      const f = fixture(t), entry = join(f.repo, 'entry');
+      const beforeDirectory = direction === 'directory-to-file';
+      if (beforeDirectory) mkdirSync(entry);
+      writeFileSync(beforeDirectory ? join(entry, 'index.js') : entry, 'before');
+      run(f.repo, ['add', 'entry']); run(f.repo, ['commit', '-m', 'entry baseline']);
+      const head = run(f.repo, ['rev-parse', 'HEAD']), index = readFileSync(join(f.repo, '.git/index'));
+      const convert = root => {
+        const path = join(root, 'entry'); rmSync(path, { recursive: true, force: true });
+        if (!beforeDirectory) mkdirSync(path);
+        writeFileSync(beforeDirectory ? path : join(path, 'index.js'), 'after');
+      };
+      const record = f.runtime.prepareWorkspace(), manager = new GitWorkspace(f.repo);
+      convert(record.worktreePath);
+      if (staged) run(record.worktreePath, ['add', '-A', '--', 'entry']);
+      const audit = manager.inspect(record, { allowedPaths: ['entry'] });
+      assert.deepEqual(audit.outOfScope, []);
+      assert.throws(() => manager.candidate(record, ['tracked.txt']), /Write scope exceeded/);
+      const candidate = manager.candidate(record, ['entry']);
+      const check = await f.runtime.verifyWorkspace(record.id, { command: process.execPath, args: ['-e', "if(require('node:fs').readFileSync(process.argv[1],'utf8')!=='after')process.exit(1)", beforeDirectory ? 'entry' : 'entry/index.js'] });
+      assert.equal(check.status, 'passed');
+      manager.applyCandidate(record, candidate);
+      assert.equal(readFileSync(beforeDirectory ? entry : join(entry, 'index.js'), 'utf8'), 'after');
+      assert.equal(run(f.repo, ['rev-parse', 'HEAD']), head);
+      assert.deepEqual(readFileSync(join(f.repo, '.git/index')), index);
+      assert.equal(f.runtime.removeWorkspace(record.id, { discard: true }).status, 'removed');
+      // Capture the same dirty source shape without altering its existing index.
+      const sourceIndex = readFileSync(join(f.repo, '.git/index'));
+      const snapshot = f.runtime.prepareWorkspace({ dirtyPolicy: 'snapshot' });
+      assert.equal(readFileSync(join(snapshot.worktreePath, beforeDirectory ? 'entry' : 'entry/index.js'), 'utf8'), 'after');
+      assert.deepEqual(readFileSync(join(f.repo, '.git/index')), sourceIndex);
+      f.runtime.removeWorkspace(snapshot.id);
+    });
+  }
+});
+
 test('clean baseline creates an independent detached worktree, persists receipt and removes only its own artifacts', async t => {
   const f = fixture(t), before = origin(f.repo);
   const prepared = f.runtime.prepareWorkspace();

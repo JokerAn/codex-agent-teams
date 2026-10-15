@@ -89,7 +89,7 @@ test('default dirty rejection fails the attempt before spawning the member and r
 });
 
 test('member blockers preserve their worktree and do not execute the verification command', async t => {
-  const f = setup(t, { run: async () => ({ result: { ...report('baseline'), blockers: ['Need evidence'] } }) });
+  const f = setup(t, { run: async () => ({ result: { ...report('baseline'), criteria: [{ criterion: acceptance[0], satisfied: false, evidence: 'Missing required proof evidence' }], blockers: ['Need evidence'] } }) });
   const task = await runTask(f, contract("require('node:fs').writeFileSync('must-not-run','bad')"));
   assert.equal(task.status, 'blocked');
   const workspace = f.runtime.workspaceStatus(task.attempts[0].workspaceId);
@@ -308,6 +308,32 @@ setInterval(()=>{const a=runtime.status(${JSON.stringify(task.id)}).attempts[0];
   f.runtime.removeWorkspace(workspace.id);
 });
 
+
+for (const outcome of ['cancelled', 'timed_out']) {
+  test(`${outcome} before preparation creates no workspace and never launches a member`, async t => {
+    let preparations = 0, calls = 0;
+    const f = setup(t, { run: async () => { calls++; throw Error('must not run'); } });
+    const worktrees = f.git(['worktree', 'list', '--porcelain']);
+    f.runtime.prepareWorkspaceRecord = () => { preparations++; throw Error('Preparation reached after abort'); };
+    let now = Date.now();
+    t.mock.method(Date, 'now', () => now);
+    const task = f.runtime.create(contract());
+    f.runtime.start(task.id);
+    let result;
+    if (outcome === 'cancelled') result = await f.runtime.cancel(task.id);
+    else {
+      now += f.config.taskTimeoutMs;
+      result = await f.runtime.wait(task.id, 10000);
+    }
+    assert.equal(result.status, outcome);
+    assert.match(result.error, outcome === 'cancelled' ? /Cancelled by captain/ : /Task deadline exceeded/);
+    assert.equal(result.failure?.code, outcome === 'cancelled' ? undefined : 'task_deadline_exceeded');
+    assert.equal(preparations, 0); assert.equal(calls, 0);
+    assert.equal(result.attempts[0].workspaceId, undefined);
+    assert.deepEqual(f.runtime.workspaceStatus(), []);
+    assert.equal(f.git(['worktree', 'list', '--porcelain']), worktrees);
+  });
+}
 
 test('a synchronous preparation that exhausts the deadline never launches a member', async t => {
   let called = false;

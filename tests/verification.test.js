@@ -92,6 +92,28 @@ test('descendants keeping pipes open are killed even after the command parent ex
   const pid = Number(readFileSync(marker, 'utf8')); assert.equal(processAlive(pid), false);
 });
 
+test('descendant receipt installs bounded cleanup even when group visibility briefly outlives guard close', { timeout: 5000 }, async t => {
+  const f = logsFixture(t), kill = process.kill;
+  let group, visibleUntil;
+  t.mock.method(process, 'kill', (pid, signal) => {
+    if (pid === -group && signal === 0) {
+      try { return kill(pid, signal); }
+      catch (error) {
+        if (error.code !== 'ESRCH') throw error;
+        visibleUntil ??= Date.now() + 150;
+        if (Date.now() < visibleUntil) return true;
+        throw error;
+      }
+    }
+    return kill(pid, signal);
+  });
+  const descendant = "setInterval(()=>{},1000);";
+  const code = `require('node:child_process').spawn(process.execPath,['-e',${JSON.stringify(descendant)}],{stdio:'ignore'});setTimeout(()=>process.exit(0),100);`;
+  const result = await runVerification(command(code, { timeoutMs: 2000 }), { ...f, onSpawn: update => { group = update.childPid; } });
+  assert.equal(result.status, 'failed'); assert.match(result.error, /descendants/);
+  assert.equal(result.cleanupConfirmed, true);
+});
+
 if (process.platform === 'darwin') test('macOS denied group signal falls back to verified members and confirms cleanup', async t => {
   const f = logsFixture(t), controller = new AbortController();
   const kill = process.kill;

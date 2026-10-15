@@ -8,7 +8,51 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { TaskStore } from '../src/store.js';
 import { TaskRuntime } from '../src/runtime.js';
 import { pluginIdentity, readSnapshot, overview, taskView, renderHtml, renderText, markPhase, toolFeedback } from '../src/status.js';
+
+test('selected task counts differ from project history and filtering precedes limits without claiming session ownership', () => {
+  const tasks = Array.from({ length: 25 }, (_, i) => ({ id: `task-${i}`, title: i === 0 ? 'find-oldest' : `History ${i}`, objective: 'fixture',
+    dependencies: [], status: i === 24 ? 'running' : i === 23 ? 'blocked' : 'succeeded', updatedAt: new Date(1000 * i).toISOString(),
+    attempts: [{ id: `attempt-${i}`, status: i === 24 ? 'running' : 'succeeded', startedAt: new Date(0).toISOString(), endedAt: i === 24 ? null : new Date(100).toISOString() }] }));
+  const snapshot = { tasks, workspaces: [], owner: { processAlive: true }, stateExists: true };
+  const selected = overview(snapshot, { taskIds: ['task-0'], limit: 1 });
+  assert.equal(selected.counts.total, 1); assert.equal(selected.projectCounts.total, 25);
+  assert.equal(selected.filters.kind, 'selected'); assert.equal(selected.tasks[0].taskId, 'task-0');
+  assert.equal(overview(snapshot, { query: 'find-oldest', limit: 1 }).tasks[0].taskId, 'task-0');
+  const liveOnly = overview(snapshot, { showHistory: false });
+  assert.equal(liveOnly.matchedTotal, 1); assert.equal(liveOnly.tasks[0].taskId, 'task-24');
+  assert.equal(liveOnly.counts.total, 25); assert.equal(liveOnly.counts.attention, 1);
+  assert.equal(overview(snapshot, { taskIds: [] }).matchedTotal, 0);
+  for (const taskIds of [['unknown'], ['task-0', 'task-0']]) assert.throws(() => overview(snapshot, { taskIds }), /Selected taskId|distinct/);
+});
+
+test('13-task summary and catalog omit long evidence and private owner metadata within bounded receipts', () => {
+  const tasks = Array.from({ length: 13 }, (_, i) => ({ id: `task-${i}`, title: '审查'.repeat(100), objective: 'private-objective'.repeat(10000),
+    dependencies: [], status: 'succeeded', updatedAt: '2026-10-15T00:00:00Z', result: { summary: 'private-report'.repeat(10000) },
+    attempts: [{ id: `attempt-${i}`, status: 'succeeded', startedAt: '2026-10-15T00:00:00Z', endedAt: '2026-10-15T00:00:01Z', actions: { items: [{ secret: 'private-action' }] } }] }));
+  const snapshot = { tasks, workspaces: [], owner: { pid: 1, processAlive: true, token: 'private-owner-token' }, stateExists: true };
+  for (const [projection, max] of [['summary', 4096], ['catalog', 12288]]) {
+    const value = overview(snapshot, { projection }), json = JSON.stringify(value);
+    assert(Buffer.byteLength(json) <= max, `${projection} is ${Buffer.byteLength(json)} bytes`);
+    assert.doesNotMatch(json, /private-objective|private-report|private-action|private-owner-token/);
+    assert.equal(value.tasks.length, projection === 'summary' ? 0 : 13);
+    assert.doesNotMatch(toolFeedback('teams_status', value), /undefined/);
+  }
+  assert.equal(overview(snapshot).tasks[0].summary.length, tasks[0].result.summary.length, 'full evidence remains available');
+});
 import { config, contract, report, tick } from './helpers.js';
+
+test('CLI and HTML preserve report limitations and bounded lifecycle evidence as observations', t => {
+  const f = fixture(t), store = new TaskStore(f.path); t.after(() => store.close());
+  const actions = { items: [{ id: 'cmd', type: 'commandExecution', summary: '<command>', status: 'failed', exitCode: 7, completed: true }], truncated: false };
+  store.save({ id: 'evidence', objective: 'fixture', status: 'awaiting_review', dependencies: [], result: { ...report, limitations: ['No real Git fixture'] },
+    attempts: [{ id: 'a', status: 'awaiting_review', actions }] }, 'fixture');
+  const observed = JSON.parse(cli(f.configPath, ['--overview']));
+  assert.deepEqual(observed.tasks[0].limitations, ['No real Git fixture']);
+  assert.deepEqual(observed.tasks[0].actions, actions);
+  const html = renderHtml(observed, { live: true });
+  assert.match(html, /No real Git fixture/); assert.match(html, /&lt;command&gt;/);
+  assert.doesNotMatch(html, /<command>/);
+});
 
 function fixture(t) {
   const root = mkdtempSync(join(tmpdir(), 'teams-status-'));
@@ -234,6 +278,28 @@ test('missing owner warns about stale activity without recovering or suggesting 
   assert.equal(active.warning,null);assert.equal(active.tasks[0].elapsedMs,10000);
   assert.equal(active.tasks[1].integrationElapsedMs,10000);
   assert.deepEqual(tasks.map(task=>task.status),['running','integrating']);
+});
+
+test('orphaned attempt history stops counting while recorded endpoints and live owners retain durations', () => {
+  const startedAt = '2026-10-12T00:00:00Z', endedAt = '2026-10-12T00:01:00Z';
+  for (const knownEnd of [false, true]) {
+    const task = { id: 'orphan', objective: 'Crash fixture', status: 'running', dependencies: [], attempts: [
+      { id: 'previous', status: 'failed', startedAt, endedAt },
+      { id: 'current', status: 'running', startedAt, ...(knownEnd ? { endedAt } : {}) },
+    ] };
+    const snapshot = { tasks: [task], workspaces: [], stateExists: true };
+    const before = structuredClone(task);
+    for (const at of ['2026-10-12T00:10:00Z', '2026-10-12T00:20:00Z']) {
+      for (const owner of [null, { processAlive: false }, { processAlive: true }]) {
+        const view = overview({ ...snapshot, owner }, { at }).tasks[0];
+        const expected = knownEnd ? 60000 : owner?.processAlive ? Date.parse(at) - Date.parse(startedAt) : null;
+        assert.equal(view.elapsedMs, expected);
+        assert.equal(view.attempts[1].elapsedMs, expected);
+        assert.equal(view.attempts[0].elapsedMs, 60000);
+      }
+    }
+    assert.deepEqual(task, before);
+  }
 });
 
 test('recovery preserves execution endpoints and records observation separately from unknown stop times', t => {

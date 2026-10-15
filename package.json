@@ -1,6 +1,6 @@
 {
   "name": "codex-agent-teams-local",
-  "version": "0.5.1",
+  "version": "0.7.0",
   "private": true,
   "description": "Quality-first, compact task delegation for Codex",
   "type": "module",
@@ -12,10 +12,11 @@
   },
   "scripts": {
     "build": "node scripts/build.js",
-    "test": "node --test tests/*.test.js",
+    "update": "node scripts/update.js",
+    "test": "node --test --test-concurrency=4 tests/*.test.js",
     "doctor": "node src/cli.js doctor",
     "mcp": "node src/cli.js mcp",
-    "test:coverage": "node --test --experimental-test-coverage --test-coverage-include='src/*.js' tests/*.test.js"
+    "test:coverage": "node --test --test-concurrency=4 --experimental-test-coverage --test-coverage-include='src/*.js' tests/*.test.js"
   },
   "dependencies": {
     "@modelcontextprotocol/server": "2.3.1",

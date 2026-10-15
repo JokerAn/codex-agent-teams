@@ -1,0 +1,27 @@
+{
+  "note": "Planning template only; null means unmeasured. Use unseen task baselines and equal acceptance before comparing time.",
+  "task": {
+    "id": null,
+    "baselineCommit": null,
+    "acceptanceReference": null,
+    "permissionsReference": null
+  },
+  "runs": [
+    {
+      "approach": "single-agent",
+      "model": null,
+      "effort": null,
+      "hostStartedAt": null,
+      "hostCompletedAt": null,
+      "totalDeliveryMs": null,
+      "memberExecutionMs": null,
+      "reportToCaptainReviewMs": null,
+      "membersEndedToDeliveryMs": null,
+      "quality": { "accepted": null, "validFindings": null, "severeFalsePositives": null, "knownAcceptanceMisses": null, "evidenceReference": null },
+      "rework": { "rebuiltFixtures": null, "retries": null, "humanInterventions": null },
+      "usage": { "captain": null, "members": null, "priceReference": null }
+    },
+    { "approach": "native-subagents", "status": "not-run" },
+    { "approach": "agent-teams", "status": "not-run" }
+  ]
+}

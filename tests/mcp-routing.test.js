@@ -105,6 +105,49 @@ test('one SDK connection routes two projects without owner acquisition during in
   assert.deepEqual(f.executions, []);
 });
 
+test('SDK live panels reuse per-project viewers without owner acquisition and close with their connection', async t => {
+  const f = await fixture(t), s = await f.connect();
+  const schema = (await s.client.listTools()).tools.find(tool => tool.name === 'teams_status').inputSchema;
+  assert.equal(schema.properties.panel.type, 'boolean');
+  const [a, again, b] = await Promise.all([
+    s.call('teams_status', { workspace: f.a, panel: true }),
+    s.call('teams_status', { workspace: f.a, panel: true }),
+    s.call('teams_status', { workspace: f.b, panel: true }),
+  ]);
+  assert.equal(a.isError, false); assert.equal(b.isError, false);
+  assert.equal(a.value.panel.url, again.value.panel.url);
+  assert.notEqual(a.value.panel.url, b.value.panel.url);
+  assert.equal(a.value.panel.readOnly, true);
+  assert.equal(a.value.panel.lifetime, 'mcp-connection');
+  const aHtml = await (await fetch(a.value.panel.url)).text(), bHtml = await (await fetch(b.value.panel.url)).text();
+  assert.ok(aHtml.includes(f.a)); assert.ok(!aHtml.includes(f.b));
+  assert.ok(bHtml.includes(f.b)); assert.ok(!bHtml.includes(f.a));
+  for (const workspace of [f.a, f.b]) assert.equal(existsSync(join(workspace, '.codex-teams')), false);
+  assert.deepEqual(f.runtimeCreations, []);
+  assert.equal((await s.call('teams_status', { panel: true })).isError, true, 'ambiguous workspace stays rejected');
+  await s.close();
+  await assert.rejects(fetch(a.value.panel.url)); await assert.rejects(fetch(b.value.panel.url));
+});
+
+test('SDK incremental cursors are project-bound and expire on reconnect without acquiring an owner', async t => {
+  const f = await fixture(t), s = await f.connect();
+  const a = (await s.call('teams_create', { ...contract, expectedWorkspace: f.a })).value;
+  const b = (await s.call('teams_create', { ...contract, expectedWorkspace: f.b })).value;
+  const first = (await s.call('teams_status', { taskId: a.id, incremental: true })).value;
+  const same = await s.call('teams_status', { taskId: a.id, afterCursor: first.cursor });
+  assert.equal(same.value.unchanged, true);
+  const wrong = await s.call('teams_status', { workspace: f.b, taskId: b.id, afterCursor: first.cursor });
+  assert.equal(wrong.isError, true); assert.match(wrong.value, /another workspace/);
+  await s.close();
+  const reopened = await f.connect(), before = f.runtimeCreations.length;
+  const stale = await reopened.call('teams_wait', { workspace: f.a, taskId: a.id, timeoutMs: 0, afterCursor: first.cursor });
+  assert.equal(stale.isError, true); assert.match(stale.value, /Invalid or expired/);
+  assert.equal(f.runtimeCreations.length, before, 'expired cursor refuses before runtime acquisition');
+  const full = await reopened.call('teams_status', { workspace: f.a, taskId: a.id, incremental: true });
+  assert.equal(full.isError, false); assert.notEqual(full.value.cursor, first.cursor);
+  assert.equal(f.runtimeCreations.length, before);
+});
+
 test('model approvals, task ids, reviews and forget stay within their project on one connection', { timeout: 15000 }, async t => {
   const f = await fixture(t), s = await f.connect(async request => f.accept(f.workspaceFor(request)));
   const aTask = (await s.call('teams_create', { ...contract, expectedWorkspace: f.a })).value;

@@ -5,9 +5,27 @@ import { TaskStore } from '../src/store.js';
 import { taskPrompt } from '../src/policy.js';
 import { setup, contract, report, approve, config, tick } from './helpers.js';
 import { taskView } from '../src/status.js';
-import { taskSchema } from '../src/contracts.js';
+import { assertStrictOutputSchema, outputSchemaFor, taskSchema } from '../src/contracts.js';
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+test('structured output schema requires optional stored limitations', () => {
+  const schema = outputSchemaFor(['criterion']);
+  assert.deepEqual(schema.required, ['summary', 'criteria', 'findings', 'blockers', 'limitations']);
+  assert.deepEqual(Object.keys(schema.properties), schema.required);
+});
+
+test('strict generation guard rejects missing required properties at every object level', () => {
+  for (const nested of [false, true]) {
+    const schema = outputSchemaFor(['criterion']);
+    const object = nested ? schema.properties.criteria.items : schema;
+    object.required = object.required.filter(key => key !== (nested ? 'evidence' : 'limitations'));
+    assert.throws(() => assertStrictOutputSchema(schema), /every object property must be required/);
+  }
+  const schema = outputSchemaFor(['criterion']);
+  schema.properties.criteria.items.additionalProperties = true;
+  assert.throws(() => assertStrictOutputSchema(schema), /additionalProperties must be false/);
+});
 async function until(predicate) {
   const deadline = Date.now() + 5000;
   while (!predicate()) { if (Date.now() > deadline) throw new Error('Test condition timed out'); await delay(10); }
@@ -110,11 +128,31 @@ test('claims without matching criteria or evidence cannot pass', async t => {
 });
 
 test('blocker report never enters the review-pass path', async t => {
-  const { runtime } = setup(t, { run: async () => ({ result: { ...report, blockers: ['Repository is incomplete'] } }) });
+  const { runtime } = setup(t, { run: async () => ({ result: { ...report, criteria: report.criteria.map(c => ({ ...c, satisfied: false, evidence: 'Repository incomplete; required source unavailable' })), blockers: ['Repository is incomplete'] } }) });
   const task = runtime.create(contract);
   runtime.start(task.id);
   assert.equal((await runtime.wait(task.id)).status, 'blocked');
   assert.throws(() => approve(runtime, task.id), /not awaiting review/);
+});
+
+test('completed reports with limitations await review, contradictory blockers diagnose without retry', async t => {
+  for (const contradictory of [false, true]) await t.test(String(contradictory), async t => {
+    let calls = 0;
+    const result = { ...report, limitations: ['Read-only report; real Git fixture belongs to captain'], blockers: contradictory ? ['Cannot write STATUS'] : [] };
+    const { runtime } = setup(t, { run: async () => { calls++; return { result }; } });
+    const task = runtime.create(contract); runtime.start(task.id);
+    const state = await runtime.wait(task.id);
+    assert.equal(state.status, contradictory ? 'failed' : 'awaiting_review');
+    assert.equal(calls, 1);
+    if (contradictory) {
+      assert.match(state.error, /Inconsistent result/);
+      assert.match(state.attempts[0].validationFailure.resultExcerpt, /Cannot write STATUS/);
+      assert.throws(() => approve(runtime, task.id), /not awaiting review/);
+    } else {
+      assert.deepEqual(state.result.limitations, result.limitations);
+      assert.equal(approve(runtime, task.id).status, 'succeeded');
+    }
+  });
 });
 
 test('all criteria need real captain evidence in contract order', async t => {

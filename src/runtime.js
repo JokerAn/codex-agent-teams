@@ -58,7 +58,7 @@ export class TaskRuntime {
     return this.store.save(task, 'created');
   }
   status(id) { return id ? this.store.get(id) : this.store.list(); }
-  start(id, { retry = false, reason = '', models, catalog } = {}) {
+  start(id, { retry = false, reason = '', models, catalog, host } = {}) {
     if (this.closing) throw new Error('Runtime is closing');
     if (this.requireModelConfirmation && !this.modelConfirmation && !models) throw new Error('User model confirmation or explicit captain models required. Pass models to teams_start, or optionally call teams_models with confirm=true.');
     if (models && !catalog) throw new Error('Explicit captain models require a live catalog before starting members.');
@@ -96,7 +96,7 @@ export class TaskRuntime {
       validateDispatchModel(selection, catalog);
       validateDispatchModel(profiles.expert, catalog);
     }
-    const attempt = { id: randomUUID(), status: 'running', startedAt: new Date().toISOString(), selection, reason,
+    const attempt = { id: randomUUID(), status: 'running', startedAt: new Date().toISOString(), selection, reason, ...(host ? { host: structuredClone(host) } : {}),
       reviewerSelection: { ...profiles.expert }, ...(models ? { dispatch: { source: 'captain-explicit', profiles: structuredClone(profiles), target, validatedAt: new Date().toISOString() } } : this.modelConfirmation ? { modelConfirmation: structuredClone(this.modelConfirmation) } : {}) };
     markPhase(attempt, task.executionPlan ? 'preparing' : 'member', attempt.startedAt);
     task.attempts.push(attempt);
@@ -155,6 +155,7 @@ export class TaskRuntime {
       // Worktree preparation is synchronous (git fork/exec plus whole-tree hashing). Yield once so
       // the MCP transport can answer status calls while a member is being prepared.
       await new Promise(resolve => setImmediate(resolve));
+      live();
       if (task.executionPlan) {
         workspace = this.prepareWorkspaceRecord({ dirtyPolicy: task.executionPlan.dirtyPolicy }, { taskId: task.id, attemptId: attempt.id });
         progress({ workspaceInputDigest: new GitWorkspace(this.config.workspace).inspect(workspace).contentDigest });
@@ -195,6 +196,7 @@ export class TaskRuntime {
           if (packet.length > 120000) throw new Error('Review packet exceeds 120000 characters; narrow the change');
           phase('independent_review');
           progress({ machineReview: { status: 'running', selection: attempt.reviewerSelection } });
+          live();
           const reviewed = await this.backend.run({ cwd: workspace.worktreePath, mode: 'read-only', role: 'review',
             selection: attempt.reviewerSelection, acceptance: task.acceptance, prompt: packet, signal: controller.signal,
             onProgress: update => { const previous = this.store.get(task.id).attempts.at(-1).machineReview; progress({ machineReview: { ...previous, ...update } }); } });
@@ -210,6 +212,7 @@ export class TaskRuntime {
           if (!passed) throw new Error('Independent expert review rejected the change');
         }
       }
+      live();
       this.finish(task.id, attempt.id, result.blockers.length || result.criteria.some(criterion => !criterion.satisfied) ? 'blocked' : 'awaiting_review', {
         result, execution: { ...execution, result: undefined } });
     } catch (error) {
@@ -237,7 +240,9 @@ export class TaskRuntime {
     // Returning false used to be ignored by both callers, which could leave the attempt stuck at
     // "running" with no endedAt (and a memberLaunch that never became "exited"). Record the drop.
     if (task.status !== 'running' || task.attempts.at(-1)?.id !== attemptId) { this.store.save(task, 'finish-dropped'); return false; }
-    const cleanupConfirmed = !processAlive(task.attempts.at(-1)?.childPid, true) && !processAlive(task.attempts.at(-1)?.machineReview?.childPid, true);
+    const launches = [task.attempts.at(-1), task.attempts.at(-1)?.machineReview];
+    const cleanupConfirmed = launches.every(launch => !processAlive(launch?.childPid, true)
+      && !(launch?.memberLaunch && launch.memberLaunch !== 'exited' && !Number.isSafeInteger(launch.childPid)));
     if (!cleanupConfirmed && status === 'awaiting_review') { status = 'failed'; payload = { ...payload, error: 'Member/reviewer process group exit is unconfirmed' }; }
     task.status = status;
     Object.assign(task, payload);

@@ -58,6 +58,55 @@ async function integrate(f, task) {
   f.runtime.integrate(task.id, task.attempts.at(-1).id); return f.runtime.wait(task.id, 15000);
 }
 
+test('deadline crossed in either synchronous evidence check cannot launch review or submit success', async t => {
+  for (const slowCall of [1, 2]) await t.test(`evidence check ${slowCall}`, async t => {
+    const f = fixture(t);
+    let offset = 0, calls = 0;
+    const now = Date.now, evidence = GitWorkspace.prototype.candidateEvidence;
+    t.mock.method(Date, 'now', () => now() + offset);
+    t.mock.method(GitWorkspace.prototype, 'candidateEvidence', function (...args) {
+      const patch = evidence.apply(this, args);
+      if (++calls === slowCall) offset += f.config.taskTimeoutMs + 100;
+      return patch;
+    });
+    const task = await execute(f);
+    assert.equal(task.status, 'timed_out', task.error);
+    assert.equal(f.roles.filter(role => role.role === 'review').length, slowCall === 1 ? 0 : 1);
+    assert.equal(task.failure.code, 'task_deadline_exceeded');
+  });
+});
+
+test('file/directory conversions complete runtime review, integration and source verification with user staging intact', async t => {
+  for (const beforeDirectory of [false, true]) await t.test(String(beforeDirectory), async t => {
+    const criteria = ['entry has the expected converted bytes'];
+    const f = fixture(t, { backend: { run: async request => {
+      if (request.role !== 'review') {
+        const entry = join(request.cwd, 'entry'); rmSync(entry, { recursive: true, force: true });
+        if (!beforeDirectory) mkdirSync(entry);
+        writeFileSync(beforeDirectory ? entry : join(entry, 'index.js'), 'converted');
+      }
+      return { actualModel: request.selection.model, result: { summary: 'fixture conversion', criteria: [{ criterion: criteria[0], satisfied: true, evidence: 'entry conversion fixture' }], findings: [], blockers: [] } };
+    } } });
+    const entry = join(f.repo, 'entry'); if (beforeDirectory) mkdirSync(entry);
+    writeFileSync(beforeDirectory ? join(entry, 'index.js') : entry, 'baseline');
+    f.git(['add', 'entry']); f.git(['commit', '-m', 'entry baseline']);
+    writeFileSync(join(f.repo, 'user.txt'), 'staged user\n'); f.git(['add', 'user.txt']);
+    writeFileSync(join(f.repo, 'user.txt'), 'staged user\nunstaged user\n');
+    const head = f.git(['rev-parse', 'HEAD']), index = readFileSync(join(f.repo, '.git/index'));
+    const task = await execute(f, { objective: 'Convert entry shape', kind: 'implementation', mode: 'workspace-write', acceptance: criteria,
+      executionPlan: { dirtyPolicy: 'snapshot', allowedPaths: ['entry'], verification: { command: process.execPath,
+        args: ['-e', "if(require('node:fs').readFileSync(process.argv[1],'utf8')!=='converted')process.exit(1)", beforeDirectory ? 'entry' : 'entry/index.js'] } } });
+    assert.equal(task.status, 'awaiting_review', task.error);
+    const reviewed = f.runtime.review({ taskId: task.id, attemptId: task.attempts[0].id, verdict: 'pass', evidence: criteria.map(criterion => ({ criterion, evidence: 'captain checked conversion and command' })) });
+    const result = await integrate(f, reviewed);
+    assert.equal(result.status, 'succeeded', result.error);
+    assert.equal(result.attempts[0].integration.status, 'passed');
+    assert.equal(f.git(['rev-parse', 'HEAD']), head); assert.deepEqual(readFileSync(join(f.repo, '.git/index')), index);
+    assert.equal(readFileSync(join(f.repo, 'user.txt'), 'utf8'), 'staged user\nunstaged user\n');
+    f.runtime.removeWorkspace(task.attempts[0].workspaceId, { discard: true });
+  });
+});
+
 test('write contract requires expert, explicit paths and verification; reserved/escaping paths are refused', () => {
   for (const bad of [{ ...input(), executionPlan: undefined }, { ...input(), profile: 'qualified' }, { ...input(), executionPlan: { ...input().executionPlan, allowedPaths: ['../other'] } }, { ...input(), executionPlan: { ...input().executionPlan, allowedPaths: ['.git/config'] } }, { ...input(), executionPlan: { ...input().executionPlan, allowedPaths: [] } }]) assert.throws(() => taskSchema.parse(bad));
 });

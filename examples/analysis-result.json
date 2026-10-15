@@ -1,0 +1,15 @@
+{
+  "summary": "Completed static analysis; one reproducible finding is ready for captain review.",
+  "criteria": [
+    {
+      "criterion": "Explain the deadline check with source evidence",
+      "satisfied": true,
+      "evidence": "src/runtime.js:199 checks the absolute deadline before reviewer invocation. Evidence type: source inspection. Reproduction: advance a controlled clock beyond the deadline in candidateEvidence; expected reviewer calls = 0. Execution owner: captain; this report did not run that experiment."
+    }
+  ],
+  "findings": [],
+  "blockers": [],
+  "limitations": [
+    "Static evidence satisfies this analysis contract; the captain owns temporary Git experiments and shared STATUS documentation. No real model write test was run."
+  ]
+}

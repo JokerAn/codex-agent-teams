@@ -8,7 +8,7 @@ import { existsSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { createMcpServer } from '../src/mcp.js';
-import { setup, contract } from './helpers.js';
+import { setup, contract, report } from './helpers.js';
 
 async function connectInMemory(t, runtime, capabilities, discoverModels) {
   const server = createMcpServer(runtime, { discoverModels });
@@ -19,6 +19,118 @@ async function connectInMemory(t, runtime, capabilities, discoverModels) {
   await client.connect(clientTransport);
   return client;
 }
+
+test('SDK summary/catalog and selected panel validate combinations without acquiring runtime', async t => {
+  const task = { id: 'selected-task', objective: 'fixture', status: 'succeeded', dependencies: [], attempts: [], updatedAt: new Date().toISOString() };
+  const snapshot = { target: { root: process.cwd() }, tasks: [task], workspaces: [], owner: null, stateExists: true };
+  const server = createMcpServer(() => { throw Error('No owner may be acquired'); }, { observe: () => snapshot });
+  const client = new Client({ name: 'status-projections', version: '1' });
+  const [a, b] = InMemoryTransport.createLinkedPair(); await server.connect(a); await client.connect(b);
+  t.after(async () => { await client.close(); await server.close(); });
+  const call = args => client.callTool({ name: 'teams_status', arguments: args });
+  for (const projection of ['summary', 'catalog']) {
+    const result = await call({ overview: true, projection });
+    assert(!result.isError, JSON.stringify(result));
+    assert.equal(JSON.parse(result.content[0].text).tasks.length, projection === 'summary' ? 0 : 1);
+    assert.doesNotMatch(result.content[1].text, /undefined/);
+  }
+  for (const args of [{ projection: 'summary' }, { overview: true, projection: 'catalog', taskId: task.id }, { taskIds: [] },
+    { panel: true, overview: true }, { panel: true, taskIds: ['not-in-project'] }, { panel: true, taskIds: [task.id, task.id] }]) {
+    assert((await call(args)).isError, JSON.stringify(args));
+  }
+  const panel = JSON.parse((await call({ panel: true, taskIds: [task.id] })).content[0].text).panel;
+  assert.equal(panel.scope, 'selected-tasks');
+  assert.equal(JSON.parse((await call({ panel: true, taskIds: [task.id] })).content[0].text).panel.url, panel.url);
+  assert.notEqual(JSON.parse((await call({ panel: true })).content[0].text).panel.url, panel.url);
+  assert.match(await (await fetch(panel.url)).text(), /本次选定任务/);
+  assert.equal(JSON.parse((await call({ taskId: task.id, verbose: true })).content[0].text).objective, 'fixture');
+});
+
+test('SDK completed analysis exposes limitations without blockers and still requires captain review', async t => {
+  const { runtime } = setup(t, { run: async () => ({ result: { ...report, limitations: ['No real Git fixture run'] } }) });
+  const task = runtime.create(contract); runtime.start(task.id); await runtime.wait(task.id);
+  const client = await connectInMemory(t, runtime, {}, undefined);
+  const response = await client.callTool({ name: 'teams_status', arguments: { taskId: task.id } });
+  const view = JSON.parse(response.content[0].text);
+  assert.equal(view.status, 'awaiting_review'); assert.deepEqual(view.blockers, []);
+  assert.deepEqual(view.limitations, ['No real Git fixture run']);
+  assert.match(response.content[1].text, /验证局限/);
+});
+
+test('SDK review receipt stays bounded and retains full evidence through explicit status', async t => {
+  const summary = 'large report '.repeat(1000).trim();
+  const { runtime } = setup(t, { run: async () => ({ result: { ...report, summary } }) });
+  const client = await connectInMemory(t, runtime, {}, undefined);
+  for (const verdict of ['pass', 'reject']) {
+    const task = runtime.create(contract); runtime.start(task.id); await runtime.wait(task.id);
+    const args = { taskId: task.id, attemptId: runtime.status(task.id).attempts.at(-1).id, verdict,
+      evidence: [{ criterion: contract.acceptance[0], evidence: 'Captain proof '.repeat(500).trim() }] };
+    const result = await client.callTool({ name: 'teams_review', arguments: args });
+    assert(!result.isError, JSON.stringify(result));
+    const receipt = JSON.parse(result.content[0].text);
+    assert.equal(receipt.status, verdict === 'pass' ? 'succeeded' : 'failed');
+    assert.equal(receipt.review.verdict, verdict); assert.equal(receipt.review.authority, 'captain-attested');
+    assert.equal(receipt.memberExitConfirmed, true); assert.equal(receipt.review.evidenceCount, 1);
+    assert.equal(receipt.attempts, undefined); assert.equal(receipt.result, undefined);
+    assert(Buffer.byteLength(JSON.stringify(result)) < 2000);
+    assert.match(result.content[1].text, /队长复核/);
+    const full = JSON.parse((await client.callTool({ name: 'teams_status', arguments: { taskId: task.id, verbose: true } })).content[0].text);
+    assert.deepEqual(full.review.evidence, args.evidence);
+    assert.equal(full.result.summary, summary);
+  }
+});
+
+test('SDK incremental status and wait return bounded receipts and preserve legacy results', async t => {
+  const { runtime } = setup(t);
+  const task = runtime.create(contract);
+  const client = await connectInMemory(t, runtime, {}, undefined);
+  const call = (name, args) => client.callTool({ name, arguments: { taskId: task.id, ...args } });
+  const first = JSON.parse((await call('teams_status', { incremental: true })).content[0].text);
+  const same = await call('teams_wait', { afterCursor: first.cursor, timeoutMs: 0 });
+  assert.equal(JSON.parse(same.content[0].text).unchanged, true);
+  assert.match(same.content[1].text, /没有新记录/);
+  assert.ok(Buffer.byteLength(JSON.stringify(same)) <= 1024, 'entire MCP response including receipt stays bounded');
+  t.diagnostic(`MCP unchanged response: ${Buffer.byteLength(JSON.stringify(same))} bytes including receipt`);
+  runtime.start(task.id); await runtime.wait(task.id);
+  const stale = await call('teams_status', { afterCursor: first.cursor });
+  assert.equal(stale.isError, true); assert.match(stale.content[0].text, /attempt/);
+  const fresh = JSON.parse((await call('teams_status', { incremental: true })).content[0].text);
+  const reviewed = runtime.review({ taskId: task.id, attemptId: fresh.attemptId, verdict: 'pass', evidence: task.acceptance.map(criterion => ({ criterion, evidence: 'fixture proof' })) });
+  const changed = JSON.parse((await call('teams_status', { afterCursor: fresh.cursor })).content[0].text);
+  assert.equal(changed.unchanged, false); assert.equal(changed.status, 'succeeded');
+  assert.equal(changed.captainReview, 'pass'); assert.equal(changed.objective, undefined);
+  const legacy = JSON.parse((await call('teams_status', {})).content[0].text);
+  assert.equal(legacy.objective, reviewed.objective); assert.equal(legacy.cursor, undefined);
+  assert.equal((await call('teams_status', { incremental: true, verbose: true })).isError, true);
+});
+
+test('compact SDK status and overview share orphan rules without acquiring runtime', async t => {
+  const task = { id: 'orphan', objective: 'orphan', status: 'running', dependencies: [], updatedAt: '2026-10-14T00:00:00Z',
+    attempts: [{ id: 'attempt', status: 'running', phase: 'member', startedAt: '2026-10-14T00:00:00Z' }] };
+  const snapshot = { tasks: [task], workspaces: [], owner: null, stateExists: true };
+  const server = createMcpServer(() => { throw Error('Observation must not acquire owner'); }, { observe: () => snapshot });
+  const client = new Client({ name: 'orphan-tests', version: '1' });
+  const [ct, st] = InMemoryTransport.createLinkedPair();
+  t.after(async () => { await client.close(); await server.close(); });
+  await server.connect(st); await client.connect(ct);
+  const call = async args => JSON.parse((await client.callTool({ name: 'teams_status', arguments: args })).content[0].text);
+  for (const owner of [null, { processAlive: false }, { processAlive: true }]) {
+    snapshot.owner = owner;
+    for (const status of ['running', 'integrating']) {
+      task.status = status;
+      task.attempts[0].integration = { startedAt: task.attempts[0].startedAt };
+      const compact = await call({ taskId: task.id }), full = (await call({ taskId: task.id, overview: true })).tasks[0];
+      assert.equal(compact.nextAction, full.nextAction);
+      assert.equal(compact.nextActor, full.nextActor);
+      if (!owner?.processAlive) {
+        assert.equal(compact.elapsedMs, null); assert.equal(compact.attempts[0].elapsedMs, null);
+        assert.equal(compact.integrationElapsedMs, null);
+      }
+    }
+  }
+  snapshot.owner = null; task.attempts[0].endedAt = '2026-10-14T00:00:10Z';
+  assert.equal((await call({ taskId: task.id })).elapsedMs, 10000);
+});
 
 test('direct legacy SDK server rejects workspace arguments before cancel or forget can affect its fixed project', async t => {
   const { runtime, store } = setup(t);

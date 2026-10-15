@@ -16,6 +16,17 @@ const expert = { model: 'test-model', effort: 'high' }, simple = { model: 'confi
 const content = { expert: JSON.stringify(expert), simple: JSON.stringify(simple), confirm: true, remember: true };
 const catalog = { models: [expert, simple].map(p => ({ model: p.model, displayName: p.model, efforts: [p.effort] })) };
 
+test('legacy qualified review cannot change expert model or effort, while non-review eligibility remains', () => {
+  const task = { profile: 'qualified', complexity: 'bounded', kind: 'review' };
+  const qualified = { ...expert, kinds: ['review', 'analysis'], evaluationReference: 'fixture' };
+  for (const override of [{ model: 'other' }, { effort: 'low' }, { effort: undefined }]) {
+    const options = { profiles: { expert, qualified: { ...qualified, ...override } } };
+    assert.throws(() => selectProfile(task, options), /Review tasks must use/);
+    assert.equal(selectProfile({ ...task, kind: 'analysis' }, options).model, options.profiles.qualified.model);
+  }
+  assert.equal(selectProfile(task, { profiles: { expert, qualified } }).model, expert.model);
+});
+
 test('routing uses explicit simplicity, protects review/uncertain tasks and allows expert override', () => {
   const options = { profiles: { expert, simple } };
   for (const kind of ['lookup', 'analysis', 'implementation']) {

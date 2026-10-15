@@ -82,12 +82,31 @@ export const resultSchema = z.strictObject({
   criteria: z.array(criterion).min(1).max(20),
   findings: z.array(text.max(8000)).max(40),
   blockers: z.array(text.max(8000)).max(20),
+  limitations: z.array(text.max(8000)).max(20).optional(),
 });
+/** Reject malformed generation schemas locally, before launching App Server. */
+export function assertStrictOutputSchema(schema, path = '$') {
+  if (!schema || typeof schema !== 'object') return;
+  if (schema.type === 'object') {
+    const properties = Object.keys(schema.properties ?? {});
+    if (schema.additionalProperties !== false || !Array.isArray(schema.required) ||
+      properties.some(key => !schema.required.includes(key)) || schema.required.some(key => !properties.includes(key))) {
+      throw new Error(`Invalid structured output schema at ${path}: every object property must be required and additionalProperties must be false.`);
+    }
+  }
+  for (const [key, value] of Object.entries(schema)) assertStrictOutputSchema(value, `${path}.${key}`);
+}
 export function outputSchemaFor(acceptance) {
+  acceptance = taskSchema.shape.acceptance.parse(acceptance);
   const schema = z.toJSONSchema(resultSchema);
+  // Stored reports remain backward-compatible with an omitted limitations field,
+  // while App Server structured output must require every declared property.
+  // Keep generation separate from historical report parsing.
+  schema.required = [...new Set([...(schema.required ?? []), 'limitations'])];
   schema.properties.criteria.items.properties.criterion.enum = [...acceptance];
   schema.properties.criteria.minItems = acceptance.length;
   schema.properties.criteria.maxItems = acceptance.length;
+  assertStrictOutputSchema(schema);
   return schema;
 }
 export const reviewSchema = z.strictObject({
@@ -104,6 +123,12 @@ export function validateResult(value, task) {
   }
   if (result.criteria.some(c => c.satisfied && !c.evidence.trim())) {
     throw new Error('Satisfied criteria require evidence.');
+  }
+  if (result.blockers.length && result.criteria.every(c => c.satisfied)) {
+    throw new Error('Inconsistent result: blockers require an unsatisfied acceptance criterion. Put completed-report verification boundaries in limitations instead.');
+  }
+  if (result.blockers.length && result.criteria.some(c => !c.satisfied && !c.evidence.trim())) {
+    throw new Error('Blocked criteria require evidence explaining which acceptance requirement cannot be completed.');
   }
   return result;
 }

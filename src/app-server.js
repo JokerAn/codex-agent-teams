@@ -1,5 +1,5 @@
 import packageInfo from '../package.json' with { type: 'json' };
-import { spawn } from 'node:child_process';
+import { spawnManaged } from './managed-process.js';
 import { EventEmitter } from 'node:events';
 import { outputSchemaFor } from './contracts.js';
 import { realpathSync } from 'node:fs';
@@ -7,6 +7,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { processAlive } from './store.js';
 import { signalGroup } from './verification.js';
 import { MEMBER_INSTRUCTIONS, WRITE_INSTRUCTIONS, REVIEW_INSTRUCTIONS } from './policy.js';
+import { recordAction } from './actions.js';
 
 /**
  * Attach a stable machine code so failure classification never has to pattern-match on message text.
@@ -27,7 +28,7 @@ export class AppServerClient extends EventEmitter {
     this.nextId = 1;
     this.requestTimeoutMs = requestTimeoutMs;
     this.stderr = '';
-    this.child = spawn(binary, args, { cwd, stdio: ['pipe', 'pipe', 'pipe'], detached: true, shell: false, env: { ...process.env, CODEX_TEAMS_MEMBER: '1', ...env } });
+    this.child = spawnManaged(binary, args, { cwd, stdio: ['pipe', 'pipe', 'pipe'], env: { ...process.env, CODEX_TEAMS_MEMBER: '1', ...env } });
     this.closed = new Promise(resolve => { this.resolveClosed = resolve; });
     this.child.on('error', error => { this.fail(error); this.resolveClosed(); });
     this.child.on('close', (code, signal) => {
@@ -118,13 +119,16 @@ export class AppServerClient extends EventEmitter {
       this.frameBufferBytes = 0;
       for (const p of [...this.pending.values()]) p.reject(new Error('App Server stopped'));
       const pid = this.child.pid;
-      if (pid && processAlive(pid, true)) signalGroup(pid, 'SIGTERM');
+      const errors = [];
+      const send = signal => { try { signalGroup(pid, signal); } catch (error) { errors.push(error); } };
+      if (pid && processAlive(pid, true)) send('SIGTERM');
       await Promise.race([this.closed, delay(300)]);
-      if (pid && processAlive(pid, true)) signalGroup(pid, 'SIGKILL');
+      if (pid && processAlive(pid, true)) send('SIGKILL');
       const until = Date.now() + 2000;
       while (!this.exited && pid && Date.now() < until) await delay(25);
       while (pid && processAlive(pid, true) && Date.now() < until) await delay(25);
-      if (pid && (!this.exited || processAlive(pid, true))) throw new Error(`App Server process group ${pid} exit is unconfirmed`);
+      if (pid && (!this.exited || processAlive(pid, true))) errors.push(new Error(`App Server process group ${pid} exit is unconfirmed`));
+      if (errors.length) throw new AggregateError(errors, errors.map(error => error.message).join('; '));
     })();
     return this.stopPromise;
   }
@@ -225,16 +229,38 @@ export class CodexBackend {
     } finally { await stopPreservingFailure(client, failure); }
   }
   async run({ cwd, selection, acceptance, prompt, signal, mode = 'read-only', role = 'member', onProgress = () => {} }) {
+    let outputSchema;
+    try { outputSchema = outputSchemaFor(acceptance); }
+    catch (error) { throw hostError('output_schema_invalid', error.message); }
     onProgress({ memberLaunch: 'starting' });
     const client = new AppServerClient({ ...this.options, cwd });
     let threadId, turnId, usage = null, finalTurn, fatal, wake, failure;
     const messages = new Map();
     const completions = new Map();
+    const actions = { items: [], truncated: false };
+    const pendingActions = [];
     const notifyWaiter = () => { if (wake) wake(); };
     const abort = () => { fatal = signal.reason ?? new Error('Cancelled'); notifyWaiter(); };
     client.on('fatal', error => { fatal = error; notifyWaiter(); });
     client.on('notification', (method, params) => {
       if (params.threadId !== threadId) return;
+      if (turnId && params.turnId && params.turnId !== turnId) return;
+      if (fatal || signal.aborted || (params.turnId && completions.has(params.turnId))) return;
+      if (['item/started', 'item/completed'].includes(method) && typeof params.turnId === 'string') {
+        if (turnId) {
+          if (recordAction(actions, method, params)) onProgress({ actions: structuredClone(actions) });
+        } else {
+          // Notifications may precede turn/start's reply. Keep only sanitized,
+          // bounded metadata, then bind it to the actual returned turn ID.
+          const preview = { items: [], truncated: false };
+          if (recordAction(preview, method, params) && params.turnId.length <= 96) {
+            if (preview.truncated) actions.truncated = true;
+            if (!preview.items.length) return;
+            if (pendingActions.length < 100) pendingActions.push({ turnId: params.turnId, method, entry: preview.items[0] });
+            else actions.truncated = true;
+          }
+        }
+      }
       if (method === 'item/completed' && params.item?.type === 'agentMessage') {
         if (params.item.phase !== 'commentary') messages.set(params.turnId, params.item.text);
       }
@@ -254,16 +280,25 @@ export class CodexBackend {
       onProgress({ threadId, actualModel: started.model ?? null });
       const turn = await client.request('turn/start', {
         threadId, input: [{ type: 'text', text: prompt }],
-        ...(selection.effort ? { effort: selection.effort } : {}), outputSchema: outputSchemaFor(acceptance),
+        ...(selection.effort ? { effort: selection.effort } : {}), outputSchema,
       }, signal);
       turnId = turn.turn.id;
       onProgress({ turnId });
+      for (const event of pendingActions) if (event.turnId === turnId) {
+        recordAction(actions, event.method, { item: event.entry, startedAtMs: Date.parse(event.entry.startedAt), completedAtMs: Date.parse(event.entry.endedAt) });
+      }
+      pendingActions.length = 0;
+      if (actions.items.length || actions.truncated) onProgress({ actions: structuredClone(actions) });
       while (!fatal && !(finalTurn = completions.get(turnId))) {
         await new Promise(resolve => { wake = resolve; });
         wake = undefined;
       }
       if (fatal) throw fatal;
-      if (finalTurn.status !== 'completed') throw hostError('turn_incomplete', `Turn ${finalTurn.status}: ${finalTurn.error?.message ?? 'no successful result'}`);
+      if (finalTurn.status !== 'completed') {
+        // The official structured code is authoritative; never infer it from provider prose.
+        const code = finalTurn.error?.codexErrorInfo === 'badRequest' ? 'request_rejected' : 'turn_incomplete';
+        throw hostError(code, `Turn ${finalTurn.status}: ${finalTurn.error?.message ?? 'no successful result'}`);
+      }
       const finalMessage = [...(finalTurn.items ?? [])].reverse().find(item => item.type === 'agentMessage' && item.phase !== 'commentary');
       const text = finalMessage?.text ?? messages.get(turnId);
       if (!text) throw hostError('no_structured_result', 'Completed turn has no final structured result');

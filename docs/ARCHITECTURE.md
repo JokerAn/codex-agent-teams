@@ -1,10 +1,16 @@
 # 实现说明
 
+## 0.6.2 宿主停止与进程清理
+
+官方命令 hooks 通过 host-hook 向 MCP 连接内 host-lifecycle 控制器登记真实 session/turn，取得一次性票据并绑定 attempt。Interrupt/SessionEnd 先写中断标记，再按归属取消，异步发现后重新检查，避免迟到启动和误停新轮。控制器仅使用当前用户可访问的 Unix socket，hook 不直接写任务状态；任务状态及退出确认仍由 runtime 拥有。纯观察不获取 owner，重连使用零等待调用显式恢复 owner/端点。
+
+managed-process 将 App Server/验证命令放入短生命周期 guard 的进程组。私有fd管道不传给命令；父MCP骤死后EOF触发整组TERM/KILL，无模型或后台调度。process-group 集中原macOS信号降级；验证保留原始退出元数据和有界后代清理。只管理未自行脱离组的子孙。打包通过portable manifest扩展及兼容manifest声明hooks，内容进入digest和安装缓存核对。实际宿主信任/停止按钮与受控回归分别验收，见 [修复记录](STOP-FIX-0.6.2-2026-10-14.md)。
+
 ## 核心边界
 
 当前 Codex 会话是 captain，负责授权目标、验收和显式集成。代码负责合同、持久状态、执行与证据；不驻留后台自动规划器。Node.js 24+ 原生 ESM，无编译步骤，Zod 校验边界，内置 SQLite，官方 MCP SDK。
 
-核心有 16 个源文件。contracts/policy 管合同和显式上下文；runtime/store 拥有状态；app-server 封装官方 App Server；workspace/verification 负责 Git 与一个真实命令；MCP/CLI 两个入口，plugin 只封装本机产物；status 提供无 owner 的状态观察、显示摘要与本地 HTML 快照。models 提供用户模型选择表单与交互终端确认，cli-progress 观察前台任务并向 stderr 输出回执，不拥有状态、截止时间或后台调度。workspace-router 延迟创建每个项目的独立运行时，定位已知任务而不建立中央索引。没有前端框架、第三方进程框架或独立验证队列。
+核心按职责分模块。contracts/policy 管合同和显式上下文；runtime/store 拥有状态；app-server 封装官方 App Server；workspace/verification 负责 Git 与一个真实命令；MCP/CLI 两个入口，plugin 只封装本机产物；status 提供无 owner 的状态观察、显示摘要与本地 HTML 快照。models 提供用户模型选择表单与交互终端确认，cli-progress 观察前台任务并向 stderr 输出回执，不拥有状态、截止时间或后台调度。workspace-router 延迟创建每个项目的独立运行时，定位已知任务而不建立中央索引。没有前端框架、第三方进程框架或独立验证队列。
 
 ## 合同与执行
 
@@ -99,3 +105,23 @@ workspace-router 以真实目录身份复用稳定 scope，每次访问与异步
 taskId 仅在此连接已知项目的只读快照中查找，不扫描任意目录或使用跨项目中央数据库；错误 workspace 拒绝操作。显式项目只核自身身份；仅 ID 自动定位遇已知目录漂移时拒绝猜测，队长可补该任务的实际项目。关闭等待所有已创建运行时退出并聚合错误，模型发现/观察未创建 owner 的项目无需恢复。旧含 workspace 的直接配置保持固定目标语义。
 
 新增 preflight 模块：worktree 准备后解析验证程序和显式依赖，不运行代码或基线测试，不自动安装。失败记录结构化 code/phase/nextAction，原始 error 和进程退出门禁保留。Node 包检查采用 require 条件，不是通用构建环境证明；预检通过不改变真实命令/审查/源复验要求。
+
+## 0.5.2 连接内实时观察
+
+`teams_status(panel:true)` 通过官方 SDK schema 扩展原工具，不新增工具。status-panel 使用 Node 内置 HTTP，只绑定 127.0.0.1 随机端口，随机访问路径，核对 Host/Origin，仅支持 GET，无 CORS 与写入口。每次请求调用项目 scope.observe()，保留身份校验，不取得 owner、不创建数据库；状态错误返回 503，页面保留旧显示并明确标注。响应 no-store，任务文本/属性转义，实时页 CSP 仅允许同源读取，离线页仍禁止连接。
+
+MCP 按真实项目 root 保存启动 Promise，保证并发请求复用；关闭和 transport 断连等待创建完成后关闭 HTTP listener/连接。页面串行每 2 秒读取完整渲染结果，保留搜索、筛选、详情和输入焦点。宿主面板打开由队长调用可用的 UI 工具，无法注册原生子 Agent 卡片；旧缓存要升级后才有该 schema。官方接口依据：[SDK v2.3.1 registerTool](https://github.com/modelcontextprotocol/typescript-sdk/blob/v2.3.1/docs/servers/tools.md)。
+# 0.6.0 增补：交接与观察
+
+结果 schema 保留 findings/blockers，增加可选 limitations；all-true criteria 与非空 blockers 的矛盾
+通过 validateResult 诊断，旧记录读取不做状态迁移。队长仍承担事实审查，写任务机器证据门禁保持。
+
+actions.js 将官方 App Server item/started、item/completed 投影为有限元数据，不保存命令、参数、输出、
+错误内容或模型思维。单动作 ≤512 字节、单 attempt ≤100 项/64 KiB；实际缺失时间、cwd/退出码保持 null。
+通知先于 turn/start 回执时只缓存有限的已清洗元数据，确认 turnId 后归属；完成项不被迟到 start 重开。
+动作写入经 runtime 当前 attempt 门禁，reviewer 记录归入 machineReview.actions；不作为测试通过证据。
+
+observation.js 的 TaskObserver 用连接内随机密钥签署 cursor，绑定项目身份/任务/attempt 和真实记录摘要。
+不保存游标索引，不获取 owner；时间增长不改版本。首次为完整投影，无变化为小回执，变化为有限摘要。
+跨项目、重连或 attempt 改变明确要求重取完整快照。旧 status/wait 参数仍返回原格式，HTML/CLI 展示
+limitations 与动作观察。新代码未安装到正式缓存时，当前宿主仍沿用旧接口。

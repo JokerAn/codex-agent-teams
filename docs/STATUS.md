@@ -1,5 +1,236 @@
 # 当前状态
 
+## 0.7.0 A/B修补与本机候选交付（2026-10-15）
+
+用户授权按计划列TODO并开始修复。已交付 [执行清单](TODO-UPGRADE-2026-10-15.md)、[完整记录](UPGRADE-0.7.0-2026-10-15.md) 和 [证据JSON](UPGRADE-0.7.0-2026-10-15-EVIDENCE.json)。A/B源码与本机候选完成，C部分完成；下方“计划待实施”“B1/B2未修”均为此前历史时点。
+
+- A1/B1：启用hooks的路由MCP中start/integrate显式workspace，hook不回退聊天cwd；schema/说明/skill/README/示例同步，其他已知taskId查询与无hooks/legacy合同保持。公共输入收紧，版本统一0.7.0。
+- A2/B2：成功/回退共用实际关键文件、缺失状态、普通文件/父symlink与完整launcher执行位掩码。真实官方CLI list无installedPath，补effective Codex home内明确插件/版本路径的身份读取，不扫描其他缓存；临时CLI首次安装/替换/失败内容恢复25次调用通过。无旧身份仍明确未确认，运行依赖未逐文件校验。
+- B3/B4/B5：项目累计/显式选定任务/历史折叠、先过滤再limit、连续显示更多；summary/catalog可选投影，旧overview/verbose/增量兼容；skill收紧材料读取和交接。真实浏览器25/80条合成记录检查通过，预览页/服务已关闭。选定集合不冒充自动会话归属，不删除历史数据。
+- 独立只读GPT-6.1 Sol/high，captain-explicit，task `492608dc-5241-40b9-bf2c-e170482424c1`，attempt `5a0aaedd-76ee-4650-825c-1f6244a2639c`，312.552秒、退出确认。发现owner执行位漏检和显示更多停在40；队长先新增两项失败反例，再最小修补并独立验证，逐项review(pass)，报告succeeded。成员未复验最后修补，不声称其验证最终源码。
+- 最终定向 **90/90**，15531.48475ms；最终 `npm test` **334/334**，0 fail/cancelled/skipped，93357.435333ms，Node v24.21.0/macOS。日志 `/tmp/teams-upgrade-070-targeted-final-20261015.log`、`/tmp/teams-upgrade-070-full-final-20261015.log`。早期330/330、两项反例失败、临时CLI路径/元数据恢复失败日志保留，详见交付记录。
+- 最终候选 `dist/marketplace-v0.7.0-verified-20261015`，digest `912d87efb306ed4dba07f9dc59b9e9db35a8385637b59989b44bddeaa7d9bc03`。24源码与关键定义逐字节一致，最终SDK八工具/1选定与13累计/监听退出、doctor只读线程、官方临时宿主hooks发现及owner退出通过，无推理样例summary1019/catalog3750字节。首轮candidate保留，不作为最终包。
+- 最终候选一次真实writer+fresh expert reviewer（krill/gpt-6.1-sol/high），**66.893秒通过**：命令前后3项断言、captain复核、显式集成、源复验，HEAD/index与用户既有改动保持、managed worktree清理。task `7ca3c6f4-c8a6-4e43-8e43-073ee1433d51`，证据 `.codex-teams/live-write-77d3b837-8850-4636-84bb-7031621ff4f2/`。是有界功能验收，不是效率对照或桌面按钮验收。
+- 未执行正式update/用户hooks信任、真实桌面停止、当前远程平台矩阵、效率长跑、commit/push或历史清理。当前聊天仍加载0.6.3；下一步结束相关Team会话后显式update、重开会话核对0.7.0，再安排桌面停止与远程/效率证据。
+- 实际交付 `/Users/anshunli1/asl/code/github/codex-agent-teams`，main，HEAD `25e15c7`；本轮新增代码/测试/文档未暂存，开工index tree `c6e7b068a73edc1313595a53c7872413f0bf172f` 保持，无跨worktree未同步。文档格式/链接/围栏、四处版本与lock根版本、最终候选源码/定义逐字节一致、index及本轮预览服务退出核对通过；用户既有暂存diff格式也通过。
+
+## 当前升级计划已统一（2026-10-15，尚未实施新增修补）
+
+用户要求综合最新代码审查、真实使用与13条记录问题更新升级计划。主Agent直接完成文档整理，未启动新成员。根 [UPGRADE-PLAN.md](../UPGRADE-PLAN.md) 现为唯一当前实施入口；旧689行计划正文完整保留到 [历史计划](UPGRADE-PLAN-HISTORY-2026-10-15.md)，ROADMAP同步批次与依赖。
+
+- A先修两项P2：带hooks的路由start/integrate显式workspace，配套schema/调用说明/兼容迁移；更新成功与回退统一启动关键文件、类型和执行位校验。B1/B2仍未修复。
+- B处理项目累计/本次选定任务/历史折叠、可选精简摘要/目录返回与skill交接纪律。真实会话视图依赖已确认host归属，不猜最近聊天；持久归档后置，不清空数据库或改历史失败为成功。
+- C区分定向/全量回归、独立复核、候选与正式缓存交接、真实桌面停止/写闭环及既有平台矩阵；D再做有预算边界的同条件交付测量，按证据决定摘要/工具白名单/并行写。
+- 本次仅改计划、ROADMAP、STATUS并保存历史文档；未改运行代码/测试/版本、未新运行312项回归或真实模型、未update/清理数据/commit/push。上一轮312/312和复现仍为既有证据，不称本轮重跑。
+- 实际目录 `/Users/anshunli1/asl/code/github/codex-agent-teams`，main，HEAD `25e15c7`，本轮文档未暂存，原暂存树 `c6e7b068a73edc1313595a53c7872413f0bf172f` 保持，无跨worktree未同步。文档格式、链接、代码围栏与index核对通过；历史归档仅调整三处相对链接，反向归一后SHA-256与归档前相同，正文完整性确认。
+
+## 本会话真实使用与13条记录释义（2026-10-15）
+
+用户询问截图任务总数和实际使用问题。只读MCP快照 `2026-10-15T02:51:08.915Z` 确认：13为项目累计任务，本轮只创建1个、此前12个；当前running=0、awaiting=0、succeeded=10、attention=3。安装cache来源、持久任务历史、模型缓存输入是不同概念；没有依据把历史记录直接判为垃圾或残留运行。本轮未删除数据库、缓存、worktree或日志，未启动新成员。
+
+产品改进优先补“项目累计/本次会话”的明确口径与筛选、历史折叠/归档，旧失败保留原始终态；再精简overview中的长详情。真实委派产出B1且队长独立复现，有质量收益，未证明提速。队长首轮读历史过宽导致截断，观察也带出不必要详情，需要缩小检索与交接范围。完整依据与建议补入 [本轮报告的真实使用复盘](AUDIT-0.6.3-2026-10-15.md)。本续问仅补文档、未暂存，既有index保持，无源码/正式配置改动。
+
+## 0.6.3 当前代码再次复查（2026-10-15）
+
+本轮只做审查和文档记录，未修改运行代码。主目录当前工作树确认两项尚未修补 P2，完整触发、复现、证据边界及验收见 [AUDIT-0.6.3-2026-10-15.md](AUDIT-0.6.3-2026-10-15.md)。本轮范围未确认 P0/P1，历史 H1/H2/U1 不重复列为待修。
+
+- B1：聊天 cwd=A、已知任务属于B，start/integrate 省略 workspace 时，hook 把A作为明确目标而拒绝合法调用。成员提出纯内存反例；队长用当前 hook/lifecycle/router、临时双项目和真实socket独立复现两个入口，显式传B均allow。影响是调用受阻，无错项目执行证据。
+- B2：更新成功路径未比较启动器与MCP/运行配置；队长将临时cache的 mcp-launch.js、.mcp.json、teams.config.json 分别改成无效文本，当前installPreparedPlugin三次仍返回成功。受控CLI复现，不代表正式安装已损坏；最小修补是补齐关键文件比较与针对性回归。
+- 当前实际 viewer/runtime 已为 **0.6.3**，缓存来源0.6.3，build digest `571dba09c9f00c0e7b484238614533f292e4ef68f6a18bcf2215a2aad32eb62b`；旧段“仍0.6.2”为历史时点，本轮未执行更新。此快照未代替逐文件缓存核验。
+- 队长全量 `npm test` **312/312**，0 fail/cancelled/skipped，101436.099584ms，日志 `/tmp/teams-audit-20261015-tests.log`。两项独立复现通过，临时fixture清理；真实桌面停止、当前版本真实writer/reviewer/集成、Linux/远程CI及效率对照未执行。
+- Team独立只读成员GPT-6.1 Sol/high，captain-explicit，task `792a91b8-951d-478d-b953-39366efe94cf`，attempt `34b0cea6-982d-468c-85c0-e0ba9dc19495`，193.938秒、退出确认；队长独立复现并逐条review(pass)，报告succeeded，不代表缺陷修复。B2为队长独立检查范围。
+- 下一步先小补丁修B1/B2，再完成当前版本真实宿主停止/写闭环及既有平台矩阵，然后同条件效率测量，按数据决定发现摘要、工具白名单与有限并行写。
+- 实际交付 `/Users/anshunli1/asl/code/github/codex-agent-teams`，main，HEAD `25e15c7`；仅文档未暂存，既有暂存树 `c6e7b068a73edc1313595a53c7872413f0bf172f` 保持，无跨worktree未同步、commit/push/update或正式配置修改。
+
+## 0.6.3 定点修复交付（2026-10-15 收尾）
+
+用户授权定点修复，主 Agent 直接完成，没有启动新成员。源码版本已同步 0.6.3，完整实现、回归与边界见 [FIX-0.6.3-2026-10-14.md](FIX-0.6.3-2026-10-14.md)。下方“尚未修补”均为此前审查时点。
+
+- H2：待用票据与已接受 attempt 的中断归属分开；start/integrate 成功后才提交，重复启动、无效模型和过期集成失败保留原归属。H1：端点清理核对自身 token/socket，缺失可补发，生产关闭先撤销端点再释放 owner。
+- U1：更新前保存旧缓存关键文件身份，回退后重新核对；同版本内容漂移明确报告恢复未完成，legacy 无身份信息只报告元数据恢复、内容未确认。运行依赖未逐文件哈希，回执明确该边界。
+- teams_review 默认仅返回精简回执，完整报告和证据仍可由 status(verbose=true) 查询；保留运行时逐项验收及写任务门禁。README/skill/路线图同步，包、lock、两 manifest 均为0.6.3。查阅官方 MCP 2025-11-25 tools 规范，继续使用现有 text content 结果，不改变工具输入合同。
+- 定向38/38，5912.771459ms；全量 `npm test` **312/312**，0 fail/cancelled/skipped，90004.910208ms，Node v24.21.0/macOS。日志 `/tmp/teams-063-targeted-final-20261014.log`、`/tmp/teams-063-full-20261014.log`。首轮定向37/38仅新测试的尾空格预期错误，修正测试输入后通过，原失败日志保留。正式与暂存 diff 格式检查、文档链接和版本一致性检查通过。
+- 未执行正式更新、真实模型、桌面停止、Linux/远程CI或效率评测；当前已加载缓存仍为0.6.2。下一步结束相关Team会话后显式update、重启新聊天核对0.6.3，再做有界真实停止/写闭环验收。
+- 实际交付 `/Users/anshunli1/asl/code/github/codex-agent-teams`，main，HEAD `25e15c7`；本轮源码/测试/文档未暂存，原暂存树 `91e10ffbec423925a342dc7437bceeb0d3218ff4` 保持，无跨worktree未同步内容、commit/push或正式配置修改。
+
+## 当前聊天 Team 使用复盘（2026-10-14）
+
+用户要求回顾上一执行轮的插件问题。本轮主 Agent 直接复盘，未启动新成员、修改运行代码或重复全量测试；详见 [TEAM-SESSION-RETROSPECTIVE-0.6.2-2026-10-14.md](TEAM-SESSION-RETROSPECTIVE-0.6.2-2026-10-14.md)。
+
+- 区分发现与实际触发：上一轮真实成员正常完成并确认退出，H1/H2 由受控复现确认，不声称真实委派时已触发；U1 未通过正式 update 触发。模型选择/报告/复核链路有效，报告351.3秒、之后约80.8秒完成队长独立复现和验收，有质量产出但没有提速对照。
+- 产品问题：teams_review 默认返回完整任务，重复前一步已读取的报告/历史；观察中缺少有界发现摘要，队长仍需前台轮询。调用问题：队长拿到游标后仍多次使用普通wait，且读取历史文档过宽、提前重复部分成员探索。先精简回执和使用增量观察，不增加成员数量来补偿。
+- host 成员累计782303 tokens（含683904 cached input，output10264），不是一次新提示长度；缺少主线程、价格、对照，不推算整轮费用或效率收益。成员首次heredoc受只读shell限制，改node -e后检查成功，不作为插件启动失败。
+- 实际交付主目录，仅新增复盘及更新本文件，本轮未暂存，既有暂存区保持；无commit/push/update、新模型调用或跨worktree未同步交付。
+
+## 0.6.2 当前缺陷与待办复查（2026-10-14）
+
+用户询问尚存 bug、升级点和待办。本轮审查当前主目录工作树，未修改运行代码；完整触发、复现、证据边界及验收清单见 [REMAINING-WORK-0.6.2-2026-10-14.md](REMAINING-WORK-0.6.2-2026-10-14.md)。
+
+- 确认三项 P2：H1 交错重连时旧 lifecycle 可删除新端点且 publish 不补发；H2 失败 start 仍覆盖既有待验收 attempt 的中断归属；U1 更新回退仅比较版本/启用状态，同版本内容不同仍误报完整恢复。成员提出 H1/H2，队长以当前真实函数、临时文件/socket 和内存 TaskRuntime 独立复现；U1 由队长注入受控 CLI 复现。均未修补；未确认 P0/P1，真实双 MCP 竞态和桌面操作未实测。
+- 当前 viewer/runtime **已为 0.6.2**，缓存来源 `/Users/anshunli1/.codex/plugins/cache/codex-agent-teams-local/codex-agent-teams/0.6.2/`，build digest `7c003054d72675adf22c64824af8f43da8b0add9be6ecdc4cbbcd7a61d37f2d3` 与最终候选记录一致。下方“正式安装未更新”是历史时点；本轮未执行安装。D1/P3 是文档状态漂移，升级计划中的旧 CLI 无进度等说法也不能用作当前待办。
+- 队长本轮 `npm test` **306/306**，0 fail/cancelled/skipped，84523.285167ms，Node v24.21.0/macOS，日志 `/tmp/teams-current-audit-20261014-tests.log`。三项复现成功说明现有绿测未覆盖这些边界；没有宣称真实模型写闭环或 UI 验收完成。
+- 使用 team skill/Agent Teams MCP，一名独立只读 GPT-6.1 Sol/high 成员，captain-explicit；task `5532ba0f-a3e0-459e-a064-aa3cb0038df7`，attempt `b7bbf832-ec18-4fc9-a066-2fc87f36d302`，351.3秒，退出确认。队长独立复现并逐项 review(pass)，终态 succeeded，仅表示审查报告验收。
+- 下一步先修 H2/H1/U1 并补定向回归，再做真实桌面停止、当前版本 writer/reviewer/集成闭环及远程平台矩阵；随后以同条件质量/效率数据决定摘要、工具白名单和有限并行写。历史 F1/F2/F3、A1–A4 等已修问题不重复安排。
+- 实际交付 `/Users/anshunli1/asl/code/github/codex-agent-teams`，main，HEAD `25e15c7`；只新增报告并更新本文件，本轮文档未暂存，原暂存树 `91e10ffbec423925a342dc7437bceeb0d3218ff4` 保持，无跨 worktree 未同步、commit/push/update或正式配置修改。
+
+## 0.6.2 委派规则与停止联动修复（2026-10-14）
+
+用户已授权按排查文档实施，源码和最终候选已交付；正式安装未更新。完整实现、协议依据、独立复核、失败历史与边界见 [STOP-FIX-0.6.2-2026-10-14.md](STOP-FIX-0.6.2-2026-10-14.md)。旧章节“尚未修复”是此前时点。
+
+- team skill 收紧普通探索委派条件，明确队长立即执行的独立产物、首答优先、成员工具边界及0/1/2成员示例；并发2不是强制人数。running反馈提醒队长继续自己的交付，未声称实现模型收益自动判断或同条件加速。
+- 官方 PreToolUse/Interrupt/SessionEnd 命令hooks通过连接内控制器绑定真实session/turn、一次性票据和attempt。缺绑定拒绝插件start/integrate；中断先落标记，防迟到启动和跨轮误停；取消等待成员/reviewer/验证退出，端点不可达提示未知。重连先零等待调用恢复owner/端点，纯status/models仍不取得owner。
+- 成员及验证统一进程守护，私有管道EOF覆盖MCP单独SIGKILL，整组TERM/KILL及退出门禁保持。受控实际OS信号回归确认忽略TERM的同组后代也退出；不覆盖自行脱离组、同时强杀守护或系统故障，不把请求停止当退出成功。
+- 两个独立只读报告均GPT-6.1 Sol/high、captain-explicit，经队长逐项复核succeeded：协议204.0秒、补丁审查279.5秒。审查提出三项边界，队长确认修补并补回归；报告验收不是成员复验最终代码。未复制父聊天历史，无并行写成员。
+- 最终标准 `npm test` **306/306**，0 fail/cancelled/skipped，85964.450834ms，Node v24.21.0/macOS；日志 `/tmp/teams-stop-npm-final-20261014.log`。定向35/35、兼容打包/构建/更新24/24、末次更新11/11分别通过。原高并发两轮出现就绪/命令时限失败，日志保留；测试/覆盖率脚本固定并发4，未减少用例。
+- 本机 `0.162.0-alpha.17.2` 四种manifest真实协议对照确认portable入口丢失hooks摘要，最终本机包仅使用官方Codex兼容入口，源码portable定义保留。真实临时宿主缓存检查通过：三个hooks同时出现在plugin/read和hooks/list，MCP八工具/skill/双项目/无绑定门禁/退出通过，无推理、无正式配置变更、未代用户信任hooks。真实桌面点击停止仍未验收。
+- 最终候选 `dist/marketplace-v0.6.2-stop-verified-20261014`，28文件逐字节一致，digest `7c003054d72675adf22c64824af8f43da8b0add9be6ecdc4cbbcd7a61d37f2d3`，无推理doctor和只读线程检查通过；先前候选保留，不作为最终交付。更新会核对hook文件，并拒绝残留root manifest遮蔽。quick_validate缺PyYAML，未自动安装依赖；独立skill入口字段检查通过。
+- 实际交付 `/Users/anshunli1/asl/code/github/codex-agent-teams`，HEAD `25e15c7`，本轮新增修改未暂存，原暂存树保持 `1d66c24c8d6ca5dc6f6f7f78d1a0efa625442afb`，无跨worktree未同步、commit/push或正式update。下一步用户结束Team会话后显式更新、重启并信任全部hooks，再做实际按钮有界验收；真实写闭环/其他模型/Linux及远程CI/同条件效率仍单独处理。
+
+## 强行停止与成员退出核查（2026-10-14）
+
+用户明确预期：停止自己的任务时，所属成员子进程也应停止。详细入口/代码/证据补入 [委派排查报告](DELEGATION-AUDIT-2026-10-14.md) 末节。本轮仅核查并补文档，未修运行源码。
+
+- 原真实聊天轮interrupted后成员仍执行，最终awaiting_review，不满足用户停止联动预期。当前shutdown跟随MCP断连/信号，并没有宿主父轮停止绑定；应先核实官方宿主事件和任务归属，不能取消连接内其他任务来替代。
+- 临时实验使用当前TaskRuntime/serve/CodexBackend和受控hang协议成员，SIGINT、SIGTERM、stdin EOF均确认父进程及成员组退出；直接SIGKILL父MCP时，受控detached成员仍存活，证明现有代码无法保证父骤死后子进程退出。实验残留全部手动清理并确认退出，临时文件删除。没有强杀真实Codex、取消原聊天或运行模型；不宣称真实App Server每次父骤死都残留。
+- 现有清理/断连/验证/TERM升级/子孙管道定向受控回归 **6/6 pass**，0 fail/cancelled/skipped，1581.606625ms，Node v24.21.0。普通清理链路有效；聊天停止联动及父骤死保障仍未实现。下一步先实现有归属的停止联动，再按必要性设计父死亡监护，保持退出未确认禁止重派。
+- 交付主目录 `/Users/anshunli1/asl/code/github/codex-agent-teams`，HEAD `25e15c7`，本轮文档未暂存，既有暂存树保持 `1d66c24c8d6ca5dc6f6f7f78d1a0efa625442afb`，无跨worktree未同步、commit/push/update或正式配置修改。
+
+## 委派收益与队长等待排查（2026-10-14）
+
+用户指定“追踪企融险 AI 审核入参与落库调用链”聊天，要求解释模型/分工说明、单成员是否值得启动以及队长等待问题。完整证据、代码定位、决策案例和待办见 [DELEGATION-AUDIT-2026-10-14.md](DELEGATION-AUDIT-2026-10-14.md)。本轮由主 Agent 直接检查，未启动成员；只新增报告并更新状态，运行源码不变。
+
+- 聊天实际有两次不同 taskId 的 create/start，均 group/auto-gpt-6-1-sol/high，队长随后继续读取 AI 源码；主轮 interrupted、206642 ms，可见记录无 teams_wait 或最终验收。expert 是模型角色，并非成员数；启动前原句来自 skill 的分工/来源反馈要求。第一成员约主轮开始129秒后启动，第二成员晚59.212秒，整段包含规划、检索和往返，不能全算启动开销。
+- 源码 start 启动 execute promise 后立即返回，允许队长工作；委派收益只在 skill/PRINCIPLES 文字中，contract/start 不检查队长独立交付。running 回执统一建议等待、成员 commentary 不交接、只保留动作元数据，可能增加等待及重复探索；成员线程关闭插件/全部继承 MCP，能力匹配需事先说明。
+- UTC 09:23:31.665 的原项目只读 overview：实际 viewer/runtime **0.6.1**，owner存在，两成员 running，281.4/222.1秒，退出未确认；有宿主中断之后的命令完成事件。此前“正式缓存仍0.6.0”属于历史时点。宿主中断不等于MCP连接关闭，生命周期绑定尚未实现；未擅自取消其他聊天任务。该快照用量无完整主线程/价格/对照，不能证明费用或速度收益。
+- 下一步优先收紧 skill 的普通探索委派条件、区分成员阶段和队长行动、明确中断后的成员处置；再按需做有界发现摘要/显式工具能力白名单，最后同条件评测。单成员在队长并行工作或独立审查时有价值，唯一任务委派后只剩等待应直接处理；不新增强制人数或重复调度推理。
+- 本轮结束前原项目 compact 列表两任务均 awaiting_review，尚未验收成功；没有代原聊天 review(pass)。现有并发/短wait/取消容量和继承MCP关闭定向受控回归 **2/2 pass**，0 fail/cancelled/skipped，166.70425ms，Node v24.21.0，无真实模型推理；git diff --check、报告20个源码定位及STATUS链接检查通过。实际交付 `/Users/anshunli1/asl/code/github/codex-agent-teams`，HEAD `25e15c7`；本轮文档未暂存，保留既有暂存树 `1d66c24c8d6ca5dc6f6f7f78d1a0efa625442afb`，无跨 worktree 未同步，未改运行代码/正式配置/缓存、commit/push或运行新模型。
+
+## 0.6.1 一键更新命令（2026-10-14）
+
+用户要求在 package.json 提供 `npm run update`。已增加 `scripts/update.js`，复用现有 build 完成锁定依赖安装、唯一新目录打包和无推理 doctor；通过官方 Codex CLI 切换本地来源、重装插件，核对实际缓存版本、digest 和源码/技能文件。README 已补一键使用及参数；PRINCIPLES 记录只有显式执行 update 才安装，build 行为不变。
+
+- 更新前只读检查本项目 owner、未完成交接、成员/reviewer/验证退出记录；安装前再检查一次，不获取 owner、不恢复或改写任务。其他项目无法自动检查，需先结束 Team 会话。非本地同名来源、其他已安装插件或禁用安装拒绝覆盖；首次安装也支持。
+- 构建/检查失败不触碰来源和安装。切换/安装/缓存核对失败时尝试恢复原来源及插件版本/启用状态，恢复失败明确报告；新旧包保留，项目任务数据不删除，不自动重启、提交或推送。
+- 定向 update/build 12/12，3964.119667 ms；后补构建失败门禁，最终 `npm test` **295/295**，0 fail/cancelled/skipped，80091.945 ms，日志 `/tmp/teams-update-full-20261014.log`。覆盖首次安装、替换、带引号路径、source/install/cache 故障、回退失败、owner/退出门禁及构建失败。
+- 真实临时 Codex 用户目录验证：官方 CLI 30 次调用，首次安装 0.6.1、旧版替换 0.6.1、受控安装失败后恢复 0.6.1 来源/缓存均通过；未运行模型推理。回执 `/tmp/teams-update-real-smoke-20261014.json`。受控回归和真实 CLI 证据分开，不宣称运行了用户正式 update 或模型任务。
+- 实际交付 `/Users/anshunli1/asl/code/github/codex-agent-teams`，main，HEAD `25e15c7`；开工原暂存树 `463c9e44603670fe0b25b69cf83d4bf1905b2a4e` 保持，本轮新增修改未暂存，无跨 worktree 未同步，正式配置/缓存未更新。用户结束 Team 会话后可直接执行 `npm run update`，成功后重启 Codex 并开启新聊天。
+
+## 0.6.1 启动卡点修补与候选复验（2026-10-14）
+
+用户要求先修会反复失败的卡点。详见 [STARTUP-FIX-0.6.1-2026-10-14.md](STARTUP-FIX-0.6.1-2026-10-14.md) 和 [证据 JSON](STARTUP-FIX-0.6.1-2026-10-14-EVIDENCE.json)。源码与候选已验证，正式安装的自动审批要求明确用户授权，替换未执行，当前聊天旧 MCP 尚未更新。
+
+- 确认主目录 schema 已修、正式 0.6.0 缓存仍缺 required limitations，marketplace 仍指向 dist/marketplace-v0.6.0。主 Agent 直接处理，没有启动新项目审查成员，不重复已知错误请求。
+- 新增本地生成 schema/验收条件检查，提前到子进程/launch/turn 创建前；官方 codexErrorInfo=badRequest 单独归类并指引先修原因和核对缓存。未知错误保留原消息与通用分类，未自动重试/降级。package/lock/两 manifest 同步 0.6.1，含既有 S1/S2/S3。
+- 受限环境定向 92/93（POSIX launcher 等待退出超时）；沙箱外同项 1/1，最终 `npm test` **285/285**、0 fail/cancelled/skipped、81193.436333 ms。日志 `/tmp/teams-061-blockers-full-20261014.log`，环境边界保留，不把初次失败删除。
+- 候选 `dist/marketplace-v0.6.1-blockers-20261014`，24 文件逐字节一致，digest `ede7058f95b8f05dabc74587ffa273dd8de72c4095fd9eb1525884cec962ca80`。真实无推理 doctor、官方 SDK 8 工具和版本/digest、临时宿主缓存独立/skill发现/MCP ready/双项目路由均通过；没有修改正式配置。
+- 最终候选的一次真实 schema 兼容请求：krill/gpt-6.1-sol/high，8722 ms，返回含全部五个 required 字段的合法报告，cleanupConfirmed=true，host totalTokens=10890。是单次有界模型验证，不是新代码审查、写闭环或收益评测。
+- 正式替换被自动审批拒绝，依据 AGENTS.md:13 要求用户明确授权；安装脚本未执行，marketplace 与实际 0.6.0 缓存保持。下一步取得该授权后使用官方 CLI 替换、核对缓存 digest，并重建旧 MCP 会话；不绕过审批或盲目重试。
+- 实际交付主目录，HEAD `25e15c7`、原暂存树 `e6ee32da47d9abc4450c413a53d8e97d4fee657d` 保持；本轮新增改动未暂存，无跨 worktree 未同步，未 commit/push/发布。真实 writer/reviewer 写链路、其他模型、远程 CI 和桌面热重载均未追加验收。
+
+## 0.6.0 源码真实复验与续查（2026-10-14）
+
+接续上一轮记录，完整分工、13 次源码 MCP 回执、复现、局限及升级验收见 [SESSION-AUDIT-2026-10-14-FOLLOWUP.md](SESSION-AUDIT-2026-10-14-FOLLOWUP.md)，原报告与逐项验收见 [证据 JSON](SESSION-AUDIT-2026-10-14-FOLLOWUP-EVIDENCE.json)。旧章节“真实复验待执行”是此前时点，本轮仅补齐源码的真实只读复验，正式缓存仍待交接。
+
+- 已安装 MCP 为 0.6.0，缓存 contracts 仍缺 required limitations。未重复发起已知错误请求；用当前源码、官方 MCP SDK Client/InMemoryTransport 和真实 Codex App Server 建立临时连接，沿现有项目 owner/状态门禁运行一个只读成员，正式缓存/配置不变。
+- task `2d4b1c08-bcc1-4ce2-97a5-995dec144ec2`，attempt `9690fe91-50f4-4e50-b254-1e8149ef0b23`，krill/gpt-6.1-sol/high、captain-explicit，196426 ms，返回含 limitations 的报告、cleanupConfirmed=true。队长核对原两条 acceptance 并原生 ESM 独立复现后 review(pass)，终态 succeeded。证明该模型上的源码 S1 真实只读请求接受，不代表正式缓存升级或写闭环。
+- 新确认 S3/P2：独立审查期间 changed lastAction 仍指向写成员旧动作。`src/observation.js:35` 现在按 machineReview 选 reviewer journal，空 journal 不回退旧动作，并带 lastActionRole；覆盖开始/结束、空动作、完成报告、普通成员及 unchanged。成员审查修补前源码，最终补丁由队长回归验收。
+- 补齐协议测试缺口：fake App Server 递归检查每层 object 的 required/additionalProperties，正常返回 limitations=[]；新增顶层 limitations 和嵌套 evidence 缺 required 的拒绝回归。生产 S1/S2 修补已在开工暂存内容中，本轮未重复改动。
+- 定向 80/80，5675.813583 ms；全量 `npm test` 281/281，0 fail/cancelled/skipped，72469.240333 ms，Node v24.21.0/macOS。日志 `/tmp/teams-source-audit-targeted-20261014.log`、`/tmp/teams-source-audit-full-20261014.log`。模拟协议/真实本机命令与本次真实模型读任务分别记录。
+- 局限：历史 workspace 变化未进入游标摘要仅为条件反例，正常触发路径未确认；页面打开 queued、可见性未验收；8 条动作只存元数据；host 累计 494014 tokens 无主任务同口径/价格/对照，不宣称效率或费用收益。未跑真实 writer/reviewer 写闭环、其他模型、远程 CI 或长跑。临时连接、owner 与 panel 已退出。
+- 下一步：准备包含 S1/S2/S3 的 0.6.1 候选，授权缓存升级后核对实际 build/source，再做有界真实复验；错误分类、真实 reviewer 动作归属与写闭环按独立验收推进。
+- 实际交付 `/Users/anshunli1/asl/code/github/codex-agent-teams`，main，HEAD `25e15c7`；原暂存树 `e6ee32da47d9abc4450c413a53d8e97d4fee657d` 保持，本轮改动未暂存，无跨 worktree 未同步，未 commit/push/发布/更新正式缓存。
+
+## 0.6.0 实际使用排查与会话审查（2026-10-14）
+
+用户要求排查 bug/升级需求并详细记录本轮会话，以实际使用审查插件局限。完整合同、工具回执、时序、复现、局限及升级验收见 [SESSION-AUDIT-2026-10-14-0.6.0.md](SESSION-AUDIT-2026-10-14-0.6.0.md)。本轮对确认的 S1/S2 做了最小源码修补并完成离线回归，真实模型复验仍待执行。
+
+- S1/P1（已修补，待真实复验）：两个真实只读成员都被模型服务拒绝，错误为 output schema 的 required 缺少 limitations。`src/contracts.js:92` 现在仅在生成 schema 时补 required，旧报告解析仍接受缺字段；新增回归通过。当前 krill/gpt-6.1-sol/high 的修补前启动受阻，其他模型未逐一运行；writer/reviewer 同入口影响为静态判断。
+- S2/P2（已修补）：增量 status 的文字回执曾省略 JSON 已有的错误、下一执行者和具体下一步；`src/status.js:180-187` 现在在首次/changed 回执带有界字段，unchanged 保持精简。新增回归和全量测试通过，原状态/错误没有丢失。
+- 两任务 `b82265a0-8978-4b4d-8f38-b805520460ea` / `690f22eb-ea7b-40ae-98b9-74cd5cb3b348`，均 krill/gpt-6.1-sol/high、captain-explicit，耗时 1243/1553 ms，failed，cleanupConfirmed=true。没有报告、用量或独立审查结果；没有 review(pass)、自动重试或降级。队长负责复现和报告，不将成员失败算审查成功。
+- 当前已安装 MCP viewer/runtime 均为 **0.6.0**，来自 `/Users/anshunli1/.codex/plugins/cache/codex-agent-teams-local/codex-agent-teams/0.6.0/`。下方“仍为 0.5.2”属于历史时点；本轮未更新缓存。面板成功返回，宿主打开请求为 queued，未确认页面已展示。
+- 修补前定向 69/69；修补后定向 `node --test tests/core.test.js tests/backend.test.js tests/actions.test.js tests/observation.test.js tests/mcp.test.js` 为 **83/83**，日志 `/tmp/teams-session-fix-targeted-20261014.log`；全量 `npm test` 为 **278/278**，0 fail/cancelled/skipped，64781.7765 ms，日志 `/tmp/teams-session-fix-full-20261014.log`。新增纯内存和 schema 回归证明源码行为，不能替代修补后实际模型接受证据。
+- 局限：只有 failed 请求证据，真实模型报告/写闭环、其他模型、UI可见性、费用/效率对照和远程 CI 均未验收。工作区/集成链路做了静态检查，未确认额外新 bug，不把现有边界重复列为缺陷。
+- 下一步：按建议 0.6.1 继续做一次有界真实只读复验；正式缓存升级需单独授权。错误分类按官方结构化字段细化，真实写闭环、其他模型、UI 可见性和效率评测仍未做。
+- 实际交付 `/Users/anshunli1/asl/code/github/codex-agent-teams`，main，HEAD `25e15c7`；本轮开始时暂存树 `5883ba02ce16b6e17f8078aee4e0bdb7664fa920` 保留，本轮源码、测试和文档改动未暂存，无跨 worktree 未同步内容，未 commit/push/发布。
+
+## 0.6.0 三批工程升级完成（2026-10-14）
+
+用户授权按方案升级，直接在主目录 `/Users/anshunli1/asl/code/github/codex-agent-teams`（main，HEAD `25e15c7`）完成 A/B/C，package/lock/两 manifest 统一 0.6.0。完整要求到证据映射见 [UPGRADE-0.6.0-RESULT.md](UPGRADE-0.6.0-RESULT.md)。下方“尚未实施”是本轮开工前历史。
+
+- A：修复 evidence 后 deadline、双向文件/目录转换、compact/overview owner 一致性及 legacy review model/effort 约束。真实临时 Git/worktree 与完整 runtime 验证转换独立审查/队长复核/集成/源复验，用户 staging、HEAD/index 保持。
+- B：可选 limitations、矛盾报告诊断，旧报告读取/旧 blocked 保持；skill/prompt 明确证据格式、验证职责及共享 STATUS 由队长维护，完成报告可带局限待复核，未放松写任务门禁。
+- C：两个无新依赖模块 actions.js/observation.js，官方 lifecycle 的有限元数据、512 字节/项、100 项/64 KiB；敏感载荷省略、早到通知绑定 turn、迟到与截断保护。HMAC 连接内游标绑定项目/任务/attempt，旧 status/wait、CLI 和面板兼容；完整无变化回执实测 716 字节。
+- 清理：受控 TERM 失败继续 KILL并保留错误，实际临时 child 的 PID 持久化和信号失败组合保持退出未知、拒绝同轮重派。独立 B/C 审查另发现早到超限空条目，队长补失败复现、最小修补与回归，不将候选初次通过当最终结果。
+- 最终 `npm run test:coverage` 276/276，0 fail/cancelled/skipped，60767.42 ms，行 97.60%/分支 90.63%/函数 95.43%；最终定向86/86。日志 `/tmp/teams-upgrade-0.6.0-final-coverage.log`、`/tmp/teams-upgrade-final-targeted.log`。官方 SDK/受控协议和真实本机命令分别记录，不当作实际模型写效果。
+- Team 两次限定只读审查 krill/gpt-6.1-sol/high，133.5 秒与215.3 秒，均经队长原标准逐条复核后 succeeded；后一份报告正确找出已修边界，不声称成员复验修补后源码。真实临时宿主 smoke 无推理通过，正式配置未动。
+- 最终候选 `dist/marketplace-v0.6.0-reliability-efficiency-final-20261014/`，源码/skill逐字节一致；真实doctor只读线程、SDK八工具、新cursor/wait、716字节回执、panel listener退出均通过，回执 `/tmp/teams-upgrade-0.6.0-final-package.json`。当前正式缓存仍0.5.2，未自动安装。
+- 交付与边界：主目录源码全部到位，原暂存树 `83436b9a88ed75da259384fc14d2c31b1fa991de` 保持，本轮改动未暂存；无跨worktree未同步，未commit/push/发布/升级依赖。真实同条件效率及30%目标、正式缓存重装、新真实writer/reviewer写任务和远程CI按方案单独处理，尚未执行；评测记录模板已补，不宣称普遍提效。同项目并行写仍后置。
+
+## 可靠性与交付效率升级方案（2026-10-14，尚未实施）
+
+用户要求先明确达到的效果、做法与升级方向。新增 [UPGRADE-RELIABILITY-EFFICIENCY-2026-10-14.md](UPGRADE-RELIABILITY-EFFICIENCY-2026-10-14.md)，根 UPGRADE-PLAN.md 增加最新入口，保留历史。
+
+- 五项目标：四项正确性收口、成员证据可直接复核、blocker/limitation 语义一致、有界过程记录与精简等待回执，以及同等质量下的总交付提效。工程行为与真实模型收益分开验收，不将并行时间或缓存比例当成总交付加速。
+- 三批独立交付：A 先修 A2/A4，再收口 A1/A3；B 明确验证职责、固定 finding 证据格式、增加可选 limitations 并检查报告一致性；C 采集有界官方工具/命令元数据，在既有 status/wait 增加可选游标与变化摘要。第一版保留现有 finding 格式和旧记录，独立审查、退出确认与写集成门禁保持。
+- 效率目标和边界：无变化增量响应目标 ≤1 KiB；可比任务交付尾部中位数缩短至少 30%为待验证目标。后续真实单 Agent/原生子 Agent/插件对照需独立明确运行预算，当前未执行，不承诺普遍提速。TERM/未知 PID 组合先注入验证，同项目并行写后置。
+- 本轮主 Agent 直接制定方案，无新成员、运行代码修改或模型评测；只改计划/状态文档并检查格式与入口。实际交付主目录 `/Users/anshunli1/asl/code/github/codex-agent-teams`，保留暂存树 `83436b9a88ed75da259384fc14d2c31b1fa991de`，本轮文档未暂存。下一步实施批次 A，完成后按风险验证并记录版本/候选包，正式安装单独处理。
+
+## 上一轮 Team 审查效率与可靠性复盘（2026-10-14）
+
+用户要求详细分析上一轮主子任务，完整证据和建议见 [TEAM-RETROSPECTIVE-2026-10-14.md](TEAM-RETROSPECTIVE-2026-10-14.md)。直接复盘宿主主线程、两个已有任务记录及相关源码，本轮未启动新成员或模型对照长跑。
+
+- 主任务宿主时长 780115 ms，约 13 分钟；派发前约 87.6 秒，成员并行窗口约 400.3 秒，成员全部结束到交付约 292.1 秒。成员结束到 captain pass 约 155.7 秒，随后到最终答复约 136.4 秒；不能把必要复核全部计作浪费，也不能把并行重叠当成单 Agent 加速比。
+- 成员最先提出四项已确认问题中的三项，均由队长独立复现，说明并行探索有价值。工作区成员 criteria 全 true，却把只读验证局限和不能写 STATUS 列为 blockers；运行时如实标 blocked，但合同/终态语义有改进空间。succeeded 属于 captain-attested，不代表只读发现由机器自动证明。
+- 两成员 host 累计 1,541,089 tokens，其中输入 1,520,513、缓存输入 1,336,192（输入子集）、输出 20,576；非缓存输入 184,321。缺少主任务同口径用量、价格及对照组，不能宣称费用节省或速度胜过单 Agent/原生子 Agent。
+- 宿主可读主线程，但两个 ephemeral 成员线程均无可读匹配；插件当前未持久化完整通用命令事件。本轮核实最终结论及阶段/用量，没有声称完整重放子任务命令。真实写入、恢复、重试、取消等能力不由这次只读审查代验。
+- 结论与下一步：保留合同/状态/验收门禁，优先缩小子任务并交付可直接核查的复现证据，区分 blocker 与 limitation，压缩重复上下文及观察回执；充分已有上下文时先主 Agent 审查，再按独立盲区定向派一个成员。同条件对照评测未执行，不将“真实并行、有价值”直接等同于“已证明总交付更快”。
+- 本轮只改文档，实际目录 `/Users/anshunli1/asl/code/github/codex-agent-teams`；保留复盘开始时已更新的暂存树 `83436b9a88ed75da259384fc14d2c31b1fa991de`，本轮新增内容未暂存。未改运行代码、重跑业务测试、commit/push 或更新正式缓存。
+
+## 0.5.2 当前工作树审查（2026-10-14）
+
+本轮用户要求分析 bug 与升级方向，依据 PRINCIPLES.md 审查主目录 `/Users/anshunli1/asl/code/github/codex-agent-teams`（main，HEAD `25e15c7`）的当前文件，包括已有暂存改动。完整触发条件、行号、复现与验收见 [PROJECT-AUDIT-2026-10-14.md](PROJECT-AUDIT-2026-10-14.md)。本轮仅补文档，业务源码未修改，以下问题尚未修复。
+
+- 确认四项 P2，未确认 P0/P1：A1 单任务 MCP status 未应用 owner 缺失的耗时/指引修正；A2 同步证据检查超时后仍调用 reviewer 或进入 awaiting_review；A3 legacy qualified 配置可让 review 选择非 expert model/effort；A4 文件与目录双向转换使 dirty snapshot 准备、审计及 discard 清理失败。旧 F1/F2/F3 的已完成修复不重复算待办，A1 是遗漏的单任务入口。
+- 队长本轮 `npm test` 247/247，通过，0 fail/cancelled/skipped，75164.52 ms，Node v24.21.0/macOS；日志 `/tmp/codex-teams-audit-20261014-tests.log`。独立复现：A1 官方 MCP SDK 双入口与固定时钟对照；A2 当前 runtime 配受控证据检查推进时钟；A3 内存 runtime 与合法 legacy config；A4 两个真实临时 Git/worktree 验证六个失败入口，源 HEAD/index 保持。命令均 exit 0，临时 fixture 已清理。
+- Agent Teams MCP 两个只读成员均 krill/gpt-6.1-sol/high，队长本次显式派发。状态机报告耗时 400.3 秒，逐条核对原三条 acceptance 并独立复现后 review(pass)，终态 succeeded。工作区报告耗时 391.6 秒，因只读合同未完成真实 Git fixture，终态 blocked；保留该状态，由队长补真实复现确认 A4。没有把成员自述当验证或把审查通过当作代码修复。
+- 实际已安装 0.5.2 MCP 本轮完成成员启动与 panel 返回；右侧打开请求由宿主返回 queued。旧章节关于旧缓存尚未生效的描述为历史状态。本轮未重装缓存、修改用户配置或做真实 writer/reviewer 写任务。
+- 未解决边界：TERM 发送异常清理、未知 launch/PID 落盘失败组合仍是未验证加固建议；跨平台/远程 CI、真实模型写闭环与同条件效率对照未运行。下一步先小补丁修 A2/A4，再收口 A1/A3 和针对性回归，之后做进程故障注入及小规模效率评测，再决定并行写。
+- 实际交付：本报告与本节直接写入主目录，无跨 worktree 未同步内容。既有暂存树 `a5d5e3560f24fb9f81acae29ec49c25340f9638b` 保持；本轮文档未暂存，未 commit/push、升级依赖或重装插件。
+
+## 0.5.2 实时状态面板与等待反馈（2026-10-14）
+
+用户指出插件成员启动后无法感知进度，只能干等。直接在主目录 `/Users/anshunli1/asl/code/github/codex-agent-teams`（main，HEAD `25e15c7`）补齐连接内实时观察，版本与两个 manifest/lock 同步为 0.5.2；保留此前 F1/F2/F3 修复及用户暂存现场。
+
+- `teams_status(panel:true)` 返回本项目实时状态页 URL，按项目复用启动 Promise，首次打开无需 task owner 或状态数据库。新增一个 status-panel.js，使用 Node 内置 HTTP，只监听 127.0.0.1 随机端口/路径，仅 GET，核对 Host/Origin，无新依赖、无任务写入或调度。
+- 页面每 2 秒读取真实状态，显示任务、model/effort、阶段、耗时、最近记录、下一步与证据，保留搜索/筛选/展开状态。断连或读取错误显示旧记录提示，不伪装成实时推进。原离线 HTML 导出保持无网络连接。
+- team 约定首次启动后请求面板，在宿主支持时打开右侧浏览器面板，否则提供链接；不自动启动外部浏览器。前台 wait 显式 10 秒，每阶段变化及时转述，至少每 30 秒给一次观察。旧 schema 缺少 panel 时说明缓存待升级，继续聊天反馈。页面不能接入原生子 Agent UI，不提供模型思维流或后台队长唤醒。
+- 定向 `node --test tests/status-panel.test.js tests/status.test.js tests/mcp-routing.test.js`：28/28，约 1.9 秒；最终 `npm test`：247/247，0 fail/cancelled/skipped，约 60.0 秒，Node v24.21.0/macOS。日志 `/tmp/codex-teams-live-panel-targeted-20261014.log`、`/tmp/codex-teams-live-panel-full-20261014.log`。
+- 独立只读复核以官方 Client/InMemoryTransport 实测 12 个并发请求、双项目隔离、主动 close、客户端断连、启动期间关闭、HTTP 门禁与恶意文本转义，无可复现阻塞。队长复核实现并补真实 SDK 路由测试；没有将此审查当作真实模型写任务。
+- 真实 Codex 内置浏览器验收：受控示例从执行/命令验证变为等待队长复核，快照时间自动更新，搜索/筛选/详情展开刷新后保留；关闭临时服务后明确标“连接中断或状态读取失败，当前为上次记录”。验收进程、监听、状态 fixture 和临时页面均已清理。截图在本聊天 visualization 目录的 `agent-teams-panel.jpg` 与 `agent-teams-panel-card.jpg`，受控数据明确标注。
+- 本机候选包：`dist/marketplace-v0.5.2-live-status-20261014/`。以真实 model/list 的当前配置 krill/gpt-6.1-sol/high 准备通用包，未保存真人偏好；包内源码/skill 逐字节一致。包侧 doctor --check-thread 通过（真实模型目录及只读权限，无推理；检测已有插件不代表已更新正式缓存），日志 `/tmp/codex-teams-live-panel-doctor-20261014.log`。官方 SDK 连接最终包，八工具及 panel schema、页面 v0.5.2、无 owner、MCP 子进程退出与 HTTP listener 退出均通过。
+- 交付与边界：全部源码直接在主目录，无跨 worktree 未同步内容；用户已有两份文档暂存版本未变，本轮修改未暂存。未 commit/push、安装或修改正式用户插件配置。聊天回执/自动打开仍依赖前台 skill 和宿主 UI 工具，当前旧缓存不会因源码修改生效；下一步需用户授权升级该候选包并重开会话，随后验收真实成员任务的进度。远程 CI、真实模型任务及质量/效率对照本轮未运行。
+
+## 主目录快速修复 F1/F2/F3（2026-10-14）
+
+根据当前已暂存的缺陷报告，直接在 `/Users/anshunli1/asl/code/github/codex-agent-teams`（main，HEAD `25e15c7`）完成三项最小修复，源码版本仍为 0.5.1，无新增依赖或接口变化。
+
+- F1：执行让出事件循环后、准备工作区前检查取消与 deadline；同轮取消或等待期间超时不创建工作区、不调用成员，保留取消原因。准备结束后的原门禁保留。
+- F2：owner 缺失或已退出时，执行中任务的历史 attempt 与顶层耗时统一依据真实 endedAt；缺失结束时间保持 null，已记录结束时间保持固定耗时，活 owner 正常计时。不写回状态。
+- F3：PATH 未设置时预检使用 Node Unix spawn 的默认 `/usr/bin:/bin`；显式空 PATH 仍搜索 cwd。真实 runVerification 覆盖未设置、空值、相对项、相对/绝对 executable 与缺失程序，共七种组合，启动结果一致且退出均已确认。
+- 验证：Node v24.21.0/macOS，定向 `node --test tests/attempt.test.js tests/status.test.js tests/preflight.test.js` 48/48，约 27.5 秒；最终 `npm test` 243/243，0 fail/cancelled/skipped，约 65.7 秒。日志分别为 `/tmp/codex-teams-quick-fix-targeted-20261014.log`、`/tmp/codex-teams-quick-fix-full-20261014.log`。均为离线回归、受控成员及真实本机命令，不是新一轮真实模型验证。
+- 交付：保留用户已有两份文档的暂存版本；本轮源码、测试及文档补充均未暂存。无需跨 worktree 同步，没有提交、推送或更新正式插件缓存。
+- 边界与下一步：同步 Git 准备开始后仍不能即时中断；TERM 清理加固建议本轮未处理，跨平台 CI、真实模型任务与效率对照未运行。下一步按独立授权升级缓存或开展同条件效率评测。
+
+## 审查结论同步到主目录（2026-10-14）
+
+用户要求先将审查结论同步到业务主目录，暂不再使用聊天 worktree 作为开发交付目录。本轮实际操作目录为 `/Users/anshunli1/asl/code/github/codex-agent-teams`，main，HEAD `25e15c7`；同步前工作树和暂存区均干净。后续修改默认直接在此主目录进行，除非用户重新指定。
+
+- 新增 [BUG-REVIEW-2026-10-14.md](BUG-REVIEW-2026-10-14.md)，保留原 0.5.0 审查证据，并增加当前主目录 0.5.1 的适用性复核。保留本文件既有历史，不以旧 worktree 的 STATUS.md 覆盖。
+- 当前主目录已支持队长显式派发、可选真人模型确认及逐任务 model/effort；旧报告中的能力差异已更新为主目录已解决事项。
+- 在主目录重新运行三项精简复现，均仍可触发：F1 取消后准备调用数为 1，准备错误覆盖取消原因；F2 owner 缺失时历史耗时从 600000 增至 1200000 ms，顶层均 null；F3 PATH 缺失时预检拒绝 git，而真实 spawn 成功、exitCode=0。另验证当前 taskSchema 接受 model/effort。所有命令退出码 0。
+- 本轮只同步结论文档及明确主目录约定，尚未修复三项 P2。没有重跑全量测试；原 worktree 的 234/234 不作为主目录的新全量结果。既有主目录 0.5.1 的 239/239 历史记录保留在下文。
+- 下一步：直接在主目录最小修复 F1/F2/F3 并补针对性回归；随后做真实任务协调开销评测，再决定有限并行写。未暂存、提交、推送、重装插件或删除 worktree。
+
 ## 0.5.1 交付目录纠正（2026-10-14）
 
 用户再次指出主目录看不到改动。核查发现上一轮 26 文件仅修改并暂存在聊天 cwd `/Users/anshunli1/.codex/worktrees/fc32/codex-agent-teams`，未同步到用户主目录 `/Users/anshunli1/asl/code/github/codex-agent-teams`。Git worktree 拥有各自文件与 index，不会自动同步。宿主 cwd 及 team skill 的默认目标解释了执行位置，但没有规则要求忽略用户主目录；本文件此前明确的主目录约定未落实，属于交付疏漏。

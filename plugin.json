@@ -1,6 +1,11 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "codex-agent-teams",
-  "version": "0.5.1",
-  "description": "Quality-first task delegation with isolated edits, verification, independent expert review and explicit integration"
+  "version": "0.7.0",
+  "description": "Quality-first task delegation with isolated edits, verification, independent expert review and explicit integration",
+  "extensions": {
+    "com.openai": {
+      "hooks": "./hooks/hooks.json"
+    }
+  }
 }

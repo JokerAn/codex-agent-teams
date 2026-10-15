@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import { AppServerClient, CodexBackend, memberOverrides } from '../src/app-server.js';
 import { processAlive } from '../src/store.js';
 import { setup, contract } from './helpers.js';
+import { outputSchemaFor } from '../src/contracts.js';
 
 const fixture = fileURLToPath(new URL('./fixtures/fake-app-server.js', import.meta.url));
 const backend = mode => new CodexBackend({ binary: process.execPath, args: [fixture, mode], requestTimeoutMs: 1000 });
@@ -16,9 +17,128 @@ test('protocol race, isolation overrides, structured output, usage and cleanup',
   let pid;
   const result = await backend('normal').run({ ...request(new AbortController().signal), onProgress: p => { pid ??= p.childPid; } });
   assert.equal(result.result.criteria[0].criterion, 'prove it');
+  assert.deepEqual(result.result.limitations, []);
   assert.equal(result.usage.total.totalTokens, 15);
   assert.equal(result.actualModel, 'test-model');
   assert.equal(processAlive(pid), false);
+});
+
+test('protocol fixture rejects missing strict required fields at top level and inside criteria', async t => {
+  const client = new AppServerClient({ binary: process.execPath, args: [fixture, 'normal'], requestTimeoutMs: 1000 });
+  t.after(() => client.stop());
+  await client.initialize();
+  await client.request('thread/start', { cwd: process.cwd(), model: 'test-model', sandbox: 'read-only', approvalPolicy: 'never',
+    config: memberOverrides({ mcp_servers: { 'inherited-team': {} } }) });
+  for (const nested of [false, true]) {
+    const schema = outputSchemaFor(['prove it']);
+    const object = nested ? schema.properties.criteria.items : schema;
+    object.required = object.required.filter(key => key !== (nested ? 'evidence' : 'limitations'));
+    await assert.rejects(client.request('turn/start', { threadId: 'thread-test', input: [{ type: 'text', text: request().prompt }],
+      outputSchema: schema }), /Strict output schema requires every object property/);
+  }
+});
+
+test('invalid acceptance refuses schema generation before any member process launch', async () => {
+  const updates = [];
+  await assert.rejects(backend('normal').run({ ...request(new AbortController().signal), acceptance: [],
+    onProgress: update => updates.push(update) }), error => error.hostCode === 'output_schema_invalid');
+  assert.deepEqual(updates, [], 'no launch, child, thread or turn is created');
+});
+
+for (const [mode, expected] of [['bad-request', 'member_request_rejected'], ['unclassified-turn-error', 'member_turn_incomplete']]) {
+  test(`${mode} preserves the original error and classifies by official code, with exit confirmed`, async t => {
+    const { runtime } = setup(t, backend(mode));
+    const task = runtime.create(contract); runtime.start(task.id);
+    const failed = await runtime.wait(task.id);
+    assert.equal(failed.status, 'failed');
+    assert.equal(failed.failure.code, expected);
+    assert.match(failed.error, /Invalid schema: controlled rejection/);
+    assert.equal(failed.attempts[0].memberLaunch, 'exited');
+    assert.equal(failed.attempts[0].cleanupConfirmed, true);
+    if (mode === 'bad-request') assert.match(failed.failure.nextAction, /修复原因/);
+  });
+}
+
+test('backend records bounded official action metadata into the owning attempt without command payloads', async t => {
+  const { runtime } = setup(t, backend('actions'));
+  const task = runtime.create(contract); runtime.start(task.id);
+  const result = await runtime.wait(task.id);
+  assert.equal(result.status, 'awaiting_review', result.error);
+  const actions = result.attempts[0].actions;
+  assert.equal(actions.items.length, 2);
+  assert.equal(actions.items[0].exitCode, 7);
+  assert.equal(actions.items[0].status, 'failed');
+  assert.equal(actions.items[1].completed, false);
+  assert.equal(actions.items[1].endedAt, null);
+  assert.equal(actions.items[1].tool, 'fixture-tool');
+  assert.ok(!JSON.stringify(actions).includes('SECRET'));
+  const old = result.attempts[0];
+  runtime.review({ taskId: task.id, attemptId: old.id, verdict: 'reject', evidence: task.acceptance.map(criterion => ({ criterion, evidence: 'fixture retry' })) });
+  runtime.start(task.id, { retry: true, reason: 'independent attempt' }); await runtime.wait(task.id);
+  assert.equal(runtime.status(task.id).attempts[0].actions.items.length, 2);
+  assert.equal(runtime.status(task.id).attempts[1].actions.items.length, 2);
+});
+
+test('oversized pre-reply action records truncation without poisoning turn execution or losing per-item limits', async t => {
+  const { runtime } = setup(t, backend('action-overflow'));
+  const task = runtime.create(contract); runtime.start(task.id);
+  const result = await runtime.wait(task.id);
+  assert.equal(result.status, 'awaiting_review', result.error);
+  const actions = result.attempts[0].actions;
+  assert.equal(actions.truncated, true); assert.equal(actions.items.length, 2);
+  assert.equal(actions.items[1].truncated, true);
+  for (const action of actions.items) assert.ok(Buffer.byteLength(JSON.stringify(action)) <= 512);
+});
+
+test('TERM send failure still escalates to KILL and confirms exit, preserving cleanup error', async t => {
+  const client = new AppServerClient({ binary: process.execPath, args: [fixture, 'hang'] });
+  const kill = process.kill; let killed = false;
+  t.after(async () => { if (processAlive(client.child.pid, true)) kill(-client.child.pid, 'SIGKILL'); await client.closed; });
+  await client.initialize();
+  t.mock.method(process, 'kill', (pid, signal) => {
+    if (pid === -client.child.pid && signal === 'SIGTERM') throw Object.assign(new Error('injected TERM failure'), { code: 'EACCES' });
+    if (pid === -client.child.pid && signal === 'SIGKILL') killed = true;
+    return kill(pid, signal);
+  });
+  await assert.rejects(client.stop(), /injected TERM failure/);
+  assert.equal(killed, true); assert.equal(processAlive(client.child.pid, true), false);
+});
+
+test('launch with no persisted PID and no exit receipt stays unconfirmed within the same runtime', async t => {
+  const { runtime } = setup(t, { run: async request => {
+    request.onProgress({ memberLaunch: 'starting' });
+    throw new Error('Injected PID persistence and cleanup failure');
+  } });
+  const task = runtime.create(contract); runtime.start(task.id);
+  const result = await runtime.wait(task.id);
+  assert.equal(result.status, 'failed'); assert.equal(result.attempts[0].cleanupConfirmed, false);
+  assert.throws(() => runtime.start(task.id, { retry: true, reason: 'retry' }), /exit is unconfirmed/);
+  assert.throws(() => runtime.prepareWorkspace(), /exit is unconfirmed/);
+});
+
+test('actual child plus injected PID persistence and signal failures cannot be redispatched as exited', async t => {
+  const { runtime, store } = setup(t, backend('hang'));
+  const save = store.save.bind(store), kill = process.kill;
+  let pid;
+  t.after(() => { if (processAlive(pid, true)) kill(-pid, 'SIGKILL'); });
+  t.mock.method(store, 'save', (task, event, ...rest) => {
+    if (event === 'execution-metadata' && task.attempts.at(-1)?.childPid) {
+      pid = task.attempts.at(-1).childPid;
+      throw Error('injected PID persistence failure');
+    }
+    return save(task, event, ...rest);
+  });
+  t.mock.method(process, 'kill', (target, signal) => {
+    if (target === -pid && ['SIGTERM', 'SIGKILL'].includes(signal)) throw Object.assign(Error('injected signal failure'), { code: 'EACCES' });
+    return kill(target, signal);
+  });
+  const task = runtime.create(contract); runtime.start(task.id);
+  const result = await runtime.wait(task.id);
+  assert.equal(result.attempts[0].childPid, undefined);
+  assert.equal(result.attempts[0].cleanupConfirmed, false);
+  assert.equal(processAlive(pid, true), true, 'controlled child actually remains live until test cleanup');
+  assert.match(result.error, /PID persistence failure/); assert.match(result.error, /exit is unconfirmed/);
+  assert.throws(() => runtime.start(task.id, { retry: true, reason: 'retry' }), /exit is unconfirmed/);
 });
 
 test('diagnostic handshake enumerates models without starting inference', async () => {

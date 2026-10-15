@@ -24,6 +24,8 @@ const hostFailures = {
   model_unavailable: ['member_model_unavailable', '配置的模型在当前目录不可见。重新运行 teams_models 确认可用模型后重试。'],
   effort_unsupported: ['member_effort_unsupported', '所选推理强度不被该模型支持。重新确认模型与强度组合后重试。'],
   skill_or_mcp_missing: ['host_setup_incomplete', '宿主未发现本插件的技能或 MCP server。按 README 重装/重启宿主后重试；不要降级为无技能执行。'],
+  output_schema_invalid: ['member_output_schema_invalid', '输出 schema 本地检查失败，尚未启动成员。修复合同或生成 schema，核对宿主实际插件版本与缓存；不要直接重试同一请求。'],
+  request_rejected: ['member_request_rejected', '宿主明确拒绝了请求。检查原始错误、输出 schema 和模型配置，核对实际插件版本与缓存；修复原因后再显式重试。'],
   turn_incomplete: ['member_turn_incomplete', '成员回合未正常完成（可能被中断或模型报错）。查看原始错误与退出记录，确认证据后再显式重试。'],
   no_structured_result: ['member_no_result', '成员完成但没有返回结构化结果。检查成员提示与输出约束；不要接受缺失的结果。'],
 };
@@ -47,8 +49,9 @@ export function executionFailure(error, phase) {
 /** Resolve only; never execute repository code, install dependencies or run baseline tests. */
 export function inspectExecution(plan, cwd) {
   const command = plan.verification.command;
+  // Node's Unix spawn uses this default only when PATH is absent; empty PATH searches cwd.
   const candidates = isAbsolute(command) || command.includes('/') ? [resolve(cwd, command)]
-    : (process.env.PATH ?? '').split(delimiter).map(dir => resolve(cwd, dir, command));
+    : (process.env.PATH ?? '/usr/bin:/bin').split(delimiter).map(dir => resolve(cwd, dir, command));
   let executable;
   for (const path of candidates) {
     try { if (statSync(path).isFile()) { accessSync(path, constants.X_OK); executable = realpathSync(path); break; } }

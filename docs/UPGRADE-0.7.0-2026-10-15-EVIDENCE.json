@@ -1,0 +1,248 @@
+{
+  "version": "0.7.0",
+  "capturedAt": "2026-10-15T03:27:21.935Z",
+  "workspace": "/Users/anshunli1/asl/code/github/codex-agent-teams",
+  "baseHead": "25e15c7af5482c6533b6fbb37b7833846988f34f",
+  "preservedIndexTree": "c6e7b068a73edc1313595a53c7872413f0bf172f",
+  "verification": {
+    "targeted": {
+      "passed": 90,
+      "failed": 0,
+      "durationMs": 15531.48475
+    },
+    "full": {
+      "passed": 334,
+      "failed": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "durationMs": 93357.435333
+    },
+    "environment": {
+      "node": "v24.21.0",
+      "platform": "darwin",
+      "arch": "arm64"
+    },
+    "logs": [
+      {
+        "path": "/tmp/teams-upgrade-070-targeted-final-20261015.log",
+        "sha256": "57eb1cd706e5bb162977bdae64c6179fa1de854cef06a1282ba175b0f34f4313"
+      },
+      {
+        "path": "/tmp/teams-upgrade-070-full-final-20261015.log",
+        "sha256": "05b0fe639812e5e12757f501591e01e5a68ec91d5b8ee48b9da84a96160d3a40"
+      },
+      {
+        "path": "/tmp/teams-upgrade-070-review-counterexamples-20261015.log",
+        "sha256": "71fff13ddaf4ccea9573b06575963225d085c3a81dc38078d263b7e64f5229c9"
+      }
+    ]
+  },
+  "candidate": {
+    "marketplaceRoot": "/Users/anshunli1/asl/code/github/codex-agent-teams/dist/marketplace-v0.7.0-verified-20261015",
+    "marketplacePath": "/Users/anshunli1/asl/code/github/codex-agent-teams/dist/marketplace-v0.7.0-verified-20261015/.agents/plugins/marketplace.json",
+    "pluginRoot": "/Users/anshunli1/asl/code/github/codex-agent-teams/dist/marketplace-v0.7.0-verified-20261015/plugins/codex-agent-teams",
+    "pluginName": "codex-agent-teams",
+    "configPath": "/Users/anshunli1/asl/code/github/codex-agent-teams/dist/marketplace-v0.7.0-verified-20261015/plugins/codex-agent-teams/teams.config.json",
+    "manifestFormat": "codex-compatibility",
+    "runtimeDependencies": [
+      "node_modules/@modelcontextprotocol/core",
+      "node_modules/@modelcontextprotocol/server",
+      "node_modules/zod"
+    ],
+    "installed": false,
+    "inferenceStarted": false,
+    "build": {
+      "version": "0.7.0",
+      "createdAt": "2026-10-15T03:22:10.221Z",
+      "sourceDigest": "912d87efb306ed4dba07f9dc59b9e9db35a8385637b59989b44bddeaa7d9bc03"
+    }
+  },
+  "sdk": {
+    "version": "0.7.0",
+    "sourceFilesEqual": 24,
+    "definitionsEqual": true,
+    "tools": 8,
+    "dispatchWorkspaceRequired": true,
+    "summaryBytes": 1019,
+    "catalogBytes": 3750,
+    "selectedPanel": "1 / project 13",
+    "panelExited": true,
+    "inferenceStarted": false
+  },
+  "temporaryCliUpdate": {
+    "version": "0.7.0",
+    "firstInstall": true,
+    "replacement": true,
+    "controlledFailureRecoveredAndIdentityChecked": true,
+    "cliCalls": 25,
+    "temporaryHome": true,
+    "userConfigChanged": false,
+    "inferenceStarted": false
+  },
+  "independentReview": {
+    "taskId": "492608dc-5241-40b9-bf2c-e170482424c1",
+    "attemptId": "5a0aaedd-76ee-4650-825c-1f6244a2639c",
+    "model": "krill/gpt-6.1-sol",
+    "effort": "high",
+    "elapsedMs": 312552,
+    "reportAccepted": true,
+    "reportedFindings": [
+      "launcher owner execute-bit loss",
+      "show-more limit captured across refresh"
+    ],
+    "finalFixesVerifiedBy": "captain",
+    "memberExitConfirmed": true,
+    "usage": {
+      "totalTokens": 819451,
+      "inputTokens": 810640,
+      "cachedInputTokens": 720640,
+      "outputTokens": 8811
+    }
+  },
+  "liveWrite": {
+    "passed": true,
+    "model": "krill/gpt-6.1-sol",
+    "elapsedMs": 66893,
+    "memberUsage": {
+      "total": {
+        "totalTokens": 45839,
+        "inputTokens": 45323,
+        "cachedInputTokens": 33152,
+        "cacheWriteInputTokens": 0,
+        "outputTokens": 516,
+        "reasoningOutputTokens": 39
+      },
+      "last": {
+        "totalTokens": 11929,
+        "inputTokens": 11669,
+        "cachedInputTokens": 11264,
+        "cacheWriteInputTokens": 0,
+        "outputTokens": 260,
+        "reasoningOutputTokens": 39
+      },
+      "modelContextWindow": 950000
+    },
+    "reviewUsage": {
+      "total": {
+        "totalTokens": 45613,
+        "inputTokens": 44896,
+        "cachedInputTokens": 32640,
+        "cacheWriteInputTokens": 0,
+        "outputTokens": 717,
+        "reasoningOutputTokens": 55
+      },
+      "last": {
+        "totalTokens": 12088,
+        "inputTokens": 11734,
+        "cachedInputTokens": 11136,
+        "cacheWriteInputTokens": 0,
+        "outputTokens": 354,
+        "reasoningOutputTokens": 55
+      },
+      "modelContextWindow": 950000
+    },
+    "sourceIndexPreserved": true,
+    "existingUserChangesPreserved": true,
+    "integratedWithoutCommit": true,
+    "beforeAndAfterTestsPassed": true,
+    "managedWorktreeRemoved": true,
+    "evidence": "/Users/anshunli1/asl/code/github/codex-agent-teams/.codex-teams/live-write-77d3b837-8850-4636-84bb-7031621ff4f2",
+    "scope": "One bounded real writer + independent expert reviewer, runtime tests, captain attestation, explicit integration and source tests. Not a benchmark.",
+    "taskId": "7ca3c6f4-c8a6-4e43-8e43-073ee1433d51",
+    "attemptId": "cd2f734b-8e1c-4085-8edf-67673940d105",
+    "writerThreadId": "01a13d95-c49e-71c1-91a9-a2f21f383227",
+    "reviewerThreadId": "01a13d96-5025-7072-9438-c6f79c105dac",
+    "memberExitConfirmed": true,
+    "independentReview": "passed",
+    "verificationStatuses": [
+      {
+        "status": "passed",
+        "cleanupConfirmed": true,
+        "phase": "member"
+      },
+      {
+        "status": "passed",
+        "cleanupConfirmed": true,
+        "phase": "integration"
+      }
+    ]
+  },
+  "browser": {
+    "syntheticOnly": true,
+    "selectedVsCumulative": true,
+    "filterBeforeLimit": true,
+    "consecutiveLimits": [
+      20,
+      40,
+      60,
+      80
+    ],
+    "queryPreservedOnReload": true,
+    "disconnectNoticeVerified": true,
+    "temporaryPreviewsStopped": true
+  },
+  "boundaries": {
+    "formalInstall": false,
+    "realDesktopStop": false,
+    "currentRemoteMatrix": false,
+    "efficiencyBenchmark": false,
+    "automaticSessionDetection": false,
+    "persistentArchive": false,
+    "commit": false,
+    "push": false
+  },
+  "temporaryOfficialHost": {
+    "server": {
+      "userAgent": "Codex Desktop/0.162.0-alpha.17.2 (Mac OS 26.6.2; arm64) dumb (codex_agent_teams; 0.7.0)",
+      "codexHome": "/private/var/folders/ds/crz3lj6n3vnf2q4kx5xhnzpm0000gp/T/teams-plugin-smoke-3YO0xN/codex-home",
+      "platformFamily": "unix",
+      "platformOs": "macos"
+    },
+    "marketplace": "codex-agent-teams-local",
+    "installedInTemporaryHome": true,
+    "cachedPackageIndependent": true,
+    "cachedSkillDiscovered": true,
+    "inventoryWhileRuntimeActive": true,
+    "startupStatus": "ready",
+    "tools": [
+      "teams_cancel",
+      "teams_create",
+      "teams_integrate",
+      "teams_models",
+      "teams_review",
+      "teams_start",
+      "teams_status",
+      "teams_wait"
+    ],
+    "statusBeforeOwner": true,
+    "observedPluginVersion": "0.7.0",
+    "observedRuntimeVersion": "0.7.0",
+    "modelCatalogRead": true,
+    "outerApprovalPolicy": "on-request",
+    "formRequestObserved": true,
+    "rememberDefaultForwarded": true,
+    "textReceiptForwarded": true,
+    "confirmationAction": "cancel",
+    "declinedFormDoesNotAcquireOwner": true,
+    "captainDispatchSchemaAvailable": true,
+    "missingHostBindingBlocksStart": true,
+    "contractCreated": true,
+    "incompleteWriteContractRejected": true,
+    "taskCancelled": true,
+    "sameInstallationTwoProjects": true,
+    "perProjectState": true,
+    "wrongProjectRejected": true,
+    "ambiguousTargetRejected": true,
+    "cacheCwdRejected": true,
+    "inferenceStarted": false,
+    "userConfigChanged": false,
+    "pluginHookDefinitionsDiscovered": [
+      "preToolUse",
+      "sessionEnd",
+      "interrupt"
+    ],
+    "pluginHooksInGlobalInventory": 3,
+    "hostHookExecutionVerified": false,
+    "managedRuntimeExited": true
+  }
+}
