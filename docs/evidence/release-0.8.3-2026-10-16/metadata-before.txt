@@ -1,0 +1,67 @@
+TAP version 13
+# Subtest: native packaging rejects missing or invalid release versions before creating output
+not ok 1 - native packaging rejects missing or invalid release versions before creating output
+  ---
+  duration_ms: 13.887042
+  type: 'test'
+  location: '/Users/anshunli1/asl/code/github/codex-agent-teams/tests/native-plugin.test.js:20:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception: version=undefined'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/anshunli1/asl/code/github/codex-agent-teams/tests/native-plugin.test.js:30:12)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+# Subtest: native packaging requires nonempty package and plugin metadata
+not ok 2 - native packaging requires nonempty package and plugin metadata
+  ---
+  duration_ms: 7.930416
+  type: 'test'
+  location: '/Users/anshunli1/asl/code/github/codex-agent-teams/tests/native-plugin.test.js:35:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception: package name'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/anshunli1/asl/code/github/codex-agent-teams/tests/native-plugin.test.js:45:12)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: native packaging rejects additional manifest resources and unknown fields
+not ok 3 - native packaging rejects additional manifest resources and unknown fields
+  ---
+  duration_ms: 7.466917
+  type: 'test'
+  location: '/Users/anshunli1/asl/code/github/codex-agent-teams/tests/native-plugin.test.js:50:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception: apps'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/anshunli1/asl/code/github/codex-agent-teams/tests/native-plugin.test.js:57:12)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: native packaging accepts a release with prerelease and build identifiers
+ok 4 - native packaging accepts a release with prerelease and build identifiers
+  ---
+  duration_ms: 7.140292
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 1
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 77.008208

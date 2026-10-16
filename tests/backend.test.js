@@ -23,6 +23,40 @@ test('protocol race, isolation overrides, structured output, usage and cleanup',
   assert.equal(processAlive(pid), false);
 });
 
+test('production backend passes exact effort or omits the property without forcing a default', async t => {
+  const controlled = backend('effort-contract');
+  const discovered = await controlled.probe();
+  assert.deepEqual(discovered.models[0].efforts, ['low', 'high', 'max'], 'only the fixture declares these capabilities');
+  for (const effort of ['low', 'high', 'max', undefined]) {
+    await t.test(effort ?? 'omitted', async () => {
+      const explicit = effort === undefined ? {} : { effort };
+      const result = await controlled.run({ ...request(new AbortController().signal),
+        selection: { model: 'test-model', ...explicit },
+        prompt: JSON.stringify({ acceptance: ['prove it'], ...(effort === undefined ? {} : { expectedEffort: effort }) }) });
+      assert.equal(result.result.criteria[0].satisfied, true);
+    });
+  }
+});
+
+test('concurrent runs on one production backend keep each turn effort isolated', async () => {
+  const controlled = backend('effort-contract');
+  const active = new Set();
+  let peak = 0;
+  const results = await Promise.all(['low', 'high', 'max', undefined].map(async (effort, index) => {
+    const result = await controlled.run({ ...request(new AbortController().signal),
+      selection: { model: 'test-model', ...(effort === undefined ? {} : { effort }) },
+      prompt: JSON.stringify({ acceptance: ['prove it'], ...(effort === undefined ? {} : { expectedEffort: effort }) }),
+      onProgress: update => {
+        if (update.memberLaunch === 'active') { active.add(index); peak = Math.max(peak, active.size); }
+        if (update.memberLaunch === 'exited') { active.delete(index); }
+      } });
+    return result.result.criteria[0].satisfied;
+  }));
+  assert.deepEqual(results, [true, true, true, true]);
+  assert.ok(peak > 1, 'member processes must actually overlap');
+  assert.equal(active.size, 0);
+});
+
 test('protocol fixture rejects missing strict required fields at top level and inside criteria', async t => {
   const client = new AppServerClient({ binary: process.execPath, args: [fixture, 'normal'], requestTimeoutMs: 1000 });
   t.after(() => client.stop());

@@ -1,0 +1,216 @@
+{
+  "version": "0.8.3",
+  "at": "2026-10-16T06:45:40.239Z",
+  "node": "v24.21.0",
+  "baseline": {
+    "head": "dc4c50b269c036bbcc1373edd3156c1f57b0045a",
+    "index": "f4f0ab27c1183b433cade182976c1bc0fccf248b"
+  },
+  "modelRequest": {
+    "member": "/root/plugin_high_audit",
+    "reusedExistingMember": true,
+    "originalModelRequest": "group/auto-gpt-6-astra",
+    "reasoningEffort": "high",
+    "actualModel": "unknown",
+    "actualEffort": "unknown"
+  },
+  "negativeControl": {
+    "command": "Node24 --test --test-name-pattern='native installation rejects an extra skill' tests/update.test.js",
+    "implementation": "pre-fix 0.8.2",
+    "tests": 1,
+    "passed": 0,
+    "failed": 1,
+    "failure": "AssertionError: Missing expected rejection.",
+    "log": "before.txt"
+  },
+  "targeted": {
+    "command": "TMPDIR=<member> Node24 --test tests/update.test.js tests/native-plugin.test.js tests/cli-pack.test.js",
+    "implementation": "0.8.3 native inventory guard",
+    "tests": 96,
+    "passed": 96,
+    "failed": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "durationMs": 30639.2995,
+    "breakdown": {
+      "update": 83,
+      "nativePlugin": 7,
+      "cliPack": 6,
+      "newUpdateCases": 44
+    },
+    "log": "targeted.txt"
+  },
+  "full": {
+    "command": "Node24 --test --test-concurrency=4 --test-reporter=tap tests/*.test.js",
+    "exitCode": 0,
+    "tests": 407,
+    "passed": 407,
+    "failed": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "durationMs": 86307.635375,
+    "log": "/private/var/folders/ds/crz3lj6n3vnf2q4kx5xhnzpm0000gp/T/teams-upgrade-083-eTyq8a/full-test.txt"
+  },
+  "officialUpgrade": {
+    "at": "2026-10-16T06:43:09.284Z",
+    "node": "v24.21.0",
+    "method": "Official CLI in a temporary Codex home; injected failure only after official new-cache copy",
+    "oldVersion": "0.8.2",
+    "newVersion": "0.8.3",
+    "upgradedBytesMatch": true,
+    "newBytesObservedBeforeFailure": true,
+    "rollbackVersion": "0.8.2",
+    "rollbackOldBytesMatch": true,
+    "candidate": "/private/var/folders/ds/crz3lj6n3vnf2q4kx5xhnzpm0000gp/T/teams-upgrade-083-eTyq8a/marketplace-v0.8.3-native",
+    "cliCalls": 31,
+    "inferenceStarted": false,
+    "userConfigChanged": false,
+    "temporaryHomeRemoved": true
+  },
+  "hostSmoke": {
+    "version": "0.8.3",
+    "mode": "native",
+    "cachedSkillDiscovered": true,
+    "sourceRemoved": true,
+    "externalMcpServers": 0,
+    "pluginHooks": 0,
+    "projectStateCreated": false,
+    "packageFiles": 4,
+    "packageBytes": 4211,
+    "inferenceStarted": false,
+    "userConfigChanged": false,
+    "appServerExited": true
+  },
+  "candidate": {
+    "marketplaceRoot": "/private/var/folders/ds/crz3lj6n3vnf2q4kx5xhnzpm0000gp/T/teams-upgrade-083-eTyq8a/marketplace-v0.8.3-native",
+    "files": [
+      {
+        "path": ".agents/plugins/marketplace.json",
+        "bytes": 409,
+        "sha256": "9156d4986aeb22a907de9b6cf06b8fdf9e5548f2f60b16aae890bee997230773"
+      },
+      {
+        "path": "plugins/codex-agent-teams/.codex-plugin/plugin.json",
+        "bytes": 178,
+        "sha256": "2deb776bf3bf1da71694e2d51005ab5bb73283a040cf6dc1e3f71f3321f091a7"
+      },
+      {
+        "path": "plugins/codex-agent-teams/build-info.json",
+        "bytes": 174,
+        "sha256": "3b0623fffd8bf68bc4d64724701d4e4f3c90065ca7ad659a66266531879b6449"
+      },
+      {
+        "path": "plugins/codex-agent-teams/package.json",
+        "bytes": 166,
+        "sha256": "f4e79b4f7e2d988e59a1dfa80afb6aec1a3194468f6fffe749c08662995738ec"
+      },
+      {
+        "path": "plugins/codex-agent-teams/skills/team/SKILL.md",
+        "bytes": 3693,
+        "sha256": "d5b5790832d5359929e78327b1bff61e3d70ad4142b2449020f30ff376c03b33"
+      }
+    ],
+    "totalBytes": 4620,
+    "sourceSkillEquals": true
+  },
+  "sourceHashes": {
+    "scripts/update.js": "92d2896b93a115ef97edada4f2ea151deccdb44f3c2d55d4f3c52b768138e47b",
+    "tests/update.test.js": "e6b2d7ef86efb1ae02bad5c3b6a839defd86d878ed4808062a303a408c955ef6",
+    "skills/team/SKILL.md": "d5b5790832d5359929e78327b1bff61e3d70ad4142b2449020f30ff376c03b33",
+    "package.json": "d094275f6af544116dff2c80ca1cf1231b6c3f2d821f31b5f8d96a71c8377a25",
+    "package-lock.json": "137f55eef9b8baf7f6054bf8504df484b2f420b8e33390a6610bdc7ccb1a24e6",
+    "plugin.json": "faac6dea1e22e0db6bd267d63954a479716f19762b030195d76bcb349f4f3eb9",
+    ".codex-plugin/plugin.json": "2deb776bf3bf1da71694e2d51005ab5bb73283a040cf6dc1e3f71f3321f091a7"
+  },
+  "member": {
+    "task": "0.8.3 update fixture and inventory regression tests",
+    "startedAtUtc": "2026-10-16T06:38:18.225Z",
+    "startedAtNote": "First recorded negative-control artifact timestamp; initial instruction reads preceded this timestamp slightly.",
+    "finishedAtUtc": "2026-10-16T06:40:59Z",
+    "model": {
+      "requested": "inherited",
+      "actual": "unknown"
+    },
+    "effort": {
+      "requested": "high",
+      "actual": "unknown"
+    },
+    "sourceModified": [
+      "/Users/anshunli1/asl/code/github/codex-agent-teams/tests/update.test.js"
+    ],
+    "diff": {
+      "insertions": 173,
+      "deletions": 29,
+      "relativeTo": "existing staged content",
+      "stagedByMember": false
+    },
+    "changes": [
+      "Fixture now creates a genuinely different old version, skill and digest; the default old version is 0.0.0-fixture-old and the new version is derived from the packed package.",
+      "All cache paths use codexHome/plugins/cache/marketplace/plugin/version; remove deletes installed cache and add copies actual current marketplace source. Installed metadata is derived from that source. Omitted installedPath receipts retain real version-layout coverage.",
+      "Recovery hooks receive the old source and no longer copy from the new candidate. Original command-order, legacy, source drift, executable-bit and cache-identity assertions remain.",
+      "Added distinct-byte success and failure restoration for different-version and same-version updates, explicitly dishonest old-metadata/new-bytes restoration rejection, and strict-to-native success/failure restoration.",
+      "Added six contamination types: extra skill, root runtime file, team helper, empty directory, unlisted dangling symlink and missing required skill file. Each covers candidate, old cache, recovery source and identically polluted inputs with zero-mutation assertions; post-install rejection with restoration; and polluted rollback rejection.",
+      "Unlisted symlink negative cases target a nonexistent external path and require the inventory error rather than an ENOENT from following the link. Old cache presence and no precheck mutations are explicitly asserted."
+    ],
+    "failureHistory": [
+      {
+        "command": "Node24 --test --test-name-pattern='native installation rejects an extra skill' tests/update.test.js",
+        "implementation": "pre-fix 0.8.2",
+        "tests": 1,
+        "passed": 0,
+        "failed": 1,
+        "failure": "AssertionError: Missing expected rejection.",
+        "log": "before.txt"
+      }
+    ],
+    "verification": [
+      {
+        "command": "TMPDIR=<member> Node24 --test tests/update.test.js tests/native-plugin.test.js tests/cli-pack.test.js",
+        "implementation": "0.8.3 native inventory guard",
+        "tests": 96,
+        "passed": 96,
+        "failed": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "durationMs": 30639.2995,
+        "breakdown": {
+          "update": 83,
+          "nativePlugin": 7,
+          "cliPack": 6,
+          "newUpdateCases": 44
+        },
+        "log": "targeted.txt"
+      },
+      {
+        "command": "git diff --check -- tests/update.test.js",
+        "exitCode": 0
+      }
+    ],
+    "guardReview": "Read-only review confirms each expected parent is validated as a regular directory before descending, all four native directory inventories are compared, and unlisted links are not traversed. Existing src/node_modules rejection remains. No new issue found within reviewed scope.",
+    "limitations": [
+      "CLI installation is a controlled simulator; no official host installation, App Server, MCP, model invocation or runtime performance claim.",
+      "The missing-file inventory matrix uses skills/team/SKILL.md; missing build-info retains the existing legacy identity behavior and is covered by the existing strict legacy test rather than claiming a native inventory error.",
+      "Existing-path native symlinks use the existing regular-path checks; this change adds unlisted-link cases rather than a full matrix for every known path.",
+      "No full-suite run by this member. Existing strict dependencies were loaded/copied as required by these packaging tests; no dependency install was performed.",
+      "Source race after validation and strict dependency byte verification remain outside this change."
+    ],
+    "delivery": "Changes are in the requested main directory, unstaged over the preserved existing index. No other source files, shared documentation, official configuration or installed plugin were modified by this member."
+  },
+  "delivery": {
+    "directory": "/Users/anshunli1/asl/code/github/codex-agent-teams",
+    "head": "dc4c50b269c036bbcc1373edd3156c1f57b0045a",
+    "index": "f4f0ab27c1183b433cade182976c1bc0fccf248b",
+    "newChangesStaged": false,
+    "formalInstallChanged": false,
+    "commitOrPush": false,
+    "unsyncedWorktreeChanges": false,
+    "businessStatus": ""
+  },
+  "limits": [
+    "No formal user-home install",
+    "Official upgrade test is native 0.8.2 to 0.8.3; strict-to-native verified in controlled tests only",
+    "Strict dependency bytes are not fully verified",
+    "External changes after inventory check remain outside guarantee",
+    "No speed/cost or actual model routing claims"
+  ]
+}

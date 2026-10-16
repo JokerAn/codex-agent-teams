@@ -373,6 +373,31 @@ test('CLI explicit models work without TTY and leave human preferences unset', a
   assert.equal((await f.call('teams_models', {}, await f.connect())).value.selection, null);
 });
 
+test('production start refreshes live effort capabilities and rejects before member launch or attempt creation', async t => {
+  const f = await mcpFixture(t, undefined, 'effort-catalog');
+  const discovered = (await f.call('teams_models')).value;
+  assert.deepEqual(discovered.models[0].efforts, ['low', 'high', 'max'], 'max is only a controlled fixture capability');
+  const revoked = (await f.call('teams_create', { ...contract, model: expert.model, effort: 'max' })).value;
+  const unsupported = (await f.call('teams_create', { ...contract, model: expert.model, effort: 'ultra' })).value;
+  const invalidRole = (await f.call('teams_create', contract)).value;
+  writeFileSync(join(f.dir, 'revoke-effort'), 'max no longer available');
+  for (const [task, models] of [[revoked, { expert }], [unsupported, { expert }], [invalidRole, { expert: { ...expert, effort: 'max' } }]]) {
+    const rejected = await f.call('teams_start', { taskId: task.id, models });
+    assert.equal(rejected.isError, true);
+    assert.match(rejected.value, /current Codex catalog/);
+    const pending = (await f.call('teams_status', { taskId: task.id, verbose: true })).value;
+    assert.equal(pending.status, 'pending');
+    assert.deepEqual(pending.attempts, []);
+    assert.equal(existsSync(join(f.dir, 'effort-member-started')), false, 'catalog rejection must precede thread/start');
+  }
+  const started = await f.call('teams_start', { taskId: invalidRole.id, models: { expert } });
+  assert.equal(started.isError, false);
+  const ready = (await f.call('teams_wait', { taskId: invalidRole.id, timeoutMs: 5000, verbose: true })).value;
+  assert.equal(ready.status, 'awaiting_review');
+  assert.equal(ready.attempts.length, 1);
+  assert.equal(existsSync(join(f.dir, 'effort-member-started')), true, 'a valid start must exercise the launch marker');
+});
+
 test('concurrent captain dispatches keep roles in their own attempts without changing runtime profiles', async t => {
   const seen = [];
   const { runtime, store } = setup(t, { run: async req => {

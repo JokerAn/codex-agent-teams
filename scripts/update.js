@@ -14,6 +14,14 @@ const marketplaceName = 'codex-agent-teams-local';
 const pluginName = 'codex-agent-teams';
 const selector = `${pluginName}@${marketplaceName}`;
 const json = path => JSON.parse(readFileSync(path, 'utf8'));
+// Native packages have a deliberately small, fixed shape. Inspect only these
+// directories; unexpected entries and links must never be traversed.
+const nativeInventory = {
+  '': ['.codex-plugin', 'build-info.json', 'package.json', 'skills'],
+  '.codex-plugin': ['plugin.json'],
+  skills: ['team'],
+  'skills/team': ['SKILL.md'],
+};
 // Snapshot actual installed bytes before mutation, not the mutable marketplace.
 // Legacy installations without build identity remain explicitly unverified.
 function installationIdentity(path) {
@@ -40,6 +48,18 @@ function installationIdentity(path) {
     'skills/strict-delivery/SKILL.md', 'hooks/hooks.json', 'teams.config.json', 'mcp.json', '.mcp.json', 'mcp-launch', 'mcp-launch.js'].sort();
   if (build.mode === 'native') {
     if (src || existsSync(join(path, 'node_modules'))) throw new Error('原生skill缓存残留外置运行时或依赖');
+    for (const [directory, expected] of Object.entries(nativeInventory)) {
+      const actual = readdirSync(join(path, directory)).sort();
+      if (actual.length !== expected.length || actual.some((name, index) => name !== expected[index])) {
+        throw new Error(`原生skill包目录清单不符：${directory || '.'}`);
+      }
+      for (const name of expected) {
+        const entry = directory ? `${directory}/${name}` : name;
+        if (!regular(entry, Object.hasOwn(nativeInventory, entry))) {
+          throw new Error(`原生skill包目录清单不符：缺少 ${entry}`);
+        }
+      }
+    }
   } else if (!src) throw new Error('严格交付缓存缺少源码目录');
   const hash = createHash('sha256');
   for (const file of files) {
@@ -118,6 +138,21 @@ export async function installPreparedPlugin({ binary, marketplaceRoot, workspace
   const previousPath = previousPlugin?.installedPath ?? (typeof previousPlugin?.version === 'string' && /^[A-Za-z0-9][A-Za-z0-9._+-]*$/.test(previousPlugin.version)
     ? join(resolve(codexHome), 'plugins', 'cache', marketplaceName, pluginName, previousPlugin.version) : undefined);
   const previousIdentity = installationIdentity(previousPath);
+  const assertRecoverySource = () => {
+    if (!previousPlugin) return;
+    try {
+      assert(previousIdentity, '旧缓存缺少可验证的关键文件身份，需人工核对并迁移旧安装');
+      const recovery = pluginTarget(previous.marketplaceSource.source);
+      if (installationIdentity(recovery.pluginRoot) !== previousIdentity) {
+        throw new Error('来源关键文件与旧缓存不一致');
+      }
+    } catch (error) {
+      throw new Error(`旧插件恢复来源不可确认：${error.message}。本阶段未修改插件安装；${previousIdentity ? '请先恢复与旧缓存一致的来源，再重试更新' : '请人工核对并迁移此旧安装'}。`, { cause: error });
+    }
+  };
+  // Do not remove a working cache if rollback would depend on a missing or
+  // changed source. Check again after registration, immediately before removal.
+  assertRecoverySource();
   assertUpdateIdle(workspace);
   let marketplaceChanged = false, pluginChanged = false;
   const mutate = args => command([...args, '--json']);
@@ -127,6 +162,7 @@ export async function installPreparedPlugin({ binary, marketplaceRoot, workspace
     if (previous) mutate(['plugin', 'marketplace', 'remove', marketplaceName]);
     mutate(['plugin', 'marketplace', 'add', target.marketplaceRoot]);
     assertUpdateIdle(workspace);
+    assertRecoverySource();
     pluginChanged = true;
     if (previousPlugin) mutate(['plugin', 'remove', selector]);
     const installed = mutate(['plugin', 'add', selector]);

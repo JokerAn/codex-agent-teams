@@ -25,6 +25,11 @@ rl.on('line', line => {
     return reply({ plugin: { summary: { name: 'codex-agent-teams', installed: false, enabled: false }, marketplaceName: 'codex-agent-teams-local', skills: [{ name: 'codex-agent-teams:team' }], mcpServers: mode === 'plugin-missing' ? [] : ['codex-agent-teams'] } });
   }
   if (req.method === 'config/read') return reply({ config: { model: 'test-model', model_reasoning_effort: 'high', api_key: 'SECRET_FIXTURE_DO_NOT_EXPOSE', mcp_servers: { 'inherited-team': { command: 'do-not-run' } } } });
+  if (req.method === 'model/list' && ['effort-contract', 'effort-catalog'].includes(mode)) {
+    // These are controlled fixture capabilities, not claims about any real model.
+    const efforts = mode === 'effort-catalog' && existsSync(join(process.cwd(), 'revoke-effort')) ? ['high'] : ['low', 'high', 'max'];
+    return reply({ data: [{ model: 'test-model', isDefault: true, supportedReasoningEfforts: efforts.map(reasoningEffort => ({ reasoningEffort })) }], nextCursor: null });
+  }
   if (req.method === 'model/list' && ['catalog-paged', 'catalog-revokable'].includes(mode)) {
     const model = (name, hidden = false) => ({ model: name, displayName: name + ' label', isDefault: name === 'test-model', hidden, defaultReasoningEffort: 'high', supportedReasoningEfforts: [{ reasoningEffort: 'high' }] });
     const revoked = mode === 'catalog-revokable' && existsSync(join(process.cwd(), 'revoke-model'));
@@ -32,6 +37,7 @@ rl.on('line', line => {
   }
   if (req.method === 'model/list') return reply({ data: [{ model: 'test-model', isDefault: true, supportedReasoningEfforts: [{ reasoningEffort: 'high' }] }, { model: 'configured-model', isDefault: false, supportedReasoningEfforts: [{ reasoningEffort: 'high' }] }], nextCursor: null });
   if (req.method === 'thread/start') {
+    if (mode === 'effort-catalog') writeFileSync(join(process.cwd(), 'effort-member-started'), 'started');
     if (!['read-only', 'workspace-write'].includes(req.params.sandbox) || req.params.approvalPolicy !== 'never' || req.params.config['features.multi_agent'] !== false || req.params.config['mcp_servers.inherited-team.enabled'] !== false) {
       return emit({ id: req.id, error: { message: 'Isolation settings missing' } });
     }
@@ -72,6 +78,9 @@ rl.on('line', line => {
     if (invalidOutputSchema(req.params.outputSchema)) return emit({ id: req.id, error: { message: 'Strict output schema requires every object property and additionalProperties=false' } });
     if (mode === 'write-runtime' && writable) writeFileSync(join(cwd, 'sum.js'), 'export const sum = (a,b) => a+b;\n');
     const packet = JSON.parse(req.params.input[0].text);
+    if (mode === 'effort-contract' && (Object.hasOwn(req.params, 'effort') !== Object.hasOwn(packet, 'expectedEffort') || req.params.effort !== packet.expectedEffort)) {
+      return emit({ id: req.id, error: { message: `Effort contract mismatch: expected ${JSON.stringify(packet.expectedEffort) ?? 'omitted'}, received ${JSON.stringify(req.params.effort) ?? 'omitted'}` } });
+    }
     if (req.params.outputSchema.properties.criteria.items.properties.criterion.enum[0] !== packet.acceptance[0]) return emit({ id: req.id, error: { message: 'Per-task acceptance schema missing' } });
     const result = { summary: 'Protocol fixture completed', criteria: packet.acceptance.map(criterion => ({ criterion, satisfied: true, evidence: 'fixture:1' })), findings: [], blockers: [], limitations: [] };
     if (mode === 'action-overflow') {

@@ -1,0 +1,217 @@
+{
+  "version": "0.8.3",
+  "at": "2026-10-16T07:10:01.768Z",
+  "node": "v24.21.0",
+  "platform": "darwin",
+  "arch": "arm64",
+  "baseline": {
+    "head": "dc4c50b269c036bbcc1373edd3156c1f57b0045a",
+    "index": "f4f0ab27c1183b433cade182976c1bc0fccf248b"
+  },
+  "scope": "Native release readiness, minimal packaging/CLI repairs and release-archive validation",
+  "repairs": [
+    "Unknown CLI commands rejected before optional dependency loading",
+    "Native package release version/nonempty metadata validated",
+    "Native manifest resource fields explicitly bounded",
+    "Public native archive installation and source-vs-artifact instructions"
+  ],
+  "metadataNegativeControl": {
+    "tests": 4,
+    "pass": 1,
+    "fail": 3,
+    "log": "metadata-before.txt"
+  },
+  "updateReview": {
+    "scope": "0.8.3 independent update/recovery review: scripts/update.js, scripts/codex-bin.js, tests/update.test.js, related build/package paths",
+    "findings": [],
+    "conclusion": "No additional high-value reproducible release-blocking defect found in reviewed scope.",
+    "verification": [
+      {
+        "kind": "existing regression tests",
+        "command": "Node v24.21.0 --test tests/update.test.js tests/build.test.js",
+        "passed": 86,
+        "failed": 0,
+        "skipped": 0,
+        "evidence": "tests.log"
+      },
+      {
+        "kind": "actual official CLI, isolated CODEX_HOME, real installPreparedPlugin",
+        "scenario": "Fresh native install fails copying SKILL.md after permission removal immediately before plugin add",
+        "actual": "Updater rejects; marketplace registration removed; version cache absent",
+        "evidence": "probe.mjs; probe-result.json"
+      },
+      {
+        "kind": "actual official CLI, isolated CODEX_HOME, real installPreparedPlugin",
+        "scenario": "Install controlled 0.8.2 source, attempt different 0.8.3 source, corrupt newly installed skill before updater verifies",
+        "actual": "Mismatch rejected; original 0.8.2 bytes and marketplace restored; official list omits installedPath and CODEX_HOME/version fallback succeeds",
+        "evidence": "real-rollback.mjs; real-rollback-result.json"
+      },
+      {
+        "kind": "actual official CLI, isolated CODEX_HOME, real installPreparedPlugin",
+        "scenario": "Disable installed 0.8.2 plugin in isolated config then attempt update",
+        "actual": "Rejected at precheck, only read commands issued",
+        "evidence": "real-rollback.mjs; real-rollback-result.json"
+      }
+    ],
+    "review_notes": [
+      "New tests actually copy distinct old/new versions and skill bytes, and contain a fake-restore negative control.",
+      "Native inventory/type checks cover candidates, old caches, recovery sources, installed caches and rollback caches; no duplicate report of previously fixed inventory issue.",
+      "Output/config resolution and explicit binary resolution reviewed; no additional actionable issue reproduced.",
+      "Actual CLI receipt/list shapes used directly in isolated probes; no assumed installedPath in list metadata."
+    ],
+    "limits": [
+      "Strict runtime dependency bytes are intentionally not fingerprinted individually, as already documented.",
+      "No complete concurrent-path-replacement or filesystem-fault matrix; theoretical TOCTOU cases are not promoted to release blockers.",
+      "No real model execution, formal Codex configuration access or update, dependency installation, repository edits, staging or commits."
+    ],
+    "written_only_under": "/private/var/folders/ds/crz3lj6n3vnf2q4kx5xhnzpm0000gp/T/teams-release-review-U9tDHN/update-member/",
+    "actual_model_effort": "unknown"
+  },
+  "packageReview": {
+    "status": "implemented_and_targeted_tests_passed",
+    "repository": "/Users/anshunli1/asl/code/github/codex-agent-teams",
+    "version": "0.8.3 unchanged",
+    "writes": [
+      "src/cli.js",
+      "tests/cli-pack.test.js"
+    ],
+    "changes": [
+      {
+        "file": "src/cli.js",
+        "line": 68,
+        "detail": "Reject unknown command before importing strict modules; help and pack branches stay unchanged."
+      },
+      {
+        "file": "tests/cli-pack.test.js",
+        "line": 85,
+        "detail": "Complete src fixture without node_modules checks exit 1, empty stdout and exact Unknown command: typo stderr."
+      }
+    ],
+    "validation": {
+      "node": "/Users/anshunli1/.local/share/fnm/node-versions/v24.21.0/installation/bin/node",
+      "command": "node --test tests/cli-pack.test.js tests/native-plugin.test.js",
+      "temporaryDirectory": "/private/var/folders/ds/crz3lj6n3vnf2q4kx5xhnzpm0000gp/T/teams-release-review-U9tDHN/package-member",
+      "exitCode": 0,
+      "tests": 14,
+      "passed": 14,
+      "failed": 0,
+      "skipped": 0,
+      "breakdown": {
+        "cli-pack": 7,
+        "native-plugin": 7
+      },
+      "negativeControl": "followup-results.json records pre-fix complete-src no-dependency fixture reporting Cannot find package 'zod' for typo. Partial fixture in probe-results.json reports missing status.js; the added regression uses complete src.",
+      "existingDependencies": "Strict packaging tests used existing installed dependencies, copied only into assigned temporary directory; no dependency installation or model/App Server invocation."
+    },
+    "reviewFindings": [
+      {
+        "classification": "confirmed_bug_fixed",
+        "location": "src/cli.js:68",
+        "detail": "Unknown command previously loaded strict dependencies before dispatch rejection; fixed with command allowlist."
+      },
+      {
+        "classification": "small_release_validation_improvement_owned_by_lead",
+        "location": "src/plugin-package.js:34-43",
+        "detail": "Controlled copies accepted missing version in all three metadata files and matching invalid version strings. Additional unknown manifest fields were preserved. agents probe only proves passthrough, not host execution; lead independently confirmed apps resource field and owns closed manifest validation.",
+        "evidence": [
+          "probe-results.json",
+          "followup-results.json"
+        ]
+      },
+      {
+        "classification": "necessary_release_documentation_owned_by_lead",
+        "location": "README.md:25-35; package.json:1-29",
+        "detail": "Clarify generated native marketplace is installation artifact, repository root is not a marketplace. Lead verified official CLI rejects source-root marketplace. No LICENSE file found among nonignored repository files; choosing license is a product release decision, not automatically implemented."
+      }
+    ],
+    "nonfindings": [
+      "CI test:coverage runs native-plugin fixture tests that explicitly omit dependencies and clear PATH; no missing native dependency-free coverage finding.",
+      "Native package baseline tests passed 7/7 before edits, including relocation/source removal and no dependency installation."
+    ],
+    "boundaries": [
+      "No full suite run; lead owns final integrated suite.",
+      "No official host/model validation by this member; lead owns official entry-point verification.",
+      "No strict scheduler review.",
+      "No version, manifest, docs, guard or other source writes.",
+      "No commit or staging; existing staged and unstaged changes preserved.",
+      "Review probes only mutated controlled copies in assigned temporary directory."
+    ]
+  },
+  "tests": {
+    "command": "Node24 --test --test-concurrency=4 --test-reporter=tap tests/*.test.js",
+    "exit": 0,
+    "tests": 412,
+    "pass": 412,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "durationMs": 81887.79325,
+    "log": "/private/var/folders/ds/crz3lj6n3vnf2q4kx5xhnzpm0000gp/T/teams-release-review-U9tDHN/full-final.txt"
+  },
+  "artifact": {
+    "at": "2026-10-16T07:06:14.013Z",
+    "version": "0.8.3",
+    "binaryVersion": "codex-cli 0.162.0-alpha.17.2",
+    "node": "v24.21.0",
+    "archive": "/private/var/folders/ds/crz3lj6n3vnf2q4kx5xhnzpm0000gp/T/teams-release-review-U9tDHN/codex-agent-teams-native-0.8.3.tar.gz",
+    "sha256": "6d37ba78c331d41c5189ed172b8d8d27f8932fdee0062132f1555915cca08767",
+    "checksumFile": "/private/var/folders/ds/crz3lj6n3vnf2q4kx5xhnzpm0000gp/T/teams-release-review-U9tDHN/codex-agent-teams-native-0.8.3.tar.gz.sha256",
+    "archiveBytes": 3515,
+    "archiveFiles": 5,
+    "extractedBytesMatch": true,
+    "installedBytesMatch": true,
+    "sourceRemovedBeforeDiscovery": true,
+    "discoveredPluginSkills": [
+      "codex-agent-teams:team"
+    ],
+    "pluginHooks": 0,
+    "pluginMcpServers": 0,
+    "inferenceStarted": false,
+    "userConfigChanged": false,
+    "appServerExited": true,
+    "temporaryHomeRemoved": true
+  },
+  "ciPins": [
+    {
+      "repo": "actions/checkout",
+      "sha": "d23441a48e516b6c34aea4fa41551a30e30af803",
+      "status": 200,
+      "actionManifest": true
+    },
+    {
+      "repo": "actions/setup-node",
+      "sha": "949feb2413d6458794dcd2491c4babbbce0c15c1",
+      "status": 200,
+      "actionManifest": true
+    }
+  ],
+  "sourceHashes": {
+    "src/cli.js": "1195f943c6f6dd5b85f43bc53ccfa809e7eb5e3cb92d8c4e15121cc436050256",
+    "src/plugin-package.js": "aea7015abc6a398de5e95c482c825e7b8ba928d729ec21a6ffabf048e09c71bc",
+    "tests/cli-pack.test.js": "cfea97aa021f8493415327deaf48cadc86a670eb6079ca361276293d9315babb",
+    "tests/native-plugin.test.js": "05ff71f1f699ba9030081a23dc06d6ac44b9468a3eb977be1775807d397f012a",
+    "scripts/update.js": "92d2896b93a115ef97edada4f2ea151deccdb44f3c2d55d4f3c52b768138e47b",
+    "package.json": "d094275f6af544116dff2c80ca1cf1231b6c3f2d821f31b5f8d96a71c8377a25",
+    "package-lock.json": "137f55eef9b8baf7f6054bf8504df484b2f420b8e33390a6610bdc7ccb1a24e6",
+    ".codex-plugin/plugin.json": "2deb776bf3bf1da71694e2d51005ab5bb73283a040cf6dc1e3f71f3321f091a7",
+    "plugin.json": "faac6dea1e22e0db6bd267d63954a479716f19762b030195d76bcb349f4f3eb9",
+    "skills/team/SKILL.md": "d5b5790832d5359929e78327b1bff61e3d70ad4142b2449020f30ff376c03b33"
+  },
+  "state": {
+    "head": "dc4c50b269c036bbcc1373edd3156c1f57b0045a",
+    "index": "f4f0ab27c1183b433cade182976c1bc0fccf248b",
+    "stagedVersion": "0.8.2",
+    "workingVersion": "0.8.3",
+    "newChangesStaged": false,
+    "formalInstallChanged": false,
+    "commitOrPush": false
+  },
+  "limits": [
+    "No release, push, tag or user-home install performed",
+    "GitHub Actions runner matrix not executed in this turn; referenced action manifests exist",
+    "Source repository root is not a Git marketplace; release archive is the tested installation entry",
+    "Strict desktop-stop and platform matrix are outside this native release validation",
+    "No LICENSE or public usage terms selected on user behalf",
+    "No model routing, speed or cost claims"
+  ]
+}

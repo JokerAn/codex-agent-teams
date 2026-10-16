@@ -1,0 +1,13 @@
+diff --git a/src/config/dateTz.js b/src/config/dateTz.js
+index 5ec6c77..a929290 100644
+--- a/src/config/dateTz.js
++++ b/src/config/dateTz.js
+@@ -96,7 +96,7 @@ export function getShanghaiParts(date) {
+     }
+   }
+   const parts = formatter
+-    .formatToParts(date)
++    .formatToParts(t)
+     .reduce((o, p) => ((o[p.type] = p.value), o), {})
+   // hour12:false 在部分环境下 24 点会返回 '24'，归一化为 '00'
+   const shi = parts.hour === '24' ? '00' : parts.hour

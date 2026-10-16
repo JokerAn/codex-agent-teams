@@ -1,10 +1,13 @@
 import { createHash } from 'node:crypto';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const sourceRoot = fileURLToPath(new URL('../', import.meta.url));
 const name = 'codex-agent-teams', marketplaceName = 'codex-agent-teams-local';
+const numericVersion = '(?:0|[1-9]\\d*)';
+const prerelease = `(?:${numericVersion}|\\d*[A-Za-z-][0-9A-Za-z-]*)`;
+const releaseVersion = new RegExp(`^${numericVersion}\\.${numericVersion}\\.${numericVersion}(?:-${prerelease}(?:\\.${prerelease})*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$`);
 const json = path => JSON.parse(readFileSync(path, 'utf8'));
 const writeJson = (path, value) => writeFileSync(path, JSON.stringify(value, null, 2) + '\n');
 const contained = (root, path) => {
@@ -15,6 +18,14 @@ const contained = (root, path) => {
 /** Native default: only instructions and metadata, no config, deps or subprocess. */
 export function packNativePlugin({ out = resolve('dist/local-marketplace') } = {}) {
   const root = realpathSync(sourceRoot);
+  const skillPath = 'skills/team/SKILL.md';
+  for (const path of ['skills', 'skills/team', skillPath]) {
+    const stat = lstatSync(join(root, path));
+    if (stat.isSymbolicLink() || (path === skillPath ? !stat.isFile() : !stat.isDirectory())) {
+      throw new Error(`Native skill source must use regular files/directories without a symbolic link: ${path}`);
+    }
+  }
+  const skill = readFileSync(join(root, skillPath));
   out = resolve(out);
   if (existsSync(out)) throw new Error(`Output already exists; choose a new --out directory: ${out}`);
   let ancestor = dirname(out);
@@ -24,6 +35,14 @@ export function packNativePlugin({ out = resolve('dist/local-marketplace') } = {
     if (contained(join(root, directory), out)) throw new Error(`Output cannot be inside ${directory}`);
   }
   const manifest = json(join(root, '.codex-plugin/plugin.json')), portable = json(join(root, 'plugin.json')), pkg = json(join(root, 'package.json'));
+  if (typeof pkg.version !== 'string' || pkg.version !== pkg.version.trim() || !releaseVersion.test(pkg.version)
+    || [pkg.name, pkg.description, manifest.description].some(value => typeof value !== 'string' || !value.trim())) {
+    throw new Error('Native plugin metadata requires a valid SemVer version and nonempty name/description');
+  }
+  const unsupported = Object.keys(manifest).filter(key => !['name', 'version', 'description', 'skills'].includes(key));
+  if (unsupported.length) {
+    throw new Error(`Native plugin manifest contains unsupported fields: ${unsupported.join(', ')}`);
+  }
   if (manifest.name !== name || portable.name !== name || manifest.version !== pkg.version || portable.version !== pkg.version || manifest.description !== portable.description
     || manifest.skills !== './skills/' || manifest.mcpServers || manifest.hooks || portable.extensions?.['com.openai']?.hooks) throw new Error('Native plugin manifests and package version must agree without MCP or hooks');
   mkdirSync(dirname(out), { recursive: true });
@@ -34,7 +53,7 @@ export function packNativePlugin({ out = resolve('dist/local-marketplace') } = {
     mkdirSync(join(pluginRoot, 'skills', 'team'), { recursive: true });
     writeJson(join(pluginRoot, '.codex-plugin/plugin.json'), manifest);
     writeJson(join(pluginRoot, 'package.json'), { name: pkg.name, version: pkg.version, private: true, description: pkg.description });
-    cpSync(join(root, 'skills/team/SKILL.md'), join(pluginRoot, 'skills/team/SKILL.md'));
+    writeFileSync(join(pluginRoot, skillPath), skill);
     const fingerprint = createHash('sha256');
     for (const file of ['.codex-plugin/plugin.json', 'package.json', 'skills/team/SKILL.md']) { fingerprint.update(file + '\0'); fingerprint.update(readFileSync(join(pluginRoot, file))); }
     writeJson(join(pluginRoot, 'build-info.json'), { version: pkg.version, mode: 'native', createdAt: new Date().toISOString(), sourceDigest: fingerprint.digest('hex') });

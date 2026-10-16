@@ -1,5 +1,88 @@
 # 当前状态
 
+## 0.8.3 发版复核完成（2026-10-16，未发布）
+
+用户要求详细检查线上可用版本。队长负责metadata补强、发行包和集成验收；两名high成员独立审查更新恢复与打包/公开入口，其中打包成员只修改CLI及对应回归。完整判断见[发版复核](RELEASE-REVIEW-0.8.3-2026-10-16.md)，源码身份、原始交接与限制见[证据](evidence/release-0.8.3-2026-10-16/results.json)。
+
+- 已修CLI未知命令在strict导入前拒绝，无依赖环境稳定报Unknown command；已补native合法SemVer、非空name/description及四字段manifest约束。metadata旧实现反例4项中3失败、1通过；成员CLI交接14/14早于新metadata用例，最终以队长统一全量**412/412通过**为准，0 fail/cancelled/skipped，81.888秒，Node v24.21.0。
+- 更新审查定向86/86通过，本轮官方CLI临时home验证首次复制权限失败清理、跨版本损坏恢复、缺installedPath精确回退及禁用预检，无新增高价值阻塞。strict依赖及检查后漂移边界保持。
+- 已准备native tar.gz和SHA256，压缩/解压逐文件校验一致，官方CLI安装解压产物字节一致；移除来源后真实宿主仅发现team、零插件MCP/hooks，无推理，App Server退出、临时home清理。实际验证macOS arm64/Codex CLI0.162.0-alpha.17.2。CI固定SHA的action.yml存在，但未运行远程四组runner矩阵。
+- 版本保持未发布0.8.3，无新依赖/调度层。交付主目录及既有HEAD/index保留，本轮未暂存、commit/push/tag/正式安装，apply-claim未改。**当前暂存版本0.8.2、工作树0.8.3**，源码发版前必须纳入已验收修复；公开使用许可、远程CI和发行资产上传仍由维护者执行。源码根不支持直接Git marketplace安装，README已明确native发行包入口。
+
+## 0.8.3 修复完成（2026-10-16，源码及原生候选）
+
+用户授权修复升级。队长实现native清单校验、短skill/版本和集成验收；复用high成员独立补更新测试，没有新建协作运行时。交付见[0.8.3修复记录](FIX-0.8.3-2026-10-16.md)，计数、源码身份与边界见[证据](evidence/fix-0.8.3-2026-10-16/results.json)。
+
+- **P2已修**：native身份检查限制完整目录清单，仅四个普通文件及其父目录，覆盖候选、旧缓存、恢复来源、安装结果与恢复结果；拒绝多余skill、根文件、helper、空目录、未列名链接和缺必需文件。只枚举已知目录，不跟随未知链接；strict仍核对关键文件，依赖不逐文件核对，检查后并发漂移仍属边界。
+- 更新fixture真实复制不同旧新版本/skill/digest和home/version缓存；恢复读取旧来源。新增44例，覆盖同版本不同内容、假恢复回执、strict→native成功/失败，以及六类目录异常的预检零修改、安装拒绝恢复、恢复异常明确失败。旧实现关键额外skill反例1/1失败；成员定向**96/96通过**（update83/native7/CLI6），0 fail/cancelled/skipped，30.639秒。
+- 队长统一全量`node --test --test-concurrency=4 --test-reporter=tap tests/*.test.js`：**407/407通过**，0 fail/cancelled/skipped，86.308秒，Node v24.21.0。已检查退出码和实际计数，未用历史绿测替代本轮结果。
+- 临时官方宿主确认0.8.3安装缓存4文件4211字节、来源移除后team可发现、零插件MCP/hooks、无项目状态及模型推理，App Server退出。临时官方CLI31次调用确认真实0.8.2→0.8.3字节更新，并在确认已安装新字节后注入失败、恢复原0.8.2字节；临时home清理，用户正式配置未改。strict→native本轮仅受控测试，实际模型/强度与效率回执未新增。
+- package、lock根版本和两manifest统一0.8.3，短skill明确宿主参数关闭父历史继承；默认候选5文件4620字节（含marketplace），skill与源码一致，无新依赖/调度层。候选及日志位于`/private/var/folders/ds/crz3lj6n3vnf2q4kx5xhnzpm0000gp/T/teams-upgrade-083-eTyq8a/`。
+- 实际交付`/Users/anshunli1/asl/code/github/codex-agent-teams`，本轮修改未暂存；开工HEAD`dc4c50b269c036bbcc1373edd3156c1f57b0045a`及index tree`f4f0ab27c1183b433cade182976c1bc0fccf248b`保持，apply-claim真实源码未改。未正式update、commit/push或清理历史，无跨worktree未同步内容；已加载旧会话不会热更新。
+
+## 0.8.2 原生 Team 补充实测（2026-10-16，仅评估）
+
+本轮按已加载team skill做原生low/high/max限定派发，均显式`fork_turns=none`；实际底层模型/强度/token/费用没有回执，不宣称提速或降本。结论与场景见[补充评估](NATIVE-TEAM-AUDIT-0.8.2-2026-10-16.md)，原始交接和测量见[证据](evidence/native-team-082-2026-10-16/results.json)。low只写apply-claim预约过滤器临时副本，high只读审查插件，max限定复核缓存额外skill影响边界；队长独立写汇总适配器、验收与实复制更新探针。队长产物落盘时间处于high成员工作区间内，不把文件时间当完整有效工时。
+
+- 三时区独立验收27/27通过；原始源码负对照9项中5失败，成员测试6/6另经队长确认，复用同一low成员补环境与默认参数1项通过。默认pretty reporter首次不能被计数器识别，显式TAP重跑后确认实际数量，未知计数未算通过。
+- high成员原生7/7、更新保护定向9/9通过。队长另做4种实复制CLI模拟：干净安装、新旧不同字节更新、复制新缓存后失败恢复旧字节均符合预期；额外`skills/old-runtime/SKILL.md`仍被更新器接受，确认固定名单身份核对缺口（P2），未修改实现。没有验证官方CLI正常安装残留或宿主实际加载额外skill。
+- 现有update fixture起始旧新内容相同、add不实际复制，是覆盖缺口；本轮独立探针补了不同0.8.1/0.8.2字节更新/回滚证据，尚未修改正式测试。skill可考虑明确使用宿主参数关闭父历史继承；没有证据需要新调度层、固定开队或自动模型路由。
+- 默认包5文件4568字节，Node v24.21.0打包函数首次3.96ms、后11次中位1.92ms/P95 2.20ms，CLI build5次中位26.89ms；不是模型/协作交付耗时。悬空输出链接反例保留原链接并报ENOTDIR，未复现覆盖缺陷。
+- 实际交付`/Users/anshunli1/asl/code/github/codex-agent-teams`，只新增报告/证据并补本状态，本轮未暂存；开工HEAD`dc4c50b269c036bbcc1373edd3156c1f57b0045a`及index tree`f4f0ab27c1183b433cade182976c1bc0fccf248b`保持，apply-claim真实源码未改。未正式update、commit/push、清理历史或新建worktree。停止/容量、实际max回执、小模型与可比效率/费用对照仍未验收。
+
+## 0.8.2 摸底后优化完成（2026-10-16，源码及原生候选）
+
+用户授权基于apply-claim摸底实施最小优化。队长负责更新恢复保护、短skill、版本与文档；high成员独立修复strict CLI，并只读复核更新保护的位置。默认原生协作与显式strict边界保持，无新增运行时或依赖。
+
+- 更新在所有修改前核对旧来源与缓存关键身份，注册新来源后、卸载旧插件前再次检查。来源缺失、损坏、关键内容漂移或legacy缓存缺少有效身份时保留旧安装；legacy需人工核对迁移，错误及README已明确。只校验关键文件，依赖不逐文件核对，不能阻止检查后外部进程修改来源。
+- 更新反例在旧实现上6/6失败；补保护后进一步覆盖注册期间来源消失/漂移，断言零插件remove/add、旧缓存关键字节保持，来源丢失时明确报告marketplace恢复未完成。受控CLI回执不冒称真实官方CLI回滚。
+- strict源码CLI显式`--binary`按调用cwd/PATH解析并传绝对路径，支持绝对/含空格相对/PATH命令，missing不回退配置；原配置字节不变、省略保持配置、native/help无依赖。初次6项中4失败，修后成员联合原生包13/13通过。包内再执行strict打包不在本轮覆盖范围。
+- 短skill补队长独立产物、必要环境路径、宿主容量拒绝后的复用/直接推进/等待、通过宿主参数切换模型强度，以及测试实际执行与按需负对照；未增加固定审查员、必做变异测试或调度层。README同步。
+- 队长统一运行`node --test tests/update.test.js tests/cli-pack.test.js tests/native-plugin.test.js`：**52/52通过**，0 fail/cancelled/skipped，20.110秒，Node v24.21.0。未重跑全量回归或官方宿主smoke，历史350/350不计作本轮结果。早期定向35/37中2项为错误消息换行与匹配方式问题，简化漂移错误提示后统一复验通过。
+- package、lock根版本与两manifest同步0.8.2；原生候选5文件4568字节（含marketplace目录），skill与源码逐字一致且为普通文件，无外置依赖。候选与本轮日志位于`/var/folders/ds/crz3lj6n3vnf2q4kx5xhnzpm0000gp/T/teams-optimize-082-v9rU9l/`。
+- 实际交付`/Users/anshunli1/asl/code/github/codex-agent-teams`，保留既有暂存区，本轮修改未暂存；未更新正式插件缓存、commit/push或清理历史状态。安装生效与源码交付分别处理；不宣称速度/费用改善，实际模型强度回执仍未知。
+
+## apply-claim 场景摸底（2026-10-16，仅评估与证据）
+
+完整结论见 [场景摸底](APPLY-CLAIM-PROBE-2026-10-16.md)，原始交接、限制与复放见 [结构化证据](evidence/apply-claim-probe-2026-10-16/results.json)。两组high完成同一增强；low预约、同文件唯一writer与队长直接修改分别验收。统一Node24在三个时区复放，共126次行为测试通过；未增强负对照12个用例中6失败。成员耗时并非端到端可比计时，不声称并行提速或降本。
+
+本轮观察到宿主thread limit与成员Node14/主会话Node24差异；前轮假绿已由独立变异验收发现并修复。建议保持短原生skill，改善拆分判断、必要环境交接、容量拒绝后的复用与实际测试执行证据。同文件组7个用例在三个时区21次通过，唯一writer属于职责约束，非文件系统隔离。
+
+本轮插件实现、正式缓存与apply-claim真实源码未改，仅新增本报告/复放证据并补本状态；既有暂存区保留，本轮未暂存、未commit/push/update。low/high是请求值，实际模型、强度与费用未知；max/小模型、真实桌面停止和更大任务重复对照未测。更新回滚条件和strict CLI binary传参的前轮发现尚未实施修补。
+
+## 0.8.1 修复完成（2026-10-16，源码及候选已验证）
+
+用户授权列TODO并实施修复，清单见 [修复 TODO](TODO-FIX-0.8.1-2026-10-16.md)，结果见 [修复记录](FIX-0.8.1-2026-10-16.md)。默认原生方向与可选严格边界保持，后续成员先读 [当前短摘要](CURRENT.md)，历史证据按任务读取。
+
+- **P2已修**：原生pack在创建输出前拒绝skill文件及两级父目录链接，读取后写成普通文件；移除来源后可读。新增三级链接反例在旧实现上先失败，修复后原生包 **7/7通过**，含悬空目标、输出保护和无依赖/空PATH入口。
+- 强度协议补low/high/max精确传参、省略属性、同backend并发隔离；目录撤销和非法强度在thread/start前拒绝，保持pending/零attempt，无启动标记；合法启动正对照通过。成员定向 **78/78**，队长复核断言并在全量重验。max仅fixture能力，不代表真实模型支持。
+- short team skill保持19行，补任务强度、共享文件归属、短交接和有界follow-up；README同步。新增 `npm run test:native`；四处版本及lock根包同步 **0.8.1**。无新增依赖，无严格调度器扩展。
+- 队长最终 `npm test` **350/350通过**，0 fail/cancelled/skipped，测试85.115秒/脚本墙钟86.167秒，Node v24.21.0/macOS。源码/版本限定只读复核未发现阻塞，未用静态报告替代测试。
+- 默认候选 **4文件3600字节**，skill与源码一致、无链接和外置运行时。临时官方CLI与宿主smoke通过：来源移除后发现skill、零插件MCP/hooks、无项目状态、无推理，临时App Server退出、用户配置未改。候选与原始日志在本机 `plugin-fixes/`，详见修复记录。
+- TODO源码项已完成；真实桌面停止、同文件冲突、max/小模型、重复质量/效率/费用对照仍未执行，按 [场景验收](TEAM-SCENARIOS.md) 分别记录。正式安装未更新，不把源码版本称为已加载版本。
+- 实际交付 `/Users/anshunli1/asl/code/github/codex-agent-teams`；开工HEAD `dc4c50b269c036bbcc1373edd3156c1f57b0045a`、暂存树 `79970972f55802ac87ec265815940405e96b775a` 保持，既有STATUS正文和评估文档保留。本轮改动未暂存，无跨worktree未同步、commit/push/update或历史状态清理。
+
+## 0.8.0 源码评估与分工场景验证（2026-10-16）
+
+用户明确目标是合适场景并行开发、队长独立工作及按任务选择推理强度。本轮详见 [评估与场景矩阵](EVALUATION-0.8.0-2026-10-16.md)；只新增评估文档和本摘要，保留开工时 STATUS 既有未提交段落，未修改插件实现或正式安装。
+
+- 源码与指定0.8.0安装skill逐字一致；默认包4文件3052字节，打包函数30样本中位数2.34ms/P95 2.81ms，CLI含Node启动10样本中位数455.9ms。非模型交付耗时，不能据此推算协作收益。
+- Node v24.21.0全量回归 **339/339通过**，0 fail/cancelled/skipped，墙钟83.83秒。队长在成员独立审查期间执行全量和打包反例；受控后端通过不等于真实模型/桌面验收。
+- 原生工具显式同模型Sol low/high成员完成独立审查；隔离样本分别写统计/强度模块，队长写集成与独立验收，初次7/7；复用low成员追加需求后8/8。证明分工、写入归属与follow-up可用，无端到端单代理对照；无实际强度/token/费用回执，不声称降本，max未作真实调用。
+- **确认P2未修**：`src/plugin-package.js:37` 复制源码skill符号链接，产物保留外部链接，打包返回成功但移走外部目标后不可读。临时最小源码通过真实打包器复现，正式源码/缓存未改。现有普通文件搬迁测试未覆盖此边界。
+- 严格executionPlan独占与单turn后关闭是设计限制；日常继续用短原生skill，严格退出/证据/集成门禁按需保留。优先精简历史文档强制读取、补短强度规则与文件归属，再做单代理/裸原生/skill/混合强度同验收对照，不再扩默认调度层。
+- 开工HEAD `dc4c50b269c036bbcc1373edd3156c1f57b0045a`、暂存树 `79970972f55802ac87ec265815940405e96b775a` 保持；实际交付主目录 `/Users/anshunli1/asl/code/github/codex-agent-teams`，文档未暂存，无跨worktree未同步内容、commit/push/update。真实桌面停止、同文件冲突场景、真实max/小模型与重复收益评测未执行。
+
+## 0.8.0 本会话原生协作实测（2026-10-16）
+
+用户调用已加载的 `codex-agent-teams:team`，要求测试实际效果。本轮使用宿主原生工具派发一名只读成员 `native_package_audit`，`fork_turns=none`，显式提供必要任务与约束；成员继承模型、high 强度。队长并行负责定向回归和已加载 skill 一致性，成员负责默认 pack 的依赖/服务边界与测试覆盖审查。
+
+- 成员返回具体源码行号及覆盖依据，限定范围未发现可明确复现的缺陷；队长独立核对 `src/cli.js` 的默认/strict 分支、`src/plugin-package.js` 的内置依赖与文件操作以及测试证据后接受结论。成员只做静态审查，没有把未执行的测试说成通过。
+- 队长实际执行 `node --test tests/native-plugin.test.js`：**3/3 通过**，0 fail/cancelled/skipped，133.959166ms，Node v24.21.0。覆盖默认包内容/搬迁、无依赖且空 PATH 构建与 CLI pack、已有输出及符号链接目标保护；已加载 0.8.0 缓存的 team skill 与源码 `cmp` 一致。
+- 本次完成真实原生派发、并行独立工作、结果回传与队长复核；未调用 Agent Teams MCP、启动额外 App Server/状态页或创建任务数据库。没有单 Agent 同条件对照或完整用量/计时数据，不能据此声称提速、省 token 或费用优势。
+- 未测试写任务协作、停止联动、正式安装/完整缓存身份、临时官方宿主发现、全量回归或跨平台。下一步用一个实际需求观察质量、总交付耗时和人工投入，再决定是否需要扩大验证。
+- 实际交付目录 `/Users/anshunli1/asl/code/github/codex-agent-teams`，HEAD `dc4c50b269c036bbcc1373edd3156c1f57b0045a`。开工工作树与暂存区干净；本轮仅更新本状态文档、未暂存，无跨 worktree 未同步内容，未修改运行代码、正式安装、commit 或 push。成员已完成返回。
+
 ## 0.8.0 默认流程精简完成（2026-10-15）
 
 用户授权按精简计划实施。当前交付见 [精简记录](SIMPLIFY-0.8.0-2026-10-15.md)、[结构化证据](SIMPLIFY-0.8.0-2026-10-15-EVIDENCE.json) 和 [TODO](TODO-UPGRADE-2026-10-15.md)。旧章节的默认外置路径为历史行为。

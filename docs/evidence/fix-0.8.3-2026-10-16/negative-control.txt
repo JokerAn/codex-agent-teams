@@ -1,0 +1,25 @@
+✖ native installation rejects an extra skill and restores the old cache (15.611667ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 106.910459
+
+✖ failing tests:
+
+test at tests/update.test.js:76:1
+✖ native installation rejects an extra skill and restores the old cache (15.611667ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/anshunli1/asl/code/github/codex-agent-teams/tests/update.test.js:81:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /原生skill包目录清单不符[\s\S]*安装状态已恢复/,
+    operator: 'rejects',
+    diff: 'simple'
+  }

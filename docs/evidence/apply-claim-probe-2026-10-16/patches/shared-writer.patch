@@ -1,0 +1,51 @@
+diff --git a/src/views/apply/components/pickup-time.js b/src/views/apply/components/pickup-time.js
+index 1e51958..bb13b5c 100644
+--- a/src/views/apply/components/pickup-time.js
++++ b/src/views/apply/components/pickup-time.js
+@@ -1,21 +1,40 @@
+ // 预约需提前的【小时数】，修改此处即可调整所有时段过滤规则。
+ const PICKUP_ADVANCE_HOURS = 2
+ 
+-export function isPickupTimeAvailable(dateKey, startTime, now = Date.now()) {
++export function isPickupTimeAvailable(dateKey, startTime, now = Date.now(), advanceHours = PICKUP_ADVANCE_HOURS) {
++  if (!Number.isFinite(now) || !Number.isFinite(advanceHours) || advanceHours < 0) {
++    return false
++  }
++  if (typeof dateKey !== 'string' || typeof startTime !== 'string') {
++    return false
++  }
++  const dateParts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateKey)
++  if (!dateParts || !/^([01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d{1,3})?)?$/.test(startTime)) {
++    return false
++  }
+   // 日期和时间均按用户本地时区解析；整段必须满足预约提前量。
+-  const start = new Date(`${dateKey}T${startTime}`).getTime()
++  const startDate = new Date(`${dateKey}T${startTime}`)
++  const start = startDate.getTime()
+   return (
+     Number.isFinite(start) &&
+-    start >= now + PICKUP_ADVANCE_HOURS * 60 * 60 * 1000
++    startDate.getFullYear() === Number(dateParts[1]) &&
++    startDate.getMonth() + 1 === Number(dateParts[2]) &&
++    startDate.getDate() === Number(dateParts[3]) &&
++    start >= now + advanceHours * 60 * 60 * 1000
+   )
+ }
+ 
+-export function filterPickupSliceTimes(dateList, now = Date.now()) {
++export function filterPickupSliceTimes(dateList, now = Date.now(), advanceHours = PICKUP_ADVANCE_HOURS) {
++  if (!Array.isArray(dateList) || !Number.isFinite(now) || !Number.isFinite(advanceHours) || advanceHours < 0) {
++    return []
++  }
+   return dateList
++    .filter((item) => item !== null && typeof item === 'object' && Array.isArray(item.timesRanges))
+     .map((item) => ({
+       ...item,
+-      timesRanges: (item.timesRanges || []).filter((range) =>
+-        isPickupTimeAvailable(item.dateKey, range.startTime, now)
++      timesRanges: item.timesRanges.filter((range) =>
++        range !== null && typeof range === 'object' &&
++        isPickupTimeAvailable(item.dateKey, range.startTime, now, advanceHours)
+       )
+     }))
+     .filter((item) => item.timesRanges.length)

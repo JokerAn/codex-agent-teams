@@ -1,0 +1,58 @@
+diff --git a/src/config/dateTz.js b/src/config/dateTz.js
+index 5ec6c77..1dc334a 100644
+--- a/src/config/dateTz.js
++++ b/src/config/dateTz.js
+@@ -72,7 +72,7 @@ function getShanghaiFormatter() {
+  * 按上海时区（Asia/Shanghai）拆解出年月日时分秒字段
+  * 无论用户在哪个时区，取值始终为北京时间
+  * Invalid Date / 不支持 Intl 时区时自动降级，不抛错穿透页面
+- * @param {Date} date
++ * @param {Date|number|string} date Date、毫秒时间戳或带显式时区的 ISO 字符串
+  * @returns {{nian:number|string,yue:string,ri:string,shi:string,fen:string,miao:string}}
+  */
+ export function getShanghaiParts(date) {
+@@ -96,7 +96,7 @@ export function getShanghaiParts(date) {
+     }
+   }
+   const parts = formatter
+-    .formatToParts(date)
++    .formatToParts(new Date(t))
+     .reduce((o, p) => ((o[p.type] = p.value), o), {})
+   // hour12:false 在部分环境下 24 点会返回 '24'，归一化为 '00'
+   const shi = parts.hour === '24' ? '00' : parts.hour
+diff --git a/src/views/apply/components/pickup-time.js b/src/views/apply/components/pickup-time.js
+index 1e51958..2304394 100644
+--- a/src/views/apply/components/pickup-time.js
++++ b/src/views/apply/components/pickup-time.js
+@@ -1,21 +1,27 @@
+ // 预约需提前的【小时数】，修改此处即可调整所有时段过滤规则。
+ const PICKUP_ADVANCE_HOURS = 2
+ 
+-export function isPickupTimeAvailable(dateKey, startTime, now = Date.now()) {
++export function isPickupTimeAvailable(dateKey, startTime, now = Date.now(), advanceHours = PICKUP_ADVANCE_HOURS) {
++  if (!Number.isFinite(now) || !Number.isFinite(advanceHours) || advanceHours < 0) {
++    return false
++  }
+   // 日期和时间均按用户本地时区解析；整段必须满足预约提前量。
+   const start = new Date(`${dateKey}T${startTime}`).getTime()
+   return (
+     Number.isFinite(start) &&
+-    start >= now + PICKUP_ADVANCE_HOURS * 60 * 60 * 1000
++    start >= now + advanceHours * 60 * 60 * 1000
+   )
+ }
+ 
+-export function filterPickupSliceTimes(dateList, now = Date.now()) {
++export function filterPickupSliceTimes(dateList, now = Date.now(), advanceHours = PICKUP_ADVANCE_HOURS) {
++  if (!Array.isArray(dateList) || !Number.isFinite(now) || !Number.isFinite(advanceHours) || advanceHours < 0) {
++    return []
++  }
+   return dateList
+     .map((item) => ({
+       ...item,
+       timesRanges: (item.timesRanges || []).filter((range) =>
+-        isPickupTimeAvailable(item.dateKey, range.startTime, now)
++        isPickupTimeAvailable(item.dateKey, range.startTime, now, advanceHours)
+       )
+     }))
+     .filter((item) => item.timesRanges.length)

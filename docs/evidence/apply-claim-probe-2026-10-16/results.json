@@ -1,0 +1,515 @@
+{
+  "createdAt": "2026-10-16T04:58:39.277Z",
+  "baseline": {
+    "createdAt": "2026-10-16T04:52:35.775Z",
+    "root": "/var/folders/ds/crz3lj6n3vnf2q4kx5xhnzpm0000gp/T/teams-business-probe-3L8V4R",
+    "business": "/Users/anshunli1/jd/jdGit/product/web/apply-claim",
+    "plugin": "/Users/anshunli1/asl/code/github/codex-agent-teams",
+    "sourceHashes": {
+      "src/config/dateTz.js": "3084850a32b8b7d6cd2300adc33925e827ded09731c32621c7452a66306793c4",
+      "src/views/apply/components/pickup-time.js": "3e581f0d35c0caacb388ec7d9aa585bb9a3954ce146dcd6a396d89b4903428b4"
+    },
+    "businessHead": "c1c87f54a5918c27787fed1763651c27363c3396",
+    "pluginHead": "dc4c50b269c036bbcc1373edd3156c1f57b0045a",
+    "indexTree": "a8df168af9fd8625e6466435bd0d00d9bd8505bd",
+    "scope": "Selected regular source file copies. All participants share filesystem; ownership is an instruction, not sandbox enforcement."
+  },
+  "handoffs": {
+    "serialHigh": {
+      "startedAt": "2026-10-16T04:53:07Z",
+      "finishedAt": "2026-10-16T04:53:45.978Z",
+      "commands": [
+        "node check.cjs"
+      ],
+      "result": "PASS: local boundary checks; captain hidden acceptance pending",
+      "changes": [
+        "getShanghaiParts normalizes valid inputs to Date before Intl formatting; parseAsBeijing and formatter caching/fallback unchanged",
+        "Pickup helpers accept finite nonnegative advanceHours and finite numeric now, forward advanceHours and preserve input metadata/order without mutation",
+        "check.cjs uses built-in vm and assertions for valid/invalid dates, Intl fallback, midnight boundaries, zero/fractional advance and immutable filtering"
+      ],
+      "requestedModel": "group/auto-gpt-6-astra",
+      "requestedReasoning": "high",
+      "actualModelReceipt": "unknown"
+    },
+    "parallelDate": {
+      "startedAt": "2026-10-16T04:53:21Z",
+      "finishedAt": "2026-10-16T04:54:05Z",
+      "requestedModel": "group/auto-gpt-6-astra",
+      "requestedReasoningEffort": "high",
+      "actualModelReceipt": "unknown",
+      "actualReasoningEffortReceipt": "unknown",
+      "changes": [
+        "getShanghaiParts passes its normalized millisecond timestamp to formatToParts; parameter documentation explicitly lists Date, number and zoned ISO strings.",
+        "parseAsBeijing and Intl caching/fallback logic are unchanged.",
+        "Added a dependency-free vm check covering input parity, invalid placeholders, midnight/leap/year boundaries, formatter caching and unsupported/ignored Intl time zones."
+      ],
+      "commands": [
+        {
+          "command": "node /var/folders/ds/crz3lj6n3vnf2q4kx5xhnzpm0000gp/T/teams-business-probe-3L8V4R/parallel-high/check-date.cjs",
+          "result": "Initial run failed because Node v14.21.3 does not support node:assert/strict; changed test imports to compatible built-in module names."
+        },
+        {
+          "command": "node /var/folders/ds/crz3lj6n3vnf2q4kx5xhnzpm0000gp/T/teams-business-probe-3L8V4R/parallel-high/check-date.cjs",
+          "result": "PASS 78 assertions",
+          "exitCode": 0
+        },
+        {
+          "command": "node --version",
+          "result": "v14.21.3",
+          "exitCode": 0
+        }
+      ],
+      "remainingGaps": []
+    },
+    "parallelPickup": {
+      "startedAt": "2026-10-16T04:53:28Z",
+      "finishedAt": "2026-10-16T04:54:06.999Z",
+      "requestedModel": "group/auto-gpt-6-astra",
+      "requestedReasoningEffort": "high",
+      "actualModelReceipt": "unknown",
+      "actualReasoningEffortReceipt": "unknown",
+      "changes": [
+        "为两个取件时间函数新增可选 advanceHours，默认值保持2小时；拒绝非有限数字及负提前量。",
+        "过滤函数校验数组输入并透传提前量，保留原有映射和过滤行为。",
+        "新增Node内置vm断言脚本，覆盖边界、参数校验和输入不变。"
+      ],
+      "checks": [
+        {
+          "command": "node check-pickup.cjs",
+          "exitCode": 0,
+          "result": "PASS pickup: defaults, equality, midnight, fractional/zero advance, invalid inputs, order/metadata, immutability"
+        }
+      ],
+      "remainingGaps": [],
+      "scope": "仅修改parallel-high所属pickup-time.js、check-pickup.cjs、handoff-pickup.json；未修改真实仓库。"
+    },
+    "pickupLow": {
+      "startedAt": "2026-10-16T04:55:08Z",
+      "finishedAt": "2026-10-16T04:55:45.807Z",
+      "runtime": {
+        "version": "v24.21.0",
+        "execPath": "/Users/anshunli1/.local/share/fnm/node-versions/v24.21.0/installation/bin/node"
+      },
+      "command": "node check-pickup.cjs",
+      "result": {
+        "exitCode": 0,
+        "status": "passed",
+        "coverage": [
+          "default two hours",
+          "inclusive boundary",
+          "cross midnight",
+          "zero and fractional advance",
+          "invalid advanceHours and now",
+          "metadata and order",
+          "input immutability"
+        ]
+      },
+      "memberMode": "reused member, not fresh",
+      "requestedModel": "group/auto-gpt-6-astra",
+      "requestedEffort": "low",
+      "actual": "unknown"
+    },
+    "sharedWriter": {
+      "startedAt": "2026-10-16T04:56:31Z",
+      "finishedAt": "2026-10-16T04:57:27.177Z",
+      "requestedModel": "group/auto-gpt-6-astra",
+      "requestedReasoningEffort": "high",
+      "actualModelReceipt": "unknown",
+      "actualReasoningEffortReceipt": "unknown",
+      "ownership": "same-file唯一writer；仅为写入职责约束，不是文件系统隔离；队长负责集成与验收。",
+      "changes": [
+        "两个函数支持advanceHours，默认2小时，校验有限now及有限非负advanceHours。",
+        "过滤非法列表、条目、timesRanges、时段及日期时间；检查日历溢出日期。",
+        "保留等于阈值、跨午夜、metadata和顺序，不修改原输入或时段已有属性。"
+      ],
+      "checks": [
+        {
+          "command": "/Users/anshunli1/.local/share/fnm/node-versions/v24.21.0/installation/bin/node check-pickup.cjs",
+          "exitCode": 0,
+          "result": "PASS pickup: defaults/equality/midnight, zero/fractional advance, invalid numeric arguments, dirty lists/ranges/dates/times, metadata/order/immutability"
+        }
+      ],
+      "remainingGaps": [],
+      "scope": "仅写入shared-writer所属pickup-time.js、check-pickup.cjs、handoff-pickup.json；未读其他arm/captain，未修改真实仓库，未新增成员。"
+    }
+  },
+  "runtimeSeconds": {
+    "serialHigh": 38.978,
+    "parallelDate": 44,
+    "parallelPickup": 38.999,
+    "pickupLow": 37.807,
+    "sharedWriter": 56.177
+  },
+  "events": [
+    {
+      "at": "2026-10-16T04:52:35.820Z",
+      "event": "setup"
+    },
+    {
+      "at": "2026-10-16T04:52:49.981Z",
+      "event": "dispatch_batch",
+      "arms": [
+        "serial-high",
+        "parallel-high/date",
+        "parallel-high/pickup",
+        "pickup-low"
+      ],
+      "requestedModel": "group/auto-gpt-6-astra",
+      "actualModel": "unknown"
+    },
+    {
+      "arm": "serial-high",
+      "at": "2026-10-16T04:55:10.796Z",
+      "exit": 0,
+      "error": null,
+      "tests": 12,
+      "pass": 12,
+      "fail": 0,
+      "wallMs": 78,
+      "node": "v24.21.0",
+      "execPath": "/Users/anshunli1/.local/share/fnm/node-versions/v24.21.0/installation/bin/node",
+      "event": "captain_acceptance"
+    },
+    {
+      "arm": "parallel-high",
+      "at": "2026-10-16T04:55:10.861Z",
+      "exit": 0,
+      "error": null,
+      "tests": 12,
+      "pass": 12,
+      "fail": 0,
+      "wallMs": 64,
+      "node": "v24.21.0",
+      "execPath": "/Users/anshunli1/.local/share/fnm/node-versions/v24.21.0/installation/bin/node",
+      "event": "captain_acceptance"
+    },
+    {
+      "arm": "tiny-direct",
+      "at": "2026-10-16T04:55:10.927Z",
+      "exit": 1,
+      "error": null,
+      "tests": 12,
+      "pass": 6,
+      "fail": 6,
+      "wallMs": 65,
+      "node": "v24.21.0",
+      "execPath": "/Users/anshunli1/.local/share/fnm/node-versions/v24.21.0/installation/bin/node",
+      "event": "captain_acceptance"
+    },
+    {
+      "at": "2026-10-16T04:55:27.375Z",
+      "event": "captain_tiny_direct_start",
+      "task": "getShanghaiParts normalize only at Intl call"
+    },
+    {
+      "at": "2026-10-16T04:55:27.376Z",
+      "event": "captain_tiny_direct_edited",
+      "task": "date parity one-line change"
+    },
+    {
+      "arm": "pickup-low",
+      "at": "2026-10-16T04:56:13.187Z",
+      "exit": 0,
+      "error": null,
+      "tests": 5,
+      "pass": 5,
+      "fail": 0,
+      "wallMs": 70,
+      "node": "v24.21.0",
+      "event": "captain_acceptance"
+    }
+  ],
+  "initialAcceptance": [
+    {
+      "arm": "serial-high",
+      "at": "2026-10-16T04:55:10.796Z",
+      "exit": 0,
+      "error": null,
+      "tests": 12,
+      "pass": 12,
+      "fail": 0,
+      "wallMs": 78,
+      "node": "v24.21.0",
+      "execPath": "/Users/anshunli1/.local/share/fnm/node-versions/v24.21.0/installation/bin/node"
+    },
+    {
+      "arm": "parallel-high",
+      "at": "2026-10-16T04:55:10.861Z",
+      "exit": 0,
+      "error": null,
+      "tests": 12,
+      "pass": 12,
+      "fail": 0,
+      "wallMs": 64,
+      "node": "v24.21.0",
+      "execPath": "/Users/anshunli1/.local/share/fnm/node-versions/v24.21.0/installation/bin/node"
+    },
+    {
+      "arm": "tiny-direct",
+      "at": "2026-10-16T04:55:10.927Z",
+      "exit": 1,
+      "error": null,
+      "tests": 12,
+      "pass": 6,
+      "fail": 6,
+      "wallMs": 65,
+      "node": "v24.21.0",
+      "execPath": "/Users/anshunli1/.local/share/fnm/node-versions/v24.21.0/installation/bin/node"
+    }
+  ],
+  "lowAcceptance": {
+    "arm": "pickup-low",
+    "at": "2026-10-16T04:56:13.187Z",
+    "exit": 0,
+    "error": null,
+    "tests": 5,
+    "pass": 5,
+    "fail": 0,
+    "wallMs": 70,
+    "node": "v24.21.0"
+  },
+  "nativePackageBenchmark": {
+    "at": "2026-10-16T03:53:34.211Z",
+    "node": "v24.21.0",
+    "platform": "darwin",
+    "arch": "arm64",
+    "iterations": 20,
+    "warmup": 1,
+    "firstMs": 3.7406250000000014,
+    "p50Ms": 1.8059999999999974,
+    "p95Ms": 2.181208999999999,
+    "minMs": 1.5239580000000004,
+    "maxMs": 2.181208999999999,
+    "files": 5,
+    "bytes": 4009,
+    "skillBytes": 3082,
+    "scope": "in-process local native packaging only; not inference/host startup/end-to-end speed"
+  },
+  "previousFalseGreen": {
+    "startedAt": "2026-10-16T03:52:51Z",
+    "finishedAt": "2026-10-16T03:55:24.748Z",
+    "command": "node --test experiments/date-boundary.test.cjs",
+    "result": {
+      "status": "passed_after_launcher_fix",
+      "timezoneRuns": 3,
+      "casesPerTimezone": 7,
+      "totalBehaviorCases": 21,
+      "normalExitCode": 0,
+      "mutationExitCode": 1,
+      "mutation": "return new Date(input.getTime()) -> return input",
+      "restored": true
+    },
+    "requested": {
+      "model": "group/auto-gpt-6-astra",
+      "effort": "low"
+    },
+    "actual": "unknown",
+    "firstFinishedAt": "2026-10-16T03:53:22.769Z",
+    "followupStartedAt": "2026-10-16T03:53:57Z",
+    "followup": "Removed inherited NODE_TEST_CONTEXT; force TAP reporter and require child tests=7 and pass=7 in all three TZ runs. Date-copy mutation injected in memory via temporary owned test-file edit, restored in finally; production source untouched.",
+    "initialValidation": {
+      "status": "false_positive",
+      "explanation": "Initial parent exit 0 did not prove child execution because NODE_TEST_CONTEXT was inherited. The initial claimed 15 cases and subsequent claimed 21 cases were not verified."
+    },
+    "launcherFixStartedAt": "2026-10-16T03:55:24.246Z"
+  },
+  "previousMutationVerification": {
+    "at": "2026-10-16T03:56:19.769Z",
+    "initialBeforeLauncherFix": {
+      "at": "2026-10-16T03:54:26.649Z",
+      "evidence": [
+        {
+          "name": "pickup-boundary-strict-greater",
+          "exit": 1,
+          "signal": null,
+          "error": null,
+          "killed": true,
+          "failureText": [
+            "✖ exact two-hour boundary is available; one millisecond short is unavailable (0.527125ms)",
+            "✖ advance interval continues across midnight and year boundary (0.08175ms)",
+            "✖ filter retains metadata and ordering without changing frozen input (0.397083ms)",
+            "ℹ fail 3",
+            "✖ failing tests:",
+            "✖ exact two-hour boundary is available; one millisecond short is unavailable (0.527125ms)",
+            "  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:",
+            "✖ advance interval continues across midnight and year boundary (0.08175ms)"
+          ]
+        },
+        {
+          "name": "date-returns-same-Date",
+          "exit": 0,
+          "signal": null,
+          "error": null,
+          "killed": false,
+          "failureText": [
+            "ℹ fail 0"
+          ]
+        },
+        {
+          "name": "date-midnight-wrong-offset",
+          "exit": 0,
+          "signal": null,
+          "error": null,
+          "killed": false,
+          "failureText": [
+            "ℹ fail 0"
+          ]
+        }
+      ]
+    },
+    "intermediateMutationSetupError": "Offset mutation initially matched a comment rather than executable code; corrected to quoted literal.",
+    "final": [
+      {
+        "name": "pickup-boundary-strict-greater",
+        "before": "start >= now",
+        "after": "start > now",
+        "exit": 1,
+        "signal": null,
+        "error": null,
+        "killed": true
+      },
+      {
+        "name": "date-returns-same-Date",
+        "before": "return new Date(input.getTime())",
+        "after": "return input",
+        "exit": 1,
+        "signal": null,
+        "error": null,
+        "killed": true
+      },
+      {
+        "name": "date-midnight-wrong-offset",
+        "before": "'T00:00:00+08:00'",
+        "after": "'T00:00:00+00:00'",
+        "exit": 1,
+        "signal": null,
+        "error": null,
+        "killed": true
+      }
+    ]
+  },
+  "limits": [
+    "One same-demand sample; not a randomized or counterbalanced speed comparison.",
+    "Member runtime mismatch: date high used Node 14; captain acceptance uses pinned Node 24.",
+    "Member timestamps are self-reported; final handoff file can be later.",
+    "Captain acceptance was prepared during/after dispatch and completed after both arms; not an end-to-end speed comparison.",
+    "Low reused an earlier member; not a fresh-thread speed comparison.",
+    "Model and effort values are requests, not actual receipts. No tokens, prices or costs received.",
+    "Two launches rejected by host thread limit before low member could run; only later reuse succeeded.",
+    "File ownership is instructional; no filesystem sandbox enforcement tested.",
+    "No real max, small model, desktop cancellation or real CLI rollback test."
+  ],
+  "replay": {
+    "at": "2026-10-16T04:59:15.273Z",
+    "node": "v24.21.0",
+    "execPath": "/Users/anshunli1/.local/share/fnm/node-versions/v24.21.0/installation/bin/node",
+    "behaviorExecutions": 126,
+    "results": [
+      {
+        "arm": "serial-high",
+        "tz": "UTC",
+        "exit": 0,
+        "tests": 12,
+        "pass": 12
+      },
+      {
+        "arm": "serial-high",
+        "tz": "Asia/Shanghai",
+        "exit": 0,
+        "tests": 12,
+        "pass": 12
+      },
+      {
+        "arm": "serial-high",
+        "tz": "America/Los_Angeles",
+        "exit": 0,
+        "tests": 12,
+        "pass": 12
+      },
+      {
+        "arm": "parallel-high",
+        "tz": "UTC",
+        "exit": 0,
+        "tests": 12,
+        "pass": 12
+      },
+      {
+        "arm": "parallel-high",
+        "tz": "Asia/Shanghai",
+        "exit": 0,
+        "tests": 12,
+        "pass": 12
+      },
+      {
+        "arm": "parallel-high",
+        "tz": "America/Los_Angeles",
+        "exit": 0,
+        "tests": 12,
+        "pass": 12
+      },
+      {
+        "arm": "pickup-low",
+        "tz": "UTC",
+        "exit": 0,
+        "tests": 5,
+        "pass": 5
+      },
+      {
+        "arm": "pickup-low",
+        "tz": "Asia/Shanghai",
+        "exit": 0,
+        "tests": 5,
+        "pass": 5
+      },
+      {
+        "arm": "pickup-low",
+        "tz": "America/Los_Angeles",
+        "exit": 0,
+        "tests": 5,
+        "pass": 5
+      },
+      {
+        "arm": "shared-writer",
+        "tz": "UTC",
+        "exit": 0,
+        "tests": 7,
+        "pass": 7
+      },
+      {
+        "arm": "shared-writer",
+        "tz": "Asia/Shanghai",
+        "exit": 0,
+        "tests": 7,
+        "pass": 7
+      },
+      {
+        "arm": "shared-writer",
+        "tz": "America/Los_Angeles",
+        "exit": 0,
+        "tests": 7,
+        "pass": 7
+      },
+      {
+        "arm": "tiny-direct",
+        "tz": "UTC",
+        "exit": 0,
+        "tests": 6,
+        "pass": 6
+      },
+      {
+        "arm": "tiny-direct",
+        "tz": "Asia/Shanghai",
+        "exit": 0,
+        "tests": 6,
+        "pass": 6
+      },
+      {
+        "arm": "tiny-direct",
+        "tz": "America/Los_Angeles",
+        "exit": 0,
+        "tests": 6,
+        "pass": 6
+      }
+    ]
+  }
+}

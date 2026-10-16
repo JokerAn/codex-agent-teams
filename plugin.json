@@ -1,6 +1,6 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "codex-agent-teams",
-  "version": "0.8.0",
+  "version": "0.8.3",
   "description": "Native Codex subagent collaboration with an optional strict delivery package"
 }

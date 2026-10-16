@@ -53,13 +53,21 @@ node src/cli.js run --config <file> --task <json>
   } else if (command === 'pack') {
     if (values.strict) {
       const { packPlugin } = await import('./plugin.js');
-      console.log(JSON.stringify(packPlugin({ configPath: values.config ?? process.env.TEAMS_CONFIG, out: values.out }), null, 2));
+      let codexBin;
+      if (values.binary !== undefined) {
+        const { resolveCodexBin } = await import('../scripts/codex-bin.js');
+        codexBin = resolveCodexBin(values.binary);
+      }
+      console.log(JSON.stringify(packPlugin({ configPath: values.config ?? process.env.TEAMS_CONFIG, out: values.out, codexBin }), null, 2));
     } else {
       if (values.config || values.binary) throw new Error('--config/--binary require --strict');
       const { packNativePlugin } = await import('./plugin-package.js');
       console.log(JSON.stringify(packNativePlugin({ out: values.out }), null, 2));
     }
   } else {
+    if (!['doctor', 'status', 'mcp', 'run', 'workspace', 'review', 'integrate', 'start', 'cancel', 'models'].includes(command)) {
+      throw new Error(`Unknown command: ${command}`);
+    }
     // Packaging/help stay dependency-free; execution loads the strict modules only here.
     const [status, progress, configuration, backend, models, workspace] = await Promise.all([
       import('./status.js'), import('./cli-progress.js'), import('./config.js'),

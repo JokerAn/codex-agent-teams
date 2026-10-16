@@ -1,0 +1,808 @@
+{
+  "startedAt": "2026-10-16T05:35:35.879Z",
+  "root": "/private/var/folders/ds/crz3lj6n3vnf2q4kx5xhnzpm0000gp/T/teams-audit-082-X2mNqz",
+  "plugin": "/Users/anshunli1/asl/code/github/codex-agent-teams",
+  "business": "/Users/anshunli1/jd/jdGit/product/web/apply-claim",
+  "node": "/Users/anshunli1/.local/share/fnm/node-versions/v24.21.0/installation/bin/node",
+  "baseline": {
+    "businessHead": "c1c87f54a5918c27787fed1763651c27363c3396",
+    "pluginHead": "dc4c50b269c036bbcc1373edd3156c1f57b0045a",
+    "pluginIndex": "f4f0ab27c1183b433cade182976c1bc0fccf248b",
+    "businessStatus": "",
+    "pluginStatus": "M  .codex-plugin/plugin.json\nM  AGENTS.md\nM  README.md\nM  UPGRADE-PLAN.md\nA  docs/APPLY-CLAIM-PROBE-2026-10-16.md\nA  docs/CURRENT.md\nA  docs/EVALUATION-0.8.0-2026-10-16.md\nA  docs/FIX-0.8.1-2026-10-16.md\nM  docs/ROADMAP.md\nM  docs/STATUS.md\nA  docs/TEAM-SCENARIOS.md\nA  docs/TODO-FIX-0.8.1-2026-10-16.md\nA  docs/evidence/apply-claim-probe-2026-10-16/captain/acceptance.cjs\nA  docs/evidence/apply-claim-probe-2026-10-16/captain/integration.cjs\nA  docs/evidence/apply-claim-probe-2026-10-16/patches/parallel-high.patch\nA  docs/evidence/apply-claim-probe-2026-10-16/patches/pickup-low.patch\nA  docs/evidence/apply-claim-probe-2026-10-16/patches/serial-high.patch\nA  docs/evidence/apply-claim-probe-2026-10-16/patches/shared-writer.patch\nA  docs/evidence/apply-claim-probe-2026-10-16/patches/tiny-direct.patch\nA  docs/evidence/apply-claim-probe-2026-10-16/replay.mjs\nA  docs/evidence/apply-claim-probe-2026-10-16/results.json\nM  package-lock.json\nM  package.json\nM  plugin.json\nM  scripts/update.js\nM  skills/team/SKILL.md\nM  src/cli.js\nM  src/plugin-package.js\nM  tests/backend.test.js\nA  tests/cli-pack.test.js\nM  tests/fixtures/fake-app-server.js\nM  tests/models.test.js\nM  tests/native-plugin.test.js\nM  tests/update.test.js\n",
+    "sourceHash": "3e581f0d35c0caacb388ec7d9aa585bb9a3954ce146dcd6a396d89b4903428b4"
+  },
+  "createdAt": "2026-10-16T05:41:57.558Z",
+  "settings": {
+    "low": {
+      "task": "/root/pickup_low_probe",
+      "model": "group/auto-gpt-6-astra",
+      "reasoning_effort": "low",
+      "fork_turns": "none",
+      "actualModel": "unknown",
+      "actualEffort": "unknown"
+    },
+    "high": {
+      "task": "/root/plugin_high_audit",
+      "model": "group/auto-gpt-6-astra",
+      "reasoning_effort": "high",
+      "fork_turns": "none",
+      "actualModel": "unknown",
+      "actualEffort": "unknown"
+    },
+    "max": {
+      "task": "/root/cache_max_review",
+      "model": "group/auto-gpt-6-astra",
+      "reasoning_effort": "max",
+      "fork_turns": "none",
+      "actualModel": "unknown",
+      "actualEffort": "unknown"
+    }
+  },
+  "acceptance": [
+    {
+      "label": "enhanced",
+      "tz": "UTC",
+      "exit": 0,
+      "tests": 9,
+      "pass": 9,
+      "fail": 0,
+      "skipped": 0,
+      "wallMs": 68,
+      "at": "2026-10-16T05:39:10.326Z"
+    },
+    {
+      "label": "enhanced",
+      "tz": "Asia/Shanghai",
+      "exit": 0,
+      "tests": 9,
+      "pass": 9,
+      "fail": 0,
+      "skipped": 0,
+      "wallMs": 65,
+      "at": "2026-10-16T05:39:10.392Z"
+    },
+    {
+      "label": "enhanced",
+      "tz": "America/Los_Angeles",
+      "exit": 0,
+      "tests": 9,
+      "pass": 9,
+      "fail": 0,
+      "skipped": 0,
+      "wallMs": 62,
+      "at": "2026-10-16T05:39:10.454Z"
+    },
+    {
+      "label": "negative-original",
+      "tz": "Asia/Shanghai",
+      "exit": 1,
+      "tests": 9,
+      "pass": 4,
+      "fail": 5,
+      "skipped": 0,
+      "wallMs": 66,
+      "at": "2026-10-16T05:39:10.521Z"
+    },
+    {
+      "label": "member-check",
+      "tz": "Asia/Shanghai",
+      "exit": 0,
+      "tests": 6,
+      "pass": 6,
+      "fail": 0,
+      "skipped": 0,
+      "wallMs": 61,
+      "at": "2026-10-16T05:39:10.582Z"
+    }
+  ],
+  "native": {
+    "at": "2026-10-16T05:38:37.045Z",
+    "node": "v24.21.0",
+    "cacheSkillEqualsSource": true,
+    "skillBytes": 3641,
+    "files": [
+      {
+        "file": ".agents/plugins/marketplace.json",
+        "bytes": 409
+      },
+      {
+        "file": "plugins/codex-agent-teams/.codex-plugin/plugin.json",
+        "bytes": 178
+      },
+      {
+        "file": "plugins/codex-agent-teams/build-info.json",
+        "bytes": 174
+      },
+      {
+        "file": "plugins/codex-agent-teams/package.json",
+        "bytes": 166
+      },
+      {
+        "file": "plugins/codex-agent-teams/skills/team/SKILL.md",
+        "bytes": 3641
+      }
+    ],
+    "totalBytes": 4568,
+    "packFunction": {
+      "firstMs": 3.956417000000002,
+      "measured": 11,
+      "medianMs": 1.921750000000003,
+      "p95Ms": 2.198709000000001,
+      "samplesMs": [
+        3.956417000000002,
+        2.1787080000000003,
+        2.198709000000001,
+        1.9962499999999999,
+        1.891458,
+        1.9697079999999971,
+        1.793167000000004,
+        1.7154159999999976,
+        1.8657910000000015,
+        2.0958749999999995,
+        1.921750000000003,
+        1.8085829999999987
+      ]
+    },
+    "cliBuild": {
+      "samples": [
+        {
+          "ms": 30.221582999999995,
+          "exit": 0
+        },
+        {
+          "ms": 28.506332999999998,
+          "exit": 0
+        },
+        {
+          "ms": 26.359667,
+          "exit": 0
+        },
+        {
+          "ms": 26.80962500000001,
+          "exit": 0
+        },
+        {
+          "ms": 26.891875,
+          "exit": 0
+        }
+      ],
+      "medianMs": 26.891875
+    },
+    "danglingOutput": {
+      "before": {
+        "type": "symlink"
+      },
+      "after": {
+        "type": "symlink"
+      },
+      "returned": false,
+      "error": "ENOTDIR: not a directory, rename '/private/var/folders/ds/crz3lj6n3vnf2q4kx5xhnzpm0000gp/T/teams-audit-082-X2mNqz/.teams-package-2zDxcD' -> '/private/var/folders/ds/crz3lj6n3vnf2q4kx5xhnzpm0000gp/T/teams-audit-082-X2mNqz/existing-dangling-output'"
+    }
+  },
+  "low": {
+    "startedAt": "2026-10-16T05:35:55Z",
+    "finishedAt": "2026-10-16T05:36:28Z",
+    "requestedModel": "group/auto-gpt-6-astra",
+    "requestedEffort": "low",
+    "actualModel": "unknown",
+    "actualEffort": "unknown",
+    "files": [
+      "pickup-time.mjs",
+      "check.mjs",
+      "handoff.json"
+    ],
+    "command": "/Users/anshunli1/.local/share/fnm/node-versions/v24.21.0/installation/bin/node --test /private/var/folders/ds/crz3lj6n3vnf2q4kx5xhnzpm0000gp/T/teams-audit-082-X2mNqz/member-low/check.mjs",
+    "result": {
+      "exitCode": 0,
+      "tests": 6,
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0
+    },
+    "remainingBoundaries": [
+      "Exclusion array entries are not individually validated: only primitive exact strings match string dateKey values.",
+      "Existing local timezone parsing and input assumptions are retained; no new dateList validation was added.",
+      "Tests use fixed local dates; DST transitions were not separately exercised."
+    ]
+  },
+  "followup": {
+    "startedAt": "2026-10-16T05:39:47.920Z",
+    "finishedAt": "2026-10-16T05:39:47.922Z",
+    "originalTaskName": "/root/pickup_low_probe",
+    "reusedExistingMember": true,
+    "newMemberCreated": false,
+    "version": "v24.21.0",
+    "execPath": "/Users/anshunli1/.local/share/fnm/node-versions/v24.21.0/installation/bin/node",
+    "fixedNow": 1907748000000,
+    "assertion": "filterPickupSliceTimes([], fixedNow, undefined) deepStrictEqual filterPickupSliceTimes([], fixedNow)",
+    "assertionExecuted": true,
+    "assertionsPassed": 1,
+    "result": "passed",
+    "modelAndEffortChanged": false
+  },
+  "high": {
+    "task": "plugin_high_audit",
+    "repository": "/Users/anshunli1/asl/code/github/codex-agent-teams",
+    "version": "0.8.2",
+    "startedAtUtc": "2026-10-16T05:36:08Z",
+    "finishedAtUtc": "2026-10-16T05:37:28Z",
+    "model": {
+      "requested": "unknown",
+      "actual": "unknown"
+    },
+    "effort": {
+      "requested": "high (task assignment label)",
+      "actual": "unknown"
+    },
+    "summary": "默认原生pack轻量且无运行时依赖；skill已覆盖队长独立产物、按任务low/high/max、容量拒绝复用、真实执行验收。未发现需要新增调度层或重构的依据。发现一项缓存核对缺陷及一项测试覆盖盲点。",
+    "findings": [
+      {
+        "id": "H1",
+        "classification": "defect",
+        "priority": "P2",
+        "title": "原生缓存额外skill未纳入安装身份，更新仍可报告成功",
+        "locations": [
+          "scripts/update.js:38",
+          "scripts/update.js:41",
+          "scripts/update.js:150",
+          "src/plugin-package.js:36"
+        ],
+        "trigger": "实际安装缓存含候选没有的skills/<other>/SKILL.md，且受核对的固定文件与候选一致。",
+        "evidenceType": "controlled reproduction",
+        "evidence": "audit-high/repro.mjs调用真实packNativePlugin和installPreparedPlugin，仅CLI命令以受控内存状态替代。复制候选到缓存后加入skills/old-runtime/SKILL.md；函数成功返回0.8.2且installedSkills为[old-runtime,team]。manifest.skills='./skills/'使额外skill处于发现根目录。",
+        "reproduction": "/Users/anshunli1/.local/share/fnm/node-versions/v24.21.0/installation/bin/node /private/var/folders/ds/crz3lj6n3vnf2q4kx5xhnzpm0000gp/T/teams-audit-082-X2mNqz/audit-high/repro.mjs (已有candidate，重跑需使用新的临时子目录)",
+        "artifact": "/private/var/folders/ds/crz3lj6n3vnf2q4kx5xhnzpm0000gp/T/teams-audit-082-X2mNqz/audit-high/repro-result.json",
+        "impact": "缓存验收不能保证原生安装仅暴露team；可漏过残留额外指令。",
+        "minimalRecommendation": "native模式核对skills实际集合仅team且team内仅预期SKILL.md，或对整个原生包文件集合做小型allowlist核对；加一个额外skill负例。无需扩大为严格依赖逐文件核对。",
+        "limit": "只证明安装验证函数可接受额外skill，未证明官方CLI正常安装会留下该内容；已知strict-delivery固定路径本来就在身份核对内，不把它当新缺陷。"
+      },
+      {
+        "id": "H2",
+        "classification": "untested boundary / test coverage gap",
+        "priority": "P2",
+        "title": "更新fixture没有模拟旧新缓存字节切换，迁移与回滚通过证据偏弱",
+        "locations": [
+          "tests/update.test.js:21",
+          "tests/update.test.js:25",
+          "tests/update.test.js:38",
+          "tests/update.test.js:55",
+          "tests/update.test.js:69"
+        ],
+        "trigger": "以这些单元测试的成功推断跨版本或strict→native迁移中的实际缓存替换与恢复正确。",
+        "evidenceType": "static inference",
+        "evidence": "fixture先从新候选复制cache，又从cache复制旧source；previousVersion通常标0.5.2，但缓存build/package实际仍是当前0.8.2。模拟plugin add仅改installed元数据/执行callback，不从current.root复制插件；remove也只清除元数据。因此普通成功/rollback用例的源、缓存字节原本相同。",
+        "impact": "现有断言验证了命令顺序、拒绝与摘要比较，但未独立证明真实旧版内容恢复或strict/native模式迁移。",
+        "minimalRecommendation": "只补一个旧新内容确实不同的native更新及失败恢复fixture，并让模拟add从当前marketplace复制、remove移除对应缓存；如维护strict迁移，再加一个strict→native转换例。",
+        "limit": "不是断言update实现已坏；历史真实CLI验证不在本轮重跑，也不能由此否定其历史证据。"
+      }
+    ],
+    "recommendations": {
+      "keep": [
+        "保留默认纯原生pack和短team skill；实测7/7原生回归无需Codex、npm或项目依赖即可构建。",
+        "保留0.8.2旧来源/缓存预检、卸载前再次核对、失败恢复及显式binary覆盖；本轮相关9/9通过。",
+        "保留队长独立产物、文件归属、容量拒绝复用和按任务请求low/high/max规则。"
+      ],
+      "cut": [
+        "当前目标不增加外置调度器、固定成员数、自动模型路由、状态页或普通任务强制合同。",
+        "strict现有能力已是显式可选，不建议为原生提速删除整套严格源码；把strict功能扩展冻结在真实严格需求内，普通原生验收继续走test:native。"
+      ],
+      "enhance": [
+        "补原生缓存额外skill拒绝与真实旧新字节变化的更新测试。",
+        "如当前宿主默认继承全部历史，可给skill第10行增加一句：使用宿主支持的上下文继承参数显式关闭历史复制。当前工具fork_turns默认all，但只属可操作性建议，未测试模型是否遵循，不能判为已复现行为缺陷。"
+      ],
+      "strictMaintenanceAssessment": "scripts/build.js:16-23明确分支，src/cli.js:53-73在pack/help外才动态导入strict模块；默认包不付strict运行时开销。strict构建仍npm ci、打包生产依赖和host探测（scripts/build.js:33-66），测试/update入口也共享strict fixture；维护负担主要是可选能力和全量回归，不是原生成员派发延迟。"
+    },
+    "tests": [
+      {
+        "command": "TMPDIR=<audit-high> <Node24> --test tests/native-plugin.test.js",
+        "actualCases": 7,
+        "passed": 7,
+        "failed": 0,
+        "durationMs": 159.172833
+      },
+      {
+        "command": "TMPDIR=<audit-high> <Node24> --test --test-name-pattern='native|recovery source' tests/update.test.js",
+        "actualCases": 9,
+        "passed": 9,
+        "failed": 0,
+        "durationMs": 267.166375
+      },
+      {
+        "command": "<Node24> <audit-high>/repro.mjs",
+        "result": "成功复现额外skill缓存被接受；受控CLI，不是官方宿主安装验证"
+      },
+      {
+        "command": "git diff --exit-code; git status --short",
+        "result": "无未暂存diff；已有34项暂存变更未修改"
+      }
+    ],
+    "permissionsAndWrites": {
+      "sourceModified": false,
+      "membersSpawned": false,
+      "mcpStarted": false,
+      "appServerStarted": false,
+      "realModelStarted": false,
+      "writes": [
+        "指定audit-high.json",
+        "指定audit-high/内受控复现文件和测试临时目录"
+      ],
+      "ignoredFiles": "未搜索或主动读取.gitignore匹配内容；update测试模块顶层加载strict模块所需已有node_modules仅由Node正常模块加载，这是执行该定向测试的必要依赖。没有读取项目真实.codex-teams、dist、teams.local.json。"
+    },
+    "limitations": [
+      "未启动官方CLI安装、MCP、App Server或真实模型；无法给出真实模型/effort回执或并行提速、费用结论。",
+      "未运行全量strict回归；strict构建和模型选择仅静态审查。",
+      "未重复队长的apply-claim副本实验。",
+      "来源/缓存检查后的并发漂移、严格包依赖未逐文件核对是docs/CURRENT.md已承认边界，不作为0.8.2新发现。",
+      "源码与已安装skill相同0.8.2来自任务前提；本成员未扫描正式插件缓存。"
+    ]
+  },
+  "leadArtifactTimestamps": {
+    "summaryCreatedAt": "2026-10-16T05:36:38.472Z",
+    "acceptanceCreatedAt": "2026-10-16T05:36:38.473Z"
+  },
+  "limits": [
+    "No token or price receipts",
+    "No comparable end-to-end serial/native/skill benchmark",
+    "No desktop stop/capacity test in this run",
+    "No real official CLI upgrade during this run",
+    "No fresh-thread filesystem isolation"
+  ],
+  "max": {
+    "review": "codex-agent-teams 0.8.2 bounded independent native-cache and rollback review",
+    "reviewer_task": "/root/cache_max_review",
+    "started_at_utc": "2026-10-16T05:38:22.464Z",
+    "finished_at_utc": "2026-10-16T05:43:20.026Z",
+    "model": {
+      "requested_model": "unknown: delegated contract does not expose the parent request model identifier",
+      "requested_effort": "max",
+      "actual_model_receipt": "unknown",
+      "actual_effort_receipt": "unknown",
+      "limitation": "max is the requested review label, not a verified inference receipt or a performance measurement"
+    },
+    "repository": "/Users/anshunli1/asl/code/github/codex-agent-teams",
+    "head": "dc4c50b269c036bbcc1373edd3156c1f57b0045a",
+    "runtime": {
+      "node": "v24.21.0",
+      "executable": "/Users/anshunli1/.local/share/fnm/node-versions/v24.21.0/installation/bin/node"
+    },
+    "scope": {
+      "reviewed_files": [
+        "src/plugin-package.js",
+        "scripts/update.js",
+        "tests/native-plugin.test.js",
+        "tests/update.test.js",
+        ".codex-plugin/plugin.json",
+        "plugin.json"
+      ],
+      "additional_reads": [
+        "AGENTS.md",
+        "docs/CURRENT.md",
+        "/Users/anshunli1/.codex/RTK.md",
+        "scripts/smoke-native.js",
+        "scripts/smoke-plugin.js (targeted rg matches only)",
+        "/private/var/folders/ds/crz3lj6n3vnf2q4kx5xhnzpm0000gp/T/teams-audit-082-X2mNqz/audit-high/repro.mjs",
+        "/private/var/folders/ds/crz3lj6n3vnf2q4kx5xhnzpm0000gp/T/teams-audit-082-X2mNqz/audit-high/repro-result.json"
+      ],
+      "source_modified": false,
+      "sole_write_path": "/private/var/folders/ds/crz3lj6n3vnf2q4kx5xhnzpm0000gp/T/teams-audit-082-X2mNqz/review-max.json",
+      "app_server_started": false,
+      "mcp_started": false,
+      "official_cli_install_executed": false,
+      "additional_models_or_members_started": false,
+      "ignored_content_read": false,
+      "official_host_schema_read": false,
+      "standard_test_suite_executed": false,
+      "standard_test_suite_omission_reason": "This task permits only the report file to be written; existing tests create temporary package/cache/state files. No existing test pass count is claimed."
+    },
+    "conclusion": {
+      "verdict": "P2 native inventory acceptance gap; P2 existing-suite discrimination gap with supplementary positive distinct-version rollback evidence; no demonstrated P1 host regression or broken rollback implementation",
+      "confirmed": [
+        "installationIdentity omits unlisted skill and runtime paths. A supplied completed controlled-CLI reproduction returns success with skills/old-runtime/SKILL.md present.",
+        "Independent execution of the existing identity function against an in-memory filesystem confirms unchanged hashes for extra skill, extra root runtime, extra skill helper, and extra skill symlink.",
+        "The ordinary rollback fixture gives old cache, old recovery source and new candidate the same packed bytes, and mock plugin add normally never copies source bytes into the cache.",
+        "Parent reports a separate actual-copy controlled CLI probe passing distinct 0.8.1-to-0.8.2 upgrade and post-new-copy restoration of old 0.8.1 bytes. This is attributed supplemental evidence, not an independent rerun by this reviewer."
+      ],
+      "not_confirmed": [
+        "An official CLI install/remove/update sequence actually retains extra files.",
+        "The official host discovers or loads the extra old-runtime skill.",
+        "An arbitrary extra runtime file starts a process or is otherwise reachable.",
+        "A real 0.8.1-to-0.8.2 or strict-to-native upgrade fails rollback or violates native behavior."
+      ],
+      "why_not_p1": "Known runtime paths are covered, the normal packer emits a clean four-file native package, and the extra filename in the reproduction is synthetic. Host retention, discovery and practical impact remain unverified. The evidence establishes a verification blind spot, not a high-impact production regression.",
+      "goal_sensitive_classification": "Under the native exact-one-skill/no-runtime goal, omitted skills deserve P2 because they may change the plugin interface. Under an explicitly limited critical-file comparison contract, unrelated inert files and unverified dependencies are design boundaries. Do not claim whole-tree integrity from the current digest."
+    },
+    "findings": [
+      {
+        "id": "NATIVE-INVENTORY",
+        "priority": "P2",
+        "status": "confirmed verifier gap; host impact conditional",
+        "title": "Fixed-path identity does not validate the native package inventory",
+        "evidence": [
+          {
+            "file": "scripts/update.js",
+            "lines": {
+              "start": 19,
+              "end": 54
+            },
+            "note": "Only fixed paths and top-level src/*.js enter the hash; regular-file and symlink checks run only on those paths. Native mode specifically rejects src and node_modules."
+          },
+          {
+            "file": "scripts/update.js",
+            "lines": {
+              "start": 97,
+              "end": 104
+            },
+            "note": "Candidate identity uses the same partial inventory."
+          },
+          {
+            "file": "scripts/update.js",
+            "lines": {
+              "start": 120,
+              "end": 135
+            },
+            "note": "Old cache and recovery source are compared using the same partial identity."
+          },
+          {
+            "file": "scripts/update.js",
+            "lines": {
+              "start": 149,
+              "end": 159
+            },
+            "note": "Installation succeeds after partial identity/version/digest checks; no exact skill or file inventory is checked."
+          },
+          {
+            "file": "scripts/update.js",
+            "lines": {
+              "start": 168,
+              "end": 179
+            },
+            "note": "Rollback also compares the same partial identity."
+          },
+          {
+            "file": ".codex-plugin/plugin.json",
+            "lines": {
+              "start": 2,
+              "end": 5
+            },
+            "note": "The manifest points skills at the entire ./skills/ directory; it does not name only skills/team."
+          },
+          {
+            "file": "src/plugin-package.js",
+            "lines": {
+              "start": 40,
+              "end": 48
+            },
+            "note": "The normal native packer emits exactly four files: manifest, package metadata, team skill and build info."
+          },
+          {
+            "file": "tests/native-plugin.test.js",
+            "lines": {
+              "start": 20,
+              "end": 28
+            },
+            "note": "One-skill shape is asserted for a fresh packed output, not for the installed cache."
+          },
+          {
+            "file": "tests/update.test.js",
+            "lines": {
+              "start": 69,
+              "end": 80
+            },
+            "note": "Native update coverage checks success and known src residue, but not arbitrary extra skill/runtime paths."
+          },
+          {
+            "file": "scripts/smoke-native.js",
+            "lines": {
+              "start": 28,
+              "end": 40
+            },
+            "note": "Smoke finds team positively and checks named residual paths; it does not assert the exact discovered skill set, and file count is only reported."
+          }
+        ],
+        "behavior": "Extra skills/old-runtime/SKILL.md, old-runtime.mjs, skills/team/scripts/helper.js or skills/old-runtime symlink do not affect installationIdentity. Known skills/strict-delivery/SKILL.md, .mcp.json, src and node_modules are covered; do not describe all runtime residue as invisible.",
+        "impact": "A cache can be accepted despite differing from the intended native package. Extra discoverable instructions could affect later collaboration; standalone unreferenced runtime files alone prove only extra payload, not execution.",
+        "limits": "No official-host inventory result was obtained. The broad skills manifest is a reason to test discovery, not proof of discovery."
+      },
+      {
+        "id": "ROLLBACK-FIXTURE",
+        "priority": "P2 (test-quality gap)",
+        "status": "confirmed existing-fixture weakness; parent reports supplementary distinct-content upgrade and rollback success",
+        "title": "Rollback tests cannot distinguish restoration of old bytes from reuse of new bytes in their default fixture",
+        "evidence": [
+          {
+            "file": "tests/update.test.js",
+            "lines": {
+              "start": 21,
+              "end": 25
+            },
+            "note": "One new package is built and copied into the old cache. previousVersion is usually only a 0.5.2 list-metadata label; actual package/build bytes remain current."
+          },
+          {
+            "file": "tests/update.test.js",
+            "lines": {
+              "start": 30,
+              "end": 39
+            },
+            "note": "The old recovery source is copied from that same cache."
+          },
+          {
+            "file": "tests/update.test.js",
+            "lines": {
+              "start": 54,
+              "end": 60
+            },
+            "note": "Mock remove changes state only; mock add invokes hooks and returns the same cache without installing selected marketplace contents."
+          },
+          {
+            "file": "tests/update.test.js",
+            "lines": {
+              "start": 94,
+              "end": 101
+            },
+            "note": "Several restoration hooks copy from the NEW candidate, which happens to equal the old content."
+          },
+          {
+            "file": "tests/update.test.js",
+            "lines": {
+              "start": 116,
+              "end": 120
+            },
+            "note": "A full-cache restoration hook likewise copies the NEW candidate."
+          },
+          {
+            "file": "tests/update.test.js",
+            "lines": {
+              "start": 143,
+              "end": 149
+            },
+            "note": "The source/install/cache rollback loop therefore does not prove restoration after a distinct new package overwrote old bytes."
+          },
+          {
+            "file": "tests/update.test.js",
+            "lines": {
+              "start": 169,
+              "end": 178
+            },
+            "note": "Same-version post-restore drift tests do provide meaningful negative identity checks."
+          },
+          {
+            "file": "tests/update.test.js",
+            "lines": {
+              "start": 181,
+              "end": 231
+            },
+            "note": "Pre-mutation recovery-source and legacy checks remain meaningful."
+          }
+        ],
+        "behavior": "A simulated rollback that returns old metadata but leaves current candidate bytes can pass default tests because previousIdentity already describes those candidate bytes. In the corrupt-cache case, corruption happens before the old source is copied and before the old identity is taken; the mock install leaves those old bytes in place.",
+        "surviving_value": "The tests still exercise call ordering, metadata restoration, early preservation, known-file mismatch detection and explicit restoration-drift rejection. Calling the entire rollback suite invalid would be inaccurate.",
+        "impact": "The existing repository suite alone is insufficient evidence for real distinct-content rollback. The parent actual-copy probe now supplies positive controlled evidence for that path; no implementation failure is claimed."
+      }
+    ],
+    "design_boundaries": [
+      {
+        "boundary": "Dependencies and all unlisted runtime assets are not recursively fingerprinted.",
+        "evidence": [
+          {
+            "file": "docs/CURRENT.md",
+            "lines": {
+              "start": 9,
+              "end": 14
+            },
+            "note": "The scope explicitly limits source/cache comparison to key files and excludes per-file dependency checking."
+          },
+          {
+            "file": "scripts/update.js",
+            "lines": {
+              "start": 177,
+              "end": 180
+            },
+            "note": "The recovery message explicitly limits its guarantee to key files and excludes full runtime dependency checking."
+          }
+        ],
+        "classification": "Declared design limitation for strict dependency integrity; do not escalate unrelated inert files to P1 without activation/reachability evidence. Native skill inventory is separately actionable because it is part of the advertised native interface."
+      },
+      {
+        "boundary": "Concurrent external changes after a check are not excluded.",
+        "evidence": [
+          {
+            "file": "docs/CURRENT.md",
+            "lines": {
+              "start": 9,
+              "end": 14
+            },
+            "note": "Post-check drift by other processes is already declared."
+          }
+        ],
+        "classification": "Known design limitation; this review does not propose an atomic transaction or broad updater rewrite."
+      }
+    ],
+    "minimal_protection": [
+      {
+        "target": "scripts/update.js installationIdentity native branch",
+        "change": "For build.mode === native, enumerate the small plugin tree with lstat, reject links and unexpected entry types, and enforce the exact allowed files plus their parent directories. Keep the existing critical-content hashing and rollback state machine.",
+        "allowed_files": [
+          ".codex-plugin/plugin.json",
+          "package.json",
+          "build-info.json",
+          "skills/team/SKILL.md"
+        ],
+        "allowed_directories_below_root": [
+          ".codex-plugin",
+          "skills",
+          "skills/team"
+        ],
+        "reason": "One shared guard covers candidate validation, old cache/source preflight, installed cache and rollback verification. Comparing two full trees alone would still accept an equally polluted candidate/cache; the native shape invariant must also be enforced.",
+        "compatibility": "If the official host writes necessary sidecar files inside the plugin root, first establish those names from real receipts and permit only a narrow documented exception. No such sidecars were established in this review.",
+        "cost": "Native payload is four files, so bounded enumeration is a small local operation. No wall-clock or end-to-end speed claim is made."
+      },
+      {
+        "target": "tests/update.test.js fixture",
+        "change": "Construct valid old and new packages with intentionally different bytes, versions and digests; mock plugin add must copy the selected marketplace into its installed cache and derive metadata from that copy. Snapshot old bytes before mutation. Trigger failure only after asserting that new bytes have actually replaced old bytes.",
+        "reason": "Restoration of a distinct prior state must become necessary for the positive test to pass."
+      }
+    ],
+    "discriminating_regressions": [
+      {
+        "id": "EXTRA-NATIVE-ENTRY",
+        "setup": "Clean native candidate; controlled install copies it, then adds one unexpected entry.",
+        "cases": [
+          "skills/old-runtime/SKILL.md",
+          "old-runtime.mjs",
+          "skills/team/scripts/helper.js",
+          "unexpected skill directory symlink"
+        ],
+        "expected": "The installed cache is rejected and cleanup/rollback is verified. Each extra must be absent from the candidate so the test detects inventory mismatch.",
+        "control": "A clean four-file package still succeeds; known src and strict-delivery checks remain covered."
+      },
+      {
+        "id": "POLLUTED-CANDIDATE-OR-RECOVERY",
+        "setup": "Independently pollute candidate, old cache, and old recovery source; also test identical unexpected entries in both sides of a comparison.",
+        "expected": "Native shape validation rejects before destructive plugin mutation. Equal pollution must not pass merely because two hashes match.",
+        "control": "Assert the call log contains no plugin removal/add for preflight failures and that old bytes remain unchanged."
+      },
+      {
+        "id": "DISTINCT-UPGRADE-ROLLBACK",
+        "setup": "Old native package A and new native package B have different valid version metadata, team skill text and source digest. Mock install really copies B. Inject a single failure after successful new-cache creation or during subsequent verification; recovery really copies A.",
+        "expected": "Assert new bytes existed before the failure, then compare restored cache bytes with the saved A snapshot and assert they differ from B. Check old marketplace, enabled state and version.",
+        "negative_control": "Make restoration falsely return old version metadata while copying/retaining B: updater must report recovery incomplete / old cache content not restored.",
+        "extensions": [
+          "Repeat with equal version labels but different valid content/digests to prove content identity, not only version checks.",
+          "Include an omitted-installedPath list response with genuinely separate versioned cache paths.",
+          "Include strict-to-native A/B layouts if that upgrade path is part of the release acceptance target."
+        ]
+      },
+      {
+        "id": "OFFICIAL-HOST-FOLLOWUP-NOT-EXECUTED",
+        "setup": "In a separately authorized temporary CODEX_HOME, reproduce the official CLI same-version and cross-version reinstall sequence with deliberate residue, then inspect the resulting cache inventory.",
+        "expected": "First establish whether the CLI preserves extras. Separately use host skills/list with forceReload to assert the exact plugin skill set; checking that team exists is insufficient.",
+        "limits": "Host enumeration requires a permitted host session. It was expressly prohibited in this review and was not run. Discovery still does not by itself prove an extra runtime process launches."
+      }
+    ],
+    "verification": {
+      "mode": "read-only static review plus in-memory execution of the unchanged installationIdentity function extracted from scripts/update.js",
+      "actual_filesystem_or_official_cli_equivalence_claimed": false,
+      "baseline_sha256": "4809a8d07f7292bbb23fe0af3e3e0d50f99efb96b5a6044afe3d7d2c2a632537",
+      "cases": [
+        {
+          "name": "extra skill",
+          "observation": "unchanged identity"
+        },
+        {
+          "name": "extra root runtime",
+          "observation": "unchanged identity"
+        },
+        {
+          "name": "extra skill runtime asset",
+          "observation": "unchanged identity"
+        },
+        {
+          "name": "extra skill symlink",
+          "observation": "unchanged identity"
+        },
+        {
+          "name": "known strict skill",
+          "observation": "different identity"
+        },
+        {
+          "name": "known team skill modified",
+          "observation": "different identity"
+        },
+        {
+          "name": "known runtime src",
+          "observation": "throws native residue error"
+        },
+        {
+          "name": "known node_modules",
+          "observation": "throws native residue error"
+        },
+        {
+          "name": "known MCP config",
+          "observation": "different identity"
+        }
+      ],
+      "tooling_note": "The first harness attempt stopped at its extraction-boundary assertion before executing the function; trimming trailing whitespace corrected the harness, and the second run completed all nine cases. No product-source change was made.",
+      "high_reproduction": {
+        "reviewed_code_lines": [
+          9,
+          30
+        ],
+        "reported_extra_skill": "old-runtime",
+        "reported_version": "0.8.2",
+        "reported_result": "installPreparedPlugin returned success",
+        "rerun_by_this_review": false,
+        "performance_limit": "The reported approximately 3.16 ms is a controlled command-adapter result, not official CLI, host discovery, or model performance."
+      }
+    },
+    "reviewed_file_sha256": {
+      "src/plugin-package.js": "4708103ac5e865c5c6ff9f4e392e8d8c8d240953487f4ac95e368565aadd91b0",
+      "scripts/update.js": "ce7006249d93ed67ed525fd2b27055410f409a913f5dde8ada86b9f1560cf7b2",
+      "tests/native-plugin.test.js": "cebc8ef49e697c524881a7d1ed50028ad3d9925276cbe689969cb3919a13a218",
+      "tests/update.test.js": "33dcca2480d50a8998aa7147961feb0f276829a54d4c6d076dbb21a678a22ddb",
+      ".codex-plugin/plugin.json": "38c914e5c17d1d167483d3f8cc043cba3983ab40308841b17fe15794a3e975e2",
+      "plugin.json": "51bd07df9e7153b10223c6cb808a3b6346ac27df150d445e7e0804cdaa07f815"
+    },
+    "handoff": "Bounded review complete. P2: native extra-skill inventory is omitted by fixed-path acceptance. Existing rollback fixture has P2 discrimination weakness, but parent actual-copy simulation passed distinct 0.8.1→0.8.2 update and restoration of old bytes after failure; this is not proof of a broken implementation. Minimum follow-up: exact native inventory guard plus preserve the distinct-content copying probe as a regression. Official CLI residue and actual host skill discovery remain unverified. No extra service or inference was started.",
+    "parent_followup_evidence": {
+      "provenance": "Parent /root reported completion after this independent review; the probe was not reread or rerun in this bounded subreview.",
+      "artifact": "/Users/anshunli1/asl/code/github/codex-agent-teams/docs/evidence/native-team-082-2026-10-16/update-probe.mjs",
+      "method": "Controlled CLI adapter that actually copies marketplace/cache bytes; not the official CLI or host.",
+      "reported_results": [
+        "Clean fresh native installation passes.",
+        "Native cache containing an extra skill is still accepted.",
+        "Update from valid 0.8.1 old bytes to genuinely distinct 0.8.2 new bytes passes.",
+        "Injected failure after copying the new cache successfully restores old 0.8.1 bytes."
+      ],
+      "interpretation": "Supplementary evidence positively exercises the real distinct-content rollback path in a copying simulation. The repository fixture weakness remains a test-suite gap and must not be described as proof that rollback implementation is broken."
+    }
+  },
+  "finishedAt": "2026-10-16T05:45:02.356Z",
+  "updateProbe": {
+    "node": "v24.21.0",
+    "method": "Controlled CLI adapter with actual cache removal and copying; not official CLI",
+    "script": "update-probe.mjs",
+    "scenarios": [
+      {
+        "name": "clean-fresh",
+        "accepted": true,
+        "version": "0.8.2",
+        "skills": [
+          "team"
+        ]
+      },
+      {
+        "name": "extra-skill-accepted",
+        "accepted": true,
+        "version": "0.8.2",
+        "skills": [
+          "old-runtime",
+          "team"
+        ],
+        "classification": "P2 verifier gap reproduced"
+      },
+      {
+        "name": "distinct-version-update",
+        "accepted": true,
+        "oldVersion": "0.8.1",
+        "version": "0.8.2",
+        "distinctBytesAsserted": true
+      },
+      {
+        "name": "distinct-version-rollback",
+        "accepted": false,
+        "restoredVersion": "0.8.1",
+        "oldBytesRestored": true,
+        "injectedFailure": "after copying new cache"
+      }
+    ]
+  },
+  "delivery": {
+    "pluginHead": "dc4c50b269c036bbcc1373edd3156c1f57b0045a",
+    "pluginIndex": "f4f0ab27c1183b433cade182976c1bc0fccf248b",
+    "businessStatus": "",
+    "implementationChanged": false,
+    "installedCacheChanged": false,
+    "newChangesStaged": false
+  }
+}
