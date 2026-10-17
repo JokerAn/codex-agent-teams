@@ -1,0 +1,74 @@
+{
+  "macos-node24.21-coverage.txt": {
+    "originalPath": "/tmp/teams-coverage-startup-mac2421.tap",
+    "sha256Original": "8054cee01a662adcfcaf8bd2838a0f4b5f6cdce979367b303a3f459c41b3200e",
+    "counts": {
+      "tests": 437,
+      "pass": 437,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 194428.823333
+    }
+  },
+  "ubuntu-node24.0-coverage.txt": {
+    "originalPath": "/Users/anshunli/单纯回话/codex-agent-teams/dist/node240-linux-ef6zn6_b/startup-final-240.tap",
+    "sha256Original": "849a65dd51a2e2d1f35420fcdea7dfe4fcd15a02c0a5f8e549833d3f5f12b85a",
+    "counts": {
+      "tests": 436,
+      "pass": 436,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 75089.782438
+    }
+  },
+  "ubuntu-node24.21-coverage.txt": {
+    "originalPath": "/Users/anshunli/单纯回话/codex-agent-teams/dist/node240-linux-ef6zn6_b/startup-final-2421.tap",
+    "sha256Original": "f1c3e8cc9e98b4c65a6d656b98b962814a03ea511f9bc3e05ba780d9e63bd0e0",
+    "counts": {
+      "tests": 436,
+      "pass": 436,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 57905.845008
+    }
+  },
+  "macos-focused.txt": {
+    "originalPath": "/tmp/teams-coverage-startup-focused.tap",
+    "sha256Original": "b5ffed9a7f528fb9d8727e523a1c71f20450e2715f7522086b630f6b899bc159",
+    "counts": {
+      "tests": 28,
+      "pass": 28,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 18437.628542
+    }
+  },
+  "ubuntu-node24.0-focused.txt": {
+    "originalPath": "/Users/anshunli/单纯回话/codex-agent-teams/dist/node240-linux-ef6zn6_b/startup-focused.tap",
+    "sha256Original": "20a9fcce0902956a091f440910773c062e11044e9f2d93b440a3216ce019a022",
+    "counts": {
+      "tests": 78,
+      "pass": 78,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 22361.743459
+    }
+  },
+  "initial-truncated-profile-repro.txt": {
+    "originalPath": "/tmp/teams-084-coverage-minimal-repro.tap",
+    "sha256Original": "97a589e73b965f4c1135c5a44c3c913c6f8409a3fa3277bf8035d36508875cd0",
+    "counts": {
+      "tests": 1,
+      "pass": 1,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 1056.172525
+    }
+  }
+}

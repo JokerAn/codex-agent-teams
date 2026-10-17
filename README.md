@@ -20,17 +20,25 @@
 
 成员可以接收后续指令；模型或强度的切换必须通过宿主支持的参数，不能只发一句“升到high”就声称已切换。队长复核实际改动和测试执行数量，不能只看退出码；验收可疑时用负对照确认能报错。原生工具不可用时会说明，不静默切到外置执行器。
 
-并行写入先明确文件归属，共享接口和配置由队长统筹；冲突先串行或重新分工。成员只短交接改动、证据和缺口，缺信息或小修优先复用原成员，不发送长日志或整段源码；环境故障不自动升级成重跑，不无限重试。
+**0.8.5 补齐原生协作交接规则，当前为源码候选，尚未发布。** 有跨成员依赖时，派发前约定接口、入参、返回值、失败语义、兼容要求及负责人；接口变更通知所有消费者及相关测试替身。独立任务无需额外契约文档。
+
+文件归属是协作约定，实际权限以宿主为准。派发与交接核对起始状态、声明范围和实际修改清单，包含格式化或生成工具的附带改动；共享目录的整个 diff 不能直接归给某个成员。发生越界改动先停止对该路径继续写入、查明归属，再协调修复；同文件修改先串行或交接所有权，保留其他人的内容。
+
+成员优先做局部验证，指定负责人在依赖就绪后完成集成全量测试及最终构建；有跨模块影响时可以说明理由扩大检查。共享输出目录、固定端口等验证串行执行。交接附命令、退出码、实际用例数、范围、环境、依赖就绪情况和验证前后的相关代码/依赖状态；含未提交改动时仅记录 HEAD 不够，可用文件指纹。区分“局部验证通过”“等待依赖/集成验证”和“集成验证通过”；验证期间输入变化需标明结果不代表稳定快照，并在稳定后复验。其他成员文件中的失败也要说明原因、依赖和复验负责人。
+
+有价值的独立审查可在接口或首批实现可检查时并行开始，重要且可复现的发现先交付，保留推测与未验证方向的边界，并按约定范围结束。成员简短交接改动、证据和缺口，缺信息或小修优先复用原成员；环境故障不自动升级成重跑，不无限重试。
+
+用户要求复盘时，复用宿主时间戳、调用、用量记录和状态给出可追溯的简短统计。累计 token 的口径及父子会话归属未确认时不相加，不把成员时长总和当作节省时间，不把创建受理当作实际模型/强度回执；缺失数据标未知，没有可比基线时不宣称净提速或省钱。普通任务无需额外统计服务或长报告。
 
 ### 构建与安装
 
-使用准备好的默认发布包时，不需要Node.js或项目依赖；需要宿主提供插件安装和原生子Agent能力。当前实际验证环境为macOS arm64、Codex CLI `0.162.0-alpha.17.2`；其他宿主版本的插件与子Agent接口需要各自确认，不能从本机通过推断全部兼容。
+使用准备好的默认发布包时，不需要Node.js或项目依赖；需要宿主提供插件安装和原生子Agent能力。当前实际验证环境为macOS arm64、Codex CLI `0.163.0-alpha.10.2`；其他宿主版本的插件与子Agent接口需要各自确认，不能从本机通过推断全部兼容。
 
-下载并解压 `codex-agent-teams-native-0.8.3.tar.gz` 后，添加其中的marketplace目录：
+下载并解压 `codex-agent-teams-native-0.8.5.tar.gz` 后，添加其中的marketplace目录：
 
 ```sh
-tar -xzf codex-agent-teams-native-0.8.3.tar.gz
-codex plugin marketplace add ./codex-agent-teams-native-0.8.3
+tar -xzf codex-agent-teams-native-0.8.5.tar.gz
+codex plugin marketplace add ./codex-agent-teams-native-0.8.5
 codex plugin add codex-agent-teams@codex-agent-teams-local
 ```
 
@@ -53,9 +61,9 @@ npm run build
 维护者可从该目录准备发行资产。以下示例使用本次待发布版本，打包时包含隐藏的marketplace清单：
 
 ```sh
-npm run build -- --out ./dist/codex-agent-teams-native-0.8.3
-tar -czf ./dist/codex-agent-teams-native-0.8.3.tar.gz -C ./dist codex-agent-teams-native-0.8.3
-shasum -a 256 ./dist/codex-agent-teams-native-0.8.3.tar.gz
+npm run build -- --out ./dist/codex-agent-teams-native-0.8.5
+tar -czf ./dist/codex-agent-teams-native-0.8.5.tar.gz -C ./dist codex-agent-teams-native-0.8.5
+shasum -a 256 ./dist/codex-agent-teams-native-0.8.5.tar.gz
 ```
 
 如需通过本机官方 CLI 更新：
@@ -63,6 +71,12 @@ shasum -a 256 ./dist/codex-agent-teams-native-0.8.3.tar.gz
 ```sh
 npm run update
 ```
+
+更新器按有效 `CODEX_HOME` 持有跨进程排他锁，覆盖读取旧状态、安装验收和失败恢复；同一 home 的第二个更新会在读取安装状态前明确拒绝。异常退出留下的锁不会仅凭父 PID 已退出就自动删除：确认原更新和 CLI 子进程均退出后，按错误提示核对并清理锁。
+
+删除旧缓存前会复制并核对恢复副本。失败回滚从该副本安装，避免旧来源后续变化导致原字节丢失；错误会报告保留的恢复目录。回滚引用的副本应保留至后续成功更新并确认缓存来源后再清理。外部操作改变安装所有权时，更新器保留现场和副本，停止自动回滚。
+
+候选与安装结果都会校验模式、版本和 native 内容摘要；异常候选在安装修改前拒绝。strict 仍只保证既有关键文件身份，运行依赖没有逐文件验收。
 
 **默认 update 会把旧严格安装替换为原生 skill 包。** 若仍需旧外置能力，使用下节的 `--strict`。更新需要 Codex CLI，保留任务退出/交接检查与失败恢复；先结束有关 Team/MCP 会话，不会自动重启宿主或删除项目历史数据。
 
@@ -114,4 +128,6 @@ node scripts/smoke-plugin.js   # 临时官方宿主验证严格包，无模型�
 
 运行严格源码命令前需要安装项目依赖。无推理smoke只使用临时Codex home，不更新用户正式配置；真实模型与效率对照分别记录。自动化通过不证明比原生更快。
 
-[当前开发摘要](docs/CURRENT.md) · [当前计划](UPGRADE-PLAN.md) · [0.8.3修复记录](docs/FIX-0.8.3-2026-10-16.md) · [场景验收](docs/TEAM-SCENARIOS.md) · [状态与证据](docs/STATUS.md)
+[当前开发摘要](docs/CURRENT.md) · [0.8.5协作规则升级](docs/NATIVE-COORDINATION-0.8.5-2026-10-18.md) · [当前计划](UPGRADE-PLAN.md) · [0.8.4修复记录](docs/FIX-0.8.4-2026-10-16.md) · [场景验收](docs/TEAM-SCENARIOS.md) · [状态与证据](docs/STATUS.md)
+
+CI 的功能与覆盖率分别覆盖 Ubuntu/macOS、Node 24.0.0/24.x。纯协议与空转测试 fixture 在 Node 启动前清除覆盖率环境，只隔离 fixture 及其后代，避免刻意 crash/kill 留下截断 JSON；真实 guard、CLI、MCP、runtime 子进程继续采集。没有丢弃损坏 JSON 或忽略覆盖率失败；失败诊断进入 CI 日志。

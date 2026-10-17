@@ -1,6 +1,6 @@
 {
   "name": "codex-agent-teams",
-  "version": "0.8.3",
+  "version": "0.8.5",
   "description": "Native Codex subagent collaboration with an optional strict delivery package",
   "skills": "./skills/"
 }

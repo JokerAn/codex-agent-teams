@@ -1,0 +1,74 @@
+✔ one attempt binds a fresh worktree, real command and review evidence without changing the source (4234.967084ms)
+✔ worktree command uses the current attempt snapshot including explicit dirty baseline content (4059.347459ms)
+✔ default dirty rejection fails the attempt before spawning the member and retains its bound failure (572.53875ms)
+✔ member blockers preserve their worktree and do not execute the verification command (2101.207292ms)
+✔ verification failure preserves the member report but cannot pass review or unlock dependents (3825.753208ms)
+✔ read-only member changes stop verification before any command runs (2712.8855ms)
+✔ an exit-zero command that changes task inputs does not make the attempt reviewable (3845.661208ms)
+✔ review refuses source edits after validation and cleanup remains blocked until explicit cancel (4068.895ms)
+✔ review refuses modified command log evidence (4228.712333ms)
+✔ review refuses missing command log evidence (3691.386708ms)
+✔ retry creates a new worktree and verification id; old review and old workspace cannot satisfy it (6877.740292ms)
+✔ mismatched current-attempt verification receipt cannot pass review (2786.407625ms)
+✔ cancelling a task during its command keeps it active until the bound process exits (2820.170875ms)
+✔ the task deadline also covers its bound command and failed receipts cannot unlock a task (3911.405042ms)
+✔ verified-worktree tasks are exclusive; ordinary read-only tasks retain their existing execution path (1758.415541ms)
+✔ controlled App Server protocol fixture and CLI complete a bound attempt without calling a model (6996.434875ms)
+✔ task packet includes the explicit verification contract but not runtime ids or old logs (0.281792ms)
+✔ workspace binding transaction rolls back the task pointer when SQLite refuses the workspace row (298.298375ms)
+✔ a live member group blocks verification, retry and workspace deletion even after a backend report (2236.096833ms)
+✔ crash during a bound command preserves the atomic binding and refuses live orphan recovery (2701.152417ms)
+✔ cancelled before preparation creates no workspace and never launches a member (192.385375ms)
+✔ timed_out before preparation creates no workspace and never launches a member (192.38675ms)
+✔ a synchronous preparation that exhausts the deadline never launches a member (2838.859042ms)
+✔ verification-generated ignored output can pass unchanged-input review and requires explicit cleanup (3570.650959ms)
+✔ native packaging rejects missing or invalid release versions before creating output (113.763417ms)
+✔ native packaging requires nonempty package and plugin metadata (35.714917ms)
+✔ native packaging rejects additional manifest resources and unknown fields (22.023334ms)
+✔ native packaging accepts a release with prerelease and build identifiers (14.840459ms)
+✔ default package contains only one native skill and metadata; relocation needs no local config or runtime (13.053666ms)
+✔ native packaging rejects a linked source path before creating output: skills (6.250375ms)
+✔ native packaging rejects a linked source path before creating output: skills/team (4.748458ms)
+✔ native packaging rejects a linked source path before creating output: skills/team/SKILL.md (6.782333ms)
+✔ native package remains readable after removing its source checkout (12.294625ms)
+✔ native build succeeds from a dependency-free checkout with no Codex or npm executable (160.975ms)
+✔ native output preserves existing files and refuses recursive/symlinked source destinations (1.731916ms)
+✔ canonical home aliases share one lock, which can be reacquired after release (44.021875ms)
+✔ releasing a replaced lock preserves the other owner record (19.486125ms)
+✔ linked and partial locks are refused without following or deleting them (3.052334ms)
+✔ a dead updater lock is retained until its CLI child exit can be checked manually (94.118666ms)
+ℹ tests 39
+ℹ suites 0
+ℹ pass 39
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 70690.606209
+ℹ start of coverage report
+ℹ ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ℹ file                | line % | branch % | funcs % | uncovered lines
+ℹ ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ℹ src                 |        |          |         |
+ℹ  actions.js         |  54.24 |     6.06 |   20.00 | 8-14 23 26-31 45-52 54-58
+ℹ  app-server.js      |  78.44 |    35.34 |   55.56 | 16-20 68-74 82-88 157-158 170-171 178-184 205-209 212-217 220-224 227-228 251 257-261 288-289 293-295 298-301 307-308 312-315
+ℹ  cli-progress.js    | 100.00 |    83.33 |  100.00 |
+ℹ  cli.js             |  47.98 |    10.00 |   33.33 | 21-52 54-66 69-70 83-85 87-93 95-105 118-121 128-131 134-150 156-158 165-166 168-170 187-188 190-195 197-198 200-204
+ℹ  config.js          | 100.00 |    21.43 |  100.00 |
+ℹ  contracts.js       |  79.10 |    63.64 |   83.33 | 48-51 54-59 63 65-66 68-72 94-95 122-123 125-126 128-129 131-132
+ℹ  managed-process.js |  57.14 |   100.00 |   33.33 | 14-25
+ℹ  models.js          |  93.55 |    51.43 |   92.86 | 10-13 18-19
+ℹ  plugin-package.js  |  88.73 |    70.13 |  100.00 | 31-32 57-58 60-61 65-66 71-72 83-84 98-99 102-103
+ℹ  policy.js          |  80.26 |    50.00 |   75.00 | 4-8 11-13 16 18-19 21-23 43
+ℹ  preflight.js       |  78.48 |    18.75 |   50.00 | 13-16 61 64-71 74-77
+ℹ  process-group.js   |  59.09 |    85.71 |   83.33 | 13-21
+ℹ  process-guard.js   |  90.74 |    58.82 |   60.00 | 32-33 44-46
+ℹ  runtime.js         |  79.17 |    73.71 |   84.21 | 35-39 41-44 83 173-176 182 190-213 260-261 281-283 287-329 355-358 378-386 440 492-496
+ℹ  status.js          |  50.33 |    50.93 |   73.08 | 33-55 121-123 146-156 158-197 204-211 214-224 246-248 250 253-259 262-306
+ℹ  store.js           |  98.72 |    79.76 |  100.00 | 44-45
+ℹ  verification.js    | 100.00 |    58.21 |   73.91 |
+ℹ  workspace.js       |  79.23 |    59.60 |   84.62 | 40-41 80-82 90-92 194-203 205-217 219-224 226-239 248-250
+ℹ ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ℹ all files           |  75.88 |    57.09 |   76.45 |
+ℹ ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ℹ end of coverage report

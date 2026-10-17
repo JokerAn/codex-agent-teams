@@ -1,0 +1,71 @@
+{
+  "hypothesis": "tests/config.test.js:39 uses URL.pathname as an OS path; Unicode and spaces are encoded; product code uses fileURLToPath",
+  "scope": "test harness defect; product CLI status checks passed for Unicode/space paths",
+  "testResults": [
+    {
+      "name": "config-unicode-original",
+      "args": [
+        "--test",
+        "tests/config.test.js"
+      ],
+      "cwd": "/Users/anshunli/单纯回话/codex-agent-teams",
+      "exitCode": 1,
+      "summary": [
+        "✖ the same global config observes either CLI cwd without creating a workspace owner (32.022292ms)",
+        "ℹ tests 2",
+        "ℹ pass 1",
+        "ℹ fail 1",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "✖ failing tests:",
+        "✖ the same global config observes either CLI cwd without creating a workspace owner (32.022292ms)"
+      ]
+    },
+    {
+      "name": "config-ascii-control",
+      "args": [
+        "--test",
+        "tests/config.test.js"
+      ],
+      "cwd": "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-20261016-BSbVr2/ascii-control",
+      "exitCode": 0,
+      "summary": [
+        "ℹ tests 2",
+        "ℹ pass 2",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0"
+      ]
+    }
+  ],
+  "encodedPath": "/Users/anshunli/%E5%8D%95%E7%BA%AF%E5%9B%9E%E8%AF%9D/codex-agent-teams/src/cli.js",
+  "decodedPath": "/Users/anshunli/单纯回话/codex-agent-teams/src/cli.js",
+  "actualCliChecks": [
+    {
+      "cwd": "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-20261016-BSbVr2/实际项目 空格/项目A",
+      "workspaceArgs": [],
+      "exitCode": 0,
+      "target": "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-20261016-BSbVr2/实际项目 空格/项目A",
+      "stateExists": false
+    },
+    {
+      "cwd": "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-20261016-BSbVr2/实际项目 空格/项目B",
+      "workspaceArgs": [],
+      "exitCode": 0,
+      "target": "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-20261016-BSbVr2/实际项目 空格/项目B",
+      "stateExists": false
+    },
+    {
+      "cwd": "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-20261016-BSbVr2/实际项目 空格/项目A",
+      "workspaceArgs": [
+        "--workspace",
+        "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-20261016-BSbVr2/实际项目 空格/项目B"
+      ],
+      "exitCode": 0,
+      "target": "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-20261016-BSbVr2/实际项目 空格/项目B",
+      "stateExists": false
+    }
+  ],
+  "sourceModified": false,
+  "probeCorrection": "Initial probe compared /var to canonical /private/var without realpath; corrected expected values to realpath before assertions. No product fix."
+}

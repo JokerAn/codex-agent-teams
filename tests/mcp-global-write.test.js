@@ -1,3 +1,4 @@
+import { writeFixtureExecutable } from './fixtures/coverage.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
@@ -27,7 +28,7 @@ test('global SDK connection writes, reviews and integrates two Git projects into
     return { workspace, git, userContent, head: git(['rev-parse', 'HEAD']), index: readFileSync(join(workspace, '.git/index')) };
   });
   const binary = join(root, 'controlled-write-codex'), configPath = join(root, 'global.config.json');
-  writeFileSync(binary, `#!/usr/bin/env node\nprocess.argv[2]='write-runtime';await import(${JSON.stringify(new URL('./fixtures/fake-app-server.js', import.meta.url).href)});\n`, { mode: 0o755 });
+  writeFixtureExecutable(binary, `#!/usr/bin/env node\nprocess.argv[2]='write-runtime';await import(${JSON.stringify(new URL('./fixtures/fake-app-server.js', import.meta.url).href)});\n`, { mode: 0o755 });
   writeFileSync(configPath, JSON.stringify({ codexBin: binary, maxConcurrency: 2, taskTimeoutMs: 30000, profiles: { expert: { model: 'test-model', effort: 'high' } } }));
   const forms = [];
   const client = new Client({ name: 'global-write-tests', version: '1' }, { capabilities: { elicitation: { form: {} } } });

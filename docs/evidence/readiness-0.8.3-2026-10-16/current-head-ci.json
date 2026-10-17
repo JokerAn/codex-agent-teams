@@ -1,0 +1,15 @@
+{
+  "command": "gh run list --commit 6d263a8670c32e24005a2f893087324531ca91cf --limit 20 --json databaseId,workflowName,status,conclusion,headSha,createdAt",
+  "exitCode": 0,
+  "runs": [
+    {
+      "conclusion": "failure",
+      "createdAt": "2026-10-16T07:37:04Z",
+      "databaseId": 38868353331,
+      "headSha": "6d263a8670c32e24005a2f893087324531ca91cf",
+      "status": "completed",
+      "workflowName": "Offline verification"
+    }
+  ],
+  "error": null
+}

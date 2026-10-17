@@ -1,0 +1,154 @@
+{
+  "source": "/Users/anshunli/单纯回话/codex-agent-teams",
+  "version": "0.8.4",
+  "head": "6d263a8670c32e24005a2f893087324531ca91cf",
+  "indexTreeBefore": "edc7d40e7b51fcba293198a0c374b0c82d6474de",
+  "logsCopiedWithOnlyLineEndWhitespaceTrimmed": true,
+  "receipts": {
+    "update-red.txt": {
+      "original": "/tmp/teams-084-update-red.tap",
+      "originalSHA256": "3766ea9621a79f0b0d89d75f6e5addefc4bbfe725f8caa08036076d53a6aecf5",
+      "counts": {
+        "tests": 3,
+        "pass": 0,
+        "fail": 3,
+        "cancelled": 0,
+        "skipped": 0,
+        "duration_ms": 250.016125
+      }
+    },
+    "candidate-red.txt": {
+      "original": "/tmp/teams-084-candidate-red.tap",
+      "originalSHA256": "0d955b4eb28be9a6f9c3940d81f63f93ad9bee34dda6ff3c0b4476450ddf6ac1",
+      "counts": {
+        "tests": 5,
+        "pass": 0,
+        "fail": 5,
+        "cancelled": 0,
+        "skipped": 0,
+        "duration_ms": 235.994
+      }
+    },
+    "config-red.txt": {
+      "original": "/tmp/teams-084-config-red.tap",
+      "originalSHA256": "2e31ca593c3fa5dcb687a83464b360d7c97ccbc52d9607ea66e43529bc8eb9a0",
+      "counts": {
+        "tests": 2,
+        "pass": 1,
+        "fail": 1,
+        "cancelled": 0,
+        "skipped": 0,
+        "duration_ms": 164.491542
+      }
+    },
+    "focused.txt": {
+      "original": "/tmp/teams-084-focused.tap",
+      "originalSHA256": "4d946ab54f4482470684097eba3f26b64ab2325076dfde31fdfaba3054111725",
+      "counts": {
+        "tests": 136,
+        "pass": 136,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "duration_ms": 71339.478
+      }
+    },
+    "full-coverage.txt": {
+      "original": "/tmp/teams-084-full-coverage.tap",
+      "originalSHA256": "b159b268a30f8a26ac147c276df228532ecd89c2ff636777f5ec35e3717fc9e4",
+      "counts": {
+        "tests": 428,
+        "pass": 428,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "duration_ms": 177956.586958
+      }
+    },
+    "lock-tests.txt": {
+      "original": "/tmp/teams-084-lock.tap",
+      "originalSHA256": "d1074ea3907ed28a38db9c9eaf68b3449d1b040fe58e184677877981343c5ac1",
+      "counts": {
+        "tests": 4,
+        "pass": 4,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "duration_ms": 156.677542
+      }
+    },
+    "ci-coverage.txt": {
+      "original": "/tmp/teams-084-ci-coverage.tap",
+      "originalSHA256": "fa8560ef2e55f765aa34d9a033c0047afe20eba9fe712ddcc9f44170a4fc50d4",
+      "counts": {
+        "tests": 39,
+        "pass": 39,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "duration_ms": 70690.606209
+      }
+    }
+  },
+  "fullCoverage": {
+    "command": "npm run test:coverage",
+    "node": "v24.21.0",
+    "exitCode": 0,
+    "tests": 428,
+    "pass": 428,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "linePercent": 97.4,
+    "branchPercent": 89.92,
+    "functionPercent": 95.06,
+    "scope": "src/*.js; update/lock behavior separately exercised by tests and official CLI checks"
+  },
+  "minimumNodeFunctional": {
+    "version": "v24.0.0",
+    "command": "node --test --test-concurrency=4 tests/*.test.js",
+    "exitCode": 0,
+    "tests": 428,
+    "pass": 428,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "durationMs": 186171.612375,
+    "officialArchiveSHA256": "2094ffe8d719e19a50105666828867730a43161dcd18f64a31e442fdce9f7b1d",
+    "log": "node240-functional.txt",
+    "originalLogSHA256": "69848ed425d91a78ca5bd62cb37f1eea4234b0a40336aa10949e488e6ab5de51"
+  },
+  "ciEnvironmentCoverage": {
+    "node": "v24.21.0",
+    "tests": 39,
+    "pass": 39,
+    "exitCode": 0,
+    "v8JSONFiles": 41,
+    "invalidV8JSONFiles": 0
+  },
+  "officialCLIRegressionCases": 7,
+  "nativeAndStrictHostSmokePassed": true,
+  "nativeSubagents": {
+    "requested": 2,
+    "completed": 0,
+    "outcome": "both inherited-model launches failed with upstream 404 before execution; closed; all code and verification completed locally; no model override"
+  },
+  "formalInstallationUpdated": false,
+  "inferenceStarted": false,
+  "remoteCIRun": false,
+  "limits": [
+    "Node 24.0.0 historical coverage JSON root cause unresolved; coverage policy is explicit Node24.x on both CI platforms; functional minimum-version matrix remains",
+    "strict dependency bytes are not individually attested",
+    "abandoned updater locks require manual confirmation of parent and CLI child exit; no unsafe automatic stale-lock takeover",
+    "rollback recovery directories are retained while cache source receipts can refer to them",
+    "real desktop stop, actual model/effort routing, usage/cost and comparative efficiency not newly verified"
+  ],
+  "releaseAsset": {
+    "path": "/Users/anshunli/单纯回话/codex-agent-teams/dist/releases/0.8.4/codex-agent-teams-native-0.8.4.tar.gz",
+    "sha256": "fce27a52a07a7a8543bc9bebad91841dbd92440e02b96f0554e8ea47ea0fd4b5",
+    "published": false,
+    "installedInFormalHome": false
+  },
+  "postflight": "postflight.json",
+  "sourceHashes": "source-hashes.json"
+}

@@ -1,0 +1,383 @@
+{
+  "date": "2026-10-18",
+  "timezone": "Asia/Shanghai",
+  "version": "0.8.5",
+  "deliveryRoot": "/Users/anshunli/单纯回话/codex-agent-teams",
+  "sourceReport": {
+    "path": "/Users/anshunli/gitHub/pre-page-error/CODEX_AGENT_TEAMS_IMPROVEMENTS.md",
+    "sha256": "d313984436737d9b7e422cb46141a38b1510c79fe03c36a4553c33bfb028a520",
+    "itemsImplemented": [
+      "T01",
+      "T02",
+      "T03",
+      "T04",
+      "T05",
+      "T06"
+    ]
+  },
+  "coreChange": "Self-contained native team skill and documentation; no production runtime or dependency change. One deadline test harness fixed after reproducing a pre-command timeout race.",
+  "verification": {
+    "native": {
+      "command": [
+        "npm",
+        "run",
+        "test:native"
+      ],
+      "exitCode": 0,
+      "counts": {
+        "tests": 11,
+        "suites": 0,
+        "pass": 11,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "wallSeconds": 0.457,
+      "inputs": {
+        "beforeSha256": "e4ed5a5638eef091a1950aca324a2ee5ede4696de24180d66476ab448070f35d",
+        "afterSha256": "e4ed5a5638eef091a1950aca324a2ee5ede4696de24180d66476ab448070f35d",
+        "sameAtEndpoints": true,
+        "changedFiles": [],
+        "fileCount": 74,
+        "limit": "Endpoint fingerprints do not exclude a transient edit followed by restoration."
+      },
+      "record": "native.json"
+    },
+    "skill-validation-venv": {
+      "command": [
+        "/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/skill-validation-env/bin/python",
+        "/Users/anshunli/.codex/skills/.system/skill-creator/scripts/quick_validate.py",
+        "skills/team"
+      ],
+      "exitCode": 0,
+      "counts": null,
+      "wallSeconds": 0.355,
+      "inputs": {
+        "beforeSha256": "e4ed5a5638eef091a1950aca324a2ee5ede4696de24180d66476ab448070f35d",
+        "afterSha256": "e4ed5a5638eef091a1950aca324a2ee5ede4696de24180d66476ab448070f35d",
+        "sameAtEndpoints": true,
+        "changedFiles": [],
+        "fileCount": 74,
+        "limit": "Endpoint fingerprints do not exclude a transient edit followed by restoration."
+      },
+      "record": "skill-validation-venv.json"
+    },
+    "dependencies": {
+      "command": [
+        "npm",
+        "ls",
+        "--depth=0"
+      ],
+      "exitCode": 0,
+      "counts": null,
+      "wallSeconds": 0.743,
+      "inputs": {
+        "beforeSha256": "e4ed5a5638eef091a1950aca324a2ee5ede4696de24180d66476ab448070f35d",
+        "afterSha256": "e4ed5a5638eef091a1950aca324a2ee5ede4696de24180d66476ab448070f35d",
+        "sameAtEndpoints": true,
+        "changedFiles": [],
+        "fileCount": 74,
+        "limit": "Endpoint fingerprints do not exclude a transient edit followed by restoration."
+      },
+      "record": "dependencies.json"
+    },
+    "build": {
+      "command": [
+        "npm",
+        "run",
+        "build",
+        "--",
+        "--out",
+        "./dist/releases/0.8.5/codex-agent-teams-native-0.8.5"
+      ],
+      "exitCode": 0,
+      "counts": null,
+      "wallSeconds": 0.415,
+      "inputs": {
+        "beforeSha256": "e4ed5a5638eef091a1950aca324a2ee5ede4696de24180d66476ab448070f35d",
+        "afterSha256": "e4ed5a5638eef091a1950aca324a2ee5ede4696de24180d66476ab448070f35d",
+        "sameAtEndpoints": true,
+        "changedFiles": [],
+        "fileCount": 74,
+        "limit": "Endpoint fingerprints do not exclude a transient edit followed by restoration."
+      },
+      "record": "build.json"
+    },
+    "artifact": {
+      "command": [
+        "node",
+        "/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/check-artifact.mjs"
+      ],
+      "exitCode": 0,
+      "counts": null,
+      "wallSeconds": 0.093,
+      "inputs": {
+        "beforeSha256": "e4ed5a5638eef091a1950aca324a2ee5ede4696de24180d66476ab448070f35d",
+        "afterSha256": "e4ed5a5638eef091a1950aca324a2ee5ede4696de24180d66476ab448070f35d",
+        "sameAtEndpoints": true,
+        "changedFiles": [],
+        "fileCount": 74,
+        "limit": "Endpoint fingerprints do not exclude a transient edit followed by restoration."
+      },
+      "record": "artifact.json"
+    },
+    "host": {
+      "command": [
+        "node",
+        "scripts/smoke-native.js"
+      ],
+      "exitCode": 0,
+      "counts": null,
+      "wallSeconds": 0.66,
+      "inputs": {
+        "beforeSha256": "e4ed5a5638eef091a1950aca324a2ee5ede4696de24180d66476ab448070f35d",
+        "afterSha256": "e4ed5a5638eef091a1950aca324a2ee5ede4696de24180d66476ab448070f35d",
+        "sameAtEndpoints": true,
+        "changedFiles": [],
+        "fileCount": 74,
+        "limit": "Endpoint fingerprints do not exclude a transient edit followed by restoration."
+      },
+      "record": "host.json"
+    },
+    "deadline-focused": {
+      "command": [
+        "node",
+        "--test",
+        "--test-name-pattern=deadline|bound command",
+        "tests/attempt.test.js"
+      ],
+      "exitCode": 0,
+      "counts": {
+        "tests": 3,
+        "suites": 0,
+        "pass": 3,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "wallSeconds": 7.813,
+      "inputs": {
+        "beforeSha256": "d8a96bcb5fe3f0b94a266930225fbbafe9d6473ced59accf4fad9e1054c9fe2b",
+        "afterSha256": "d8a96bcb5fe3f0b94a266930225fbbafe9d6473ced59accf4fad9e1054c9fe2b",
+        "sameAtEndpoints": true,
+        "changedFiles": [],
+        "fileCount": 74,
+        "limit": "Endpoint fingerprints do not exclude a transient edit followed by restoration."
+      },
+      "record": "deadline-focused.json"
+    },
+    "deadline-after": {
+      "command": [
+        "node",
+        "--test",
+        "--test-name-pattern=^the task deadline",
+        "/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/deadline-after.test.mjs"
+      ],
+      "exitCode": 0,
+      "counts": {
+        "tests": 1,
+        "suites": 0,
+        "pass": 1,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "wallSeconds": 6.552,
+      "inputs": {
+        "beforeSha256": "d8a96bcb5fe3f0b94a266930225fbbafe9d6473ced59accf4fad9e1054c9fe2b",
+        "afterSha256": "d8a96bcb5fe3f0b94a266930225fbbafe9d6473ced59accf4fad9e1054c9fe2b",
+        "sameAtEndpoints": true,
+        "changedFiles": [],
+        "fileCount": 74,
+        "limit": "Endpoint fingerprints do not exclude a transient edit followed by restoration."
+      },
+      "record": "deadline-after.json"
+    },
+    "full-final": {
+      "command": [
+        "npm",
+        "test"
+      ],
+      "exitCode": 0,
+      "counts": {
+        "tests": 437,
+        "suites": 0,
+        "pass": 437,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "wallSeconds": 201.166,
+      "inputs": {
+        "beforeSha256": "d8a96bcb5fe3f0b94a266930225fbbafe9d6473ced59accf4fad9e1054c9fe2b",
+        "afterSha256": "d8a96bcb5fe3f0b94a266930225fbbafe9d6473ced59accf4fad9e1054c9fe2b",
+        "sameAtEndpoints": true,
+        "changedFiles": [],
+        "fileCount": 74,
+        "limit": "Endpoint fingerprints do not exclude a transient edit followed by restoration."
+      },
+      "record": "full-final.json"
+    },
+    "syntax": {
+      "command": [
+        "node",
+        "--check",
+        "tests/attempt.test.js"
+      ],
+      "exitCode": 0,
+      "counts": null,
+      "wallSeconds": 0.078,
+      "inputs": {
+        "beforeSha256": "d8a96bcb5fe3f0b94a266930225fbbafe9d6473ced59accf4fad9e1054c9fe2b",
+        "afterSha256": "d8a96bcb5fe3f0b94a266930225fbbafe9d6473ced59accf4fad9e1054c9fe2b",
+        "sameAtEndpoints": true,
+        "changedFiles": [],
+        "fileCount": 74,
+        "limit": "Endpoint fingerprints do not exclude a transient edit followed by restoration."
+      },
+      "record": "syntax.json"
+    },
+    "whitespace": {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exitCode": 0,
+      "counts": null,
+      "wallSeconds": 0.06,
+      "inputs": {
+        "beforeSha256": "d8a96bcb5fe3f0b94a266930225fbbafe9d6473ced59accf4fad9e1054c9fe2b",
+        "afterSha256": "d8a96bcb5fe3f0b94a266930225fbbafe9d6473ced59accf4fad9e1054c9fe2b",
+        "sameAtEndpoints": true,
+        "changedFiles": [],
+        "fileCount": 74,
+        "limit": "Endpoint fingerprints do not exclude a transient edit followed by restoration."
+      },
+      "record": "whitespace.json"
+    }
+  },
+  "initialFailuresRetained": {
+    "fullSuite": {
+      "record": "full.json",
+      "tests": 437,
+      "pass": 436,
+      "fail": 1,
+      "resolvedBy": "deadline test readiness/callback control; full-final.json"
+    },
+    "deadlineReproduction": "deadline-before.json",
+    "systemPythonMissingYaml": "skill-validation.json",
+    "concurrentRecorderSetup": [
+      "behavior/review/concurrent/setup-attempt.json",
+      "behavior/review/concurrent/setup-ipc-attempt.json"
+    ]
+  },
+  "behavior": {
+    "nativeEvaluatorCount": 1,
+    "evaluatorReused": true,
+    "evaluatorClosed": true,
+    "dispatch": {
+      "fork_context": false,
+      "reasoning_effort": "high",
+      "modelOverride": null,
+      "actualModelReceipt": "unknown",
+      "actualEffortReceipt": "unknown"
+    },
+    "handoff": {
+      "localCases": 3,
+      "localPassed": 3,
+      "partialIntegrationCases": 6,
+      "partialIntegrationPassed": 5,
+      "partialIntegrationFailed": 1,
+      "decision": "HOLD; sample provider invalid-id failure retained and missing dependency pending",
+      "report": "behavior/review/handoff-review.md"
+    },
+    "duringVerificationMutation": {
+      "record": "behavior/review/concurrent/evidence.json",
+      "runtime": "v24.21.0",
+      "rounds": [
+        {
+          "round": "first",
+          "totals": {
+            "tests": 1,
+            "pass": 1,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          },
+          "validatorExit": {
+            "code": 0,
+            "signal": null
+          },
+          "writerExit": {
+            "code": 0,
+            "signal": null
+          },
+          "changedInputs": [
+            "input.json"
+          ],
+          "decision": "HOLD: green test is not a stable-snapshot handoff; input changed during validation"
+        },
+        {
+          "round": "stable",
+          "totals": {
+            "tests": 1,
+            "pass": 1,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          },
+          "validatorExit": {
+            "code": 0,
+            "signal": null
+          },
+          "writerExit": null,
+          "changedInputs": [],
+          "decision": "ACCEPT this isolated sample only: affected scope rechecked after writer exited, inputs stable"
+        }
+      ],
+      "eventSequenceReviewed": [
+        3,
+        7,
+        8,
+        9,
+        10,
+        11
+      ]
+    },
+    "earlyDeliveryLimit": "Evaluator preserved a retrospective excerpt of progress commentary; no independently confirmed lead/member delivery timestamp or receipt. Real team early notification not accepted as verified.",
+    "telemetryLimit": "host-records.json is controlled exercise data; no attributable account totals, fees or comparable baseline."
+  },
+  "artifact": {
+    "path": "/Users/anshunli/单纯回话/codex-agent-teams/dist/releases/0.8.5/codex-agent-teams-native-0.8.5.tar.gz",
+    "sha256": "e5c36f1a65686399720c5708281411bbbe0f69d86a90de9d7bbe735b6aada36d",
+    "sourceDigest": "b1e5bbdca1ff32e660f8c6fa24500f25519d31538754ca22a9d61328e86b0cd9",
+    "pluginFiles": 4,
+    "pluginBytes": 7762,
+    "sourceSkillMatches": true,
+    "extractedArchiveMatches": true,
+    "tamperNegativeControl": "modified extracted skill rejected by sourceDigest"
+  },
+  "installation": {
+    "userConfigurationChanged": false,
+    "temporaryOfficialHomeSmokePassed": true,
+    "officialSmokeInferenceStarted": false,
+    "published": false,
+    "commitCreated": false,
+    "pushed": false
+  },
+  "limitations": [
+    "Declared file ownership remains a soft coordination rule.",
+    "Endpoint fingerprints cannot exclude edit-then-restore during verification.",
+    "No real three-member interface-change notification, same-file conflict or desktop-stop acceptance this round.",
+    "No new cross-platform, minimum-Node or coverage matrix this round; previous 0.8.4 evidence remains historical.",
+    "No actual-model receipt, account costs or comparable single-agent efficiency measurement."
+  ],
+  "scopeEvidence": "scope-preservation.json"
+}

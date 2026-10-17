@@ -1,0 +1,34 @@
+EVIDENCE stale-callback {"first":"c086f926-126d-4b11-85bc-4c7c42122694","current":"f037bd72-cb5f-4798-b44b-58812c2abf3a","events":["finish-dropped","progress-dropped"],"poisoned":false}
+EVIDENCE event-rollback {"db":"/private/tmp/codex-strict-audit-rGnFTP/event-rollback-lxCPSw/state.sqlite","status":"pending","eventCount":1}
+EVIDENCE recovery-rollback {"db":"/private/tmp/codex-strict-audit-rGnFTP/recovery-rollback-SJCKRC/state.sqlite","earlierStatus":"running","recoveredEvents":0,"ownerWritten":false}
+✔ NEW stale member progress, stale finish and stale review cannot contaminate a running retry (207.182083ms)
+✔ NEW task+event transaction rolls back the task when durable event insertion fails (2.867042ms)
+✔ NEW recovery refuses an unknown later launch and rolls back earlier task recovery atomically (4.022042ms)
+EVIDENCE unknown-member {"db":"/private/tmp/codex-strict-audit-rGnFTP/case-XPTL54/repo/.codex-teams/state.sqlite","attempts":1,"cleanupConfirmed":false,"backendCalls":1,"reopenRefused":true}
+✔ NEW live unknown member launch blocks retry, unrelated execution and restart without replay (281.154708ms)
+EVIDENCE unknown-reviewer {"db":"/private/tmp/codex-strict-audit-rGnFTP/case-UKfiIh/repo/.codex-teams/state.sqlite","command":"passed","reviewerLaunch":"starting","cleanupConfirmed":false,"calls":2,"reopenRefused":true}
+✔ NEW unknown reviewer launch also blocks unrelated tasks and restart after a passed writer command (3074.014417ms)
+EVIDENCE shutdown {"db":"/private/tmp/codex-strict-audit-rGnFTP/case-80ufEk/repo/.codex-teams/state.sqlite","ownerHeldUntilRelease":true,"reopenedStatus":"cancelled","cleanupConfirmed":true,"backendCalls":1}
+✔ NEW shutdown keeps state ownership until a delayed backend confirms cancellation and reopen does not replay (157.80275ms)
+EVIDENCE persisted-integration {"db":"/private/tmp/codex-strict-audit-rGnFTP/case-rBfRqH/repo/.codex-teams/state.sqlite","symlinkRejected":true,"status":"succeeded","headPreserved":true,"indexBytesPreserved":true,"dependentUnlockedAfterSourceVerification":true}
+✔ NEW restart preserves awaiting_integration; identical-byte symlink logs reject integration; restored log allows explicit integration only (6660.940959ms)
+EVIDENCE integration-toctou {"db":"/private/tmp/codex-strict-audit-rGnFTP/case-vBAQAe/repo/.codex-teams/state.sqlite","status":"integration_failed","sourceUnchanged":true,"error":"Candidate or patch evidence changed"}
+✔ NEW patch drift between outer evidence check and apply is rechecked, retaining source and a failed integration (4993.767834ms)
+EVIDENCE permission-network-true {"turnStarts":0,"groupExitConfirmed":true,"pid":43936}
+✔ NEW read-only permission echo network-true must fail before turn/start (93.242458ms)
+EVIDENCE permission-network-missing {"turnStarts":0,"groupExitConfirmed":true,"pid":43942}
+✔ NEW read-only permission echo network-missing must fail before turn/start (96.902208ms)
+EVIDENCE permission-approval-on-request {"turnStarts":0,"groupExitConfirmed":true,"pid":43945}
+✔ NEW read-only permission echo approval-on-request must fail before turn/start (91.784709ms)
+EVIDENCE permission-approval-missing {"turnStarts":0,"groupExitConfirmed":true,"pid":43948}
+✔ NEW read-only permission echo approval-missing must fail before turn/start (94.551792ms)
+EVIDENCE permission-write-sandbox-on-readonly {"turnStarts":0,"groupExitConfirmed":true,"pid":43951}
+✔ NEW read-only permission echo write-sandbox-on-readonly must fail before turn/start (90.85675ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 16239.158583

@@ -1,3 +1,4 @@
+import { fixtureNode } from './fixtures/coverage.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
@@ -15,13 +16,14 @@ for (const kind of ['member', 'verification']) test(`SIGKILL runtime reaps guard
   // Grandchild inherits the guard's group but ignores TERM. No model or network.
   const descendant = `require('node:fs').writeFileSync(${JSON.stringify(marker)},String(process.pid));process.on('SIGTERM',()=>{});setInterval(()=>{},1000);`;
   const command = `require('node:child_process').spawn(process.execPath,['-e',${JSON.stringify(descendant)}],{stdio:'inherit'});process.on('SIGTERM',()=>{});setInterval(()=>{},1000);`;
+  const executable = fixtureNode(['-e', command]);
   const code = kind === 'member' ? `
     import {spawnManaged} from ${JSON.stringify(managed)};
-    const child=spawnManaged(process.execPath,['-e',${JSON.stringify(command)}],{stdio:['pipe','pipe','pipe']});
+    const child=spawnManaged(${JSON.stringify(executable.command)},${JSON.stringify(executable.args)},{stdio:['pipe','pipe','pipe']});
     child.on('error',()=>{});child.stdout.resume();child.stderr.resume();process.send({pid:child.pid});
   ` : `
     import {runVerification} from ${JSON.stringify(verify)};
-    await runVerification({command:process.execPath,args:['-e',${JSON.stringify(command)}],timeoutMs:60000},
+    await runVerification({...${JSON.stringify(executable)},timeoutMs:60000},
       {cwd:${JSON.stringify(root)},logDir:${JSON.stringify(join(root, 'logs'))},onSpawn:({childPid})=>process.send({pid:childPid})});
   `;
   const parent = spawn(process.execPath, ['--input-type=module', '-e', code], { stdio: ['ignore', 'ignore', 'pipe', 'ipc'] });

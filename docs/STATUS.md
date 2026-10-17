@@ -1,5 +1,51 @@
 # 当前状态
 
+## 0.8.5 原生协作规则升级与本地验收（2026-10-18，源码及候选，未发布）
+
+用户指定依据 `/Users/anshunli/gitHub/pre-page-error/CODEX_AGENT_TEAMS_IMPROVEMENTS.md` 升级。报告针对0.8.3安装的短skill；开工0.8.4源码skill与该报告哈希一致。本轮补齐T01–T06，版本统一0.8.5；详见[升级记录](NATIVE-COORDINATION-0.8.5-2026-10-18.md)与[本轮证据](evidence/native-coordination-0.8.5-2026-10-18)。
+
+- team skill 保持自包含，明确接口/测试替身约定和变更通知、实际修改归属与越界协调、带代码/依赖状态的分层验证、全量/构建负责人和共享资源串行、有边界的提前审查反馈，以及按需复盘的来源/累计token/父子归属/模型回执边界。README与场景验收同步；未新增外置执行器、运行依赖、固定人数、任务数据库或确认流程。
+- 主线负责实现与验收，一名原生high请求成员独立接手受控provider/card/list样本，再复用补充输入变化场景；未继承父历史，未覆盖模型。主线复核真实命令、测试及写入清单，不能把请求参数或创建受理当实际模型/effort回执。演练局部3/3、部分集成5/6，成员保留非法id失败及HOLD，未改成员拥有文件；补充真实Node子进程握手演练，输入在验证中变化时1/1绿测仍HOLD，writer退出/输入稳定后同用例1/1复验才接受该样本；记录器两次搭建失败保留，主线复核事件与指纹，成员已关闭。这不是项目回归失败，也不是三名真实成员的并行派发验收。
+- 首次全量437项中436通过、1失败：旧截止时间测试用3000ms涵盖worktree准备，却假设验证命令必然已创建。临时副本插入3100ms准备延迟稳定复现`verificationCount:0`；只修订测试为确认绑定命令真实启动后触发任务截止回调，保留原超时/取消/清理断言并检查绑定和进程退出。截止/绑定定向3/3、同延迟复验1/1；生产运行时src与依赖未改。
+- 最终 **macOS arm64 / Node24.21.0 `npm test` 437/437，exit0，零fail/cancelled/skipped，201.166秒**；native快速11/11。每轮相关代码和依赖输入前后指纹记录，最终全量74项输入摘要一致；端点采样不能排除瞬时改后恢复。原全量失败及受控复现保留，未跳过失败用例或复用失效结论。
+- 官方skill格式校验、默认构建、解压逐文件一致、sourceDigest篡改负对照、修改测试语法及git diff空白检查通过。系统Python首次缺PyYAML记录保留，在临时venv补PyYAML6.0.3后通过，项目依赖未增加。
+- **官方CLI0.163.0-alpha.10.2** 临时home无推理smoke通过：加载0.8.5，来源移除后发现skill，插件MCP/hooks=0、无项目状态，临时App Server已退出。native插件4文件7762字节，候选marketplace/tar.gz/SHA256SUMS在 `dist/releases/0.8.5/`；正式用户缓存未更新，0.8.4资产保留。
+- 未重复跨平台/最低Node/coverage矩阵、真实桌面停止、真实三成员接口变更/同文件冲突/提前反馈、实际模型/费用与同条件单代理对照；不把受控样本或历史0.8.4验收当本轮这些场景的新结果。下一步按需更新正式缓存，在真实业务中补充这些观察；无可比数据不宣称净提速或省钱。
+- 交付主目录 `/Users/anshunli/单纯回话/codex-agent-teams`；HEAD `6d263a8670c32e24005a2f893087324531ca91cf` 与原35个暂存readiness证据保持，215个本轮范围外既有文件内容/模式未变，其他既有改动保留。本轮源码/文档/证据未暂存，无跨worktree未同步内容；未commit/push/tag/发布或正式update。
+
+## 0.8.4 覆盖率遗留补修完成（2026-10-17，本地四组合通过）
+
+用户要求继续修复遗留问题。本轮复现并隔离了纯 fixture 被终止时污染 V8 coverage JSON 的通道，恢复最低 Node 版本 coverage 检查；版本仍为尚未发布 0.8.4。详见[补修记录](COVERAGE-FIX-0.8.4-2026-10-17.md)与[结构化证据](evidence/coverage-0.8.4-2026-10-17/results.json)。
+
+- 最终使用启动前环境隔离，纯协议、空转与 verification fixture 不写生产 coverage 目录；真实 guard、CLI、MCP、runtime 和混合生产启动器保留采集。进程内 stopCoverage 方案因 Node24.0 stderr 副作用已淘汰，未吞掉损坏 JSON 或覆盖率失败。
+- 新增9项真实子进程回归；主线全量 coverage：**macOS/Node24.0.0 437/437，macOS/Node24.21.0 437/437，Ubuntu24.04 arm64/Node24.0.0 436/436，Ubuntu24.04 arm64/Node24.21.0 436/436**；四组均 exit0、零 fail/cancelled/skipped，src 行覆盖率均97.40%。Ubuntu为本地VM，不冒称GitHub runner。
+- 真实负对照：未隔离时测试1/1通过但coverage exit1；启动前隔离后测试1/1且coverage exit0。旧CI具体坏文件PID不能追溯；本轮验证的是复现机制与已知fixture通道修复，不保证任意外部强杀生产进程的profile完整。
+- Darwin专属注册使macOS比Linux多1项，旧412/411和修前428/427均为正常差异，相关评估已纠正；原始暂存证据保留。TERM→KILL测试增加handler就绪与TERM到达证据，避免提前TERM造成假用例。
+- CI功能与coverage各恢复四组最低/当前Node矩阵；本轮未commit/push，因此未运行更新后的GitHub runner。此前404的原生成员本轮恢复实际执行、产出代码；未改模型/provider配置，成员已shutdown，最终修订由主线复核验收，不把关闭状态当成功回执。
+- 本轮仅测试/CI/说明变化，生产src及native metadata/skill未变，现有0.8.4候选保留、正式安装仍0.8.3。交付 `/Users/anshunli/单纯回话/codex-agent-teams`；本轮未暂存，原35个暂存证据与HEAD保持，无跨worktree未同步内容，未发布或正式update。
+
+## 0.8.4 修复升级完成（2026-10-16，源码及候选，未发布）
+
+用户授权按上一轮评估修复并使用原生 team。两名原生成员启动均因宿主模型路由 404 在执行前失败并已关闭，主线完成实现、复核和验收，没有成员成功或独立审查通过回执。详见[0.8.4 修复记录](FIX-0.8.4-2026-10-16.md)和[结构化证据](evidence/fix-0.8.4-2026-10-16/results.json)。
+
+- 已补共享 Codex home 更新锁、所有权复核和旧缓存恢复副本；第二更新进程预读前拒绝，外部安装变化时保留现场，来源晚期漂移后从副本恢复原字节。异常退出的锁需确认父/CLI 子进程均退出后人工清理，回滚引用的副本保留并报告路径。
+- native/strict 模式、SemVer、三处版本和 native 内容摘要在候选边界重新校验；安装后核对实际缓存与官方列表。修复中文路径测试，崩溃恢复测试清理复用 macOS 组信号回退并保留原断言。
+- 最终 Node **24.21.0 coverage 428/428**，0 fail/cancelled/skipped，177.957秒，src 行/分支/函数覆盖率 97.40%/89.92%/95.06%；官方 SHA256 核对的临时 Node **24.0.0 功能全量 428/428**，186.172秒。CI 环境覆盖率定向 39/39、41 个 V8 JSON 全可解析；计数不叠加。
+- 真实官方 CLI **0.163.0-alpha.10.2** 的七项更新/候选/恢复/解压安装检查通过；native/strict 真实宿主 smoke 均通过并退出，无模型推理、正式配置未改。native 缓存4文件4211字节，零插件 MCP/hooks；strict 未声称真实 hook 执行或模型路由已验收。
+- CI 已分成四个 Node24.0.0/24.x 功能 job 和两个 Node24.x coverage job；最低版历史 coverage JSON 根因未宣称已修复。本轮未跑远程矩阵，strict 依赖完整性与检查后外部漂移边界保持。
+- package/lock/两 manifest 统一 **0.8.4**；native tar.gz 与 SHA256 位于 `dist/releases/0.8.4/`，已解压安装逐文件验证，未发布/正式安装。实际交付 `/Users/anshunli/单纯回话/codex-agent-teams`；本轮改动未暂存，原35个暂存证据及HEAD保持，无跨worktree未同步内容，未commit/push/tag。
+
+## 0.8.3 后续升级评估（2026-10-16，仅评估，存在待修复项）
+
+用户要求基于现有改动判断项目需要升级什么。以本目录 HEAD `6d263a8670c32e24005a2f893087324531ca91cf`、最近源码提交和开工已暂存的 35 个 readiness 证据为范围；本轮独立复跑并核对官方 CLI 结果，没有修改运行时代码。详见[升级评估](UPGRADE-ASSESSMENT-0.8.3-2026-10-16.md)和[本轮证据](evidence/upgrade-assessment-0.8.3-2026-10-16/results.json)。
+
+- **P1 待修**：共享 home 的并发更新，A 的失败回滚可删除 B 已成功安装的 0.8.4 并退回 0.8.2。本轮真实 CLI、第二 Node 进程和受控调度再次复现；建议下一修补版先补更新互斥与回滚所有权。
+- **P2 待修**：候选 manifest=99.0.0、package/build-info=0.8.3 时仍返回 0.8.3 成功；未知 mode 配合空 src 可绕过 native 清单并安装额外文件。两例均为构建后异常候选边界，本轮再次复现，没有证据说明额外文件自动执行。旧缓存删除后来源漂移的恢复窗口同样复现，错误明确报告恢复失败，但原字节已丢失。
+- 本轮 native/config 定向 **13 项、12 通过、1 失败**，中文 checkout 的 `URL.pathname` 路径编码导致测试入口 `MODULE_NOT_FOUND`。已有同 HEAD 全量覆盖率证据为 **412 项、411 通过、1 失败**；此前 412/412 是历史环境记录，不能替代当前验收。
+- 已保存远程 CI 同 HEAD **2/4 成功**：macOS 最低 Node job 的 finally 直接组 kill EPERM；Ubuntu 最低 Node job 为 coverage JSON 报告失败，两者需分别定位。本轮未重跑远程矩阵，也未重跑全量。
+- 建议下一版集中更新可靠性、候选语义和测试/CI，之后补真实桌面停止及模型/效率验收；默认原生协作继续保持精简。未声明依赖都是最新版，未增加依赖或付费推理。
+- CURRENT 已纠正当前描述；旧发版记录保留为历史。实际交付 `/Users/anshunli/单纯回话/codex-agent-teams`，本轮文档/评估证据未暂存，原有 35 个暂存证据和 HEAD 保持；未改正式配置/安装，未 commit/push，无跨 worktree 未同步内容。
+
 ## 0.8.3 发版复核完成（2026-10-16，未发布）
 
 用户要求详细检查线上可用版本。队长负责metadata补强、发行包和集成验收；两名high成员独立审查更新恢复与打包/公开入口，其中打包成员只修改CLI及对应回归。完整判断见[发版复核](RELEASE-REVIEW-0.8.3-2026-10-16.md)，源码身份、原始交接与限制见[证据](evidence/release-0.8.3-2026-10-16/results.json)。

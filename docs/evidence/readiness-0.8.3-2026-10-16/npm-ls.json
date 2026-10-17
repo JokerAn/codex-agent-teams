@@ -1,0 +1,105 @@
+{
+  "version": "0.8.3",
+  "name": "codex-agent-teams-local",
+  "dependencies": {
+    "@modelcontextprotocol/client": {
+      "version": "2.3.1",
+      "resolved": "https://registry.npmjs.org/@modelcontextprotocol/client/-/client-2.3.1.tgz",
+      "overridden": false,
+      "dependencies": {
+        "@modelcontextprotocol/core": {
+          "version": "2.3.1",
+          "resolved": "https://registry.npmjs.org/@modelcontextprotocol/core/-/core-2.3.1.tgz",
+          "overridden": false,
+          "dependencies": {
+            "zod": {
+              "version": "4.6.5"
+            }
+          }
+        },
+        "cross-spawn": {
+          "version": "7.0.6",
+          "resolved": "https://registry.npmjs.org/cross-spawn/-/cross-spawn-7.0.6.tgz",
+          "overridden": false,
+          "dependencies": {
+            "path-key": {
+              "version": "3.1.1",
+              "resolved": "https://registry.npmjs.org/path-key/-/path-key-3.1.1.tgz",
+              "overridden": false
+            },
+            "shebang-command": {
+              "version": "2.0.0",
+              "resolved": "https://registry.npmjs.org/shebang-command/-/shebang-command-2.0.0.tgz",
+              "overridden": false,
+              "dependencies": {
+                "shebang-regex": {
+                  "version": "3.0.0",
+                  "resolved": "https://registry.npmjs.org/shebang-regex/-/shebang-regex-3.0.0.tgz",
+                  "overridden": false
+                }
+              }
+            },
+            "which": {
+              "version": "2.0.2",
+              "resolved": "https://registry.npmjs.org/which/-/which-2.0.2.tgz",
+              "overridden": false,
+              "dependencies": {
+                "isexe": {
+                  "version": "2.0.0",
+                  "resolved": "https://registry.npmjs.org/isexe/-/isexe-2.0.0.tgz",
+                  "overridden": false
+                }
+              }
+            }
+          }
+        },
+        "eventsource-parser": {
+          "version": "3.1.1",
+          "resolved": "https://registry.npmjs.org/eventsource-parser/-/eventsource-parser-3.1.1.tgz",
+          "overridden": false
+        },
+        "eventsource": {
+          "version": "3.0.7",
+          "resolved": "https://registry.npmjs.org/eventsource/-/eventsource-3.0.7.tgz",
+          "overridden": false,
+          "dependencies": {
+            "eventsource-parser": {
+              "version": "3.1.1"
+            }
+          }
+        },
+        "jose": {
+          "version": "6.2.12",
+          "resolved": "https://registry.npmjs.org/jose/-/jose-6.2.12.tgz",
+          "overridden": false
+        },
+        "pkce-challenge": {
+          "version": "5.0.1",
+          "resolved": "https://registry.npmjs.org/pkce-challenge/-/pkce-challenge-5.0.1.tgz",
+          "overridden": false
+        },
+        "zod": {
+          "version": "4.6.5"
+        }
+      }
+    },
+    "@modelcontextprotocol/server": {
+      "version": "2.3.1",
+      "resolved": "https://registry.npmjs.org/@modelcontextprotocol/server/-/server-2.3.1.tgz",
+      "overridden": false,
+      "dependencies": {
+        "@modelcontextprotocol/core": {
+          "version": "2.3.1"
+        },
+        "zod": {
+          "version": "4.6.5"
+        }
+      }
+    },
+    "zod": {
+      "version": "4.6.5",
+      "resolved": "https://registry.npmjs.org/zod/-/zod-4.6.5.tgz",
+      "overridden": false
+    }
+  }
+}

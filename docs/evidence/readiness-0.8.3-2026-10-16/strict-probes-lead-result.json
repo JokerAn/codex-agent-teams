@@ -1,0 +1,21 @@
+{
+  "command": [
+    "/Users/anshunli/.nvm/versions/node/v24.21.0/bin/node",
+    "--test",
+    "--test-concurrency=1",
+    "/tmp/codex-strict-audit-rGnFTP/strict-probes.test.mjs",
+    "/tmp/codex-strict-audit-rGnFTP/eperm-probes.test.mjs"
+  ],
+  "exitCode": 0,
+  "signal": null,
+  "durationMs": 16083,
+  "counts": {
+    "tests": 15,
+    "pass": 15,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "duration_ms": 16041.781417
+  },
+  "log": "/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-20261016-BSbVr2/strict-probes-lead.tap"
+}

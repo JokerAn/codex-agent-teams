@@ -1,0 +1,41 @@
+[
+  {
+    "scenario": "concurrent-updates",
+    "root": "/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-update-repro-wrH2WV/official-races-bNYxr0/concurrent-updates",
+    "successfulB": {
+      "installedPath": "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-update-repro-wrH2WV/official-races-bNYxr0/concurrent-updates/home/plugins/cache/codex-agent-teams-local/codex-agent-teams/0.8.4",
+      "version": "0.8.4",
+      "sourceDigest": "44ae7b36a7c5879285c20c0e0e5b2f3df5ad4b0c49815f47276d4ca64815314e",
+      "marketplaceRoot": "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-update-repro-wrH2WV/official-races-bNYxr0/concurrent-updates/other"
+    },
+    "errorA": "实际 marketplace 来源不符\n+ actual - expected\n\n+ '/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-update-repro-wrH2WV/official-races-bNYxr0/concurrent-updates/other'\n- '/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-update-repro-wrH2WV/official-races-bNYxr0/concurrent-updates/next'\n\n原 marketplace 与插件安装状态已恢复（已核对原缓存关键文件；运行依赖未逐文件核对）。\n候选包保留：/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-update-repro-wrH2WV/official-races-bNYxr0/concurrent-updates/next",
+    "final": [
+      {
+        "pluginId": "codex-agent-teams@codex-agent-teams-local",
+        "name": "codex-agent-teams",
+        "marketplaceName": "codex-agent-teams-local",
+        "version": "0.8.2",
+        "installed": true,
+        "enabled": true,
+        "source": {
+          "source": "local",
+          "path": "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-update-repro-wrH2WV/official-races-bNYxr0/concurrent-updates/old/plugins/codex-agent-teams"
+        },
+        "marketplaceSource": {
+          "sourceType": "local",
+          "source": "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-update-repro-wrH2WV/official-races-bNYxr0/concurrent-updates/old"
+        },
+        "installPolicy": "AVAILABLE",
+        "authPolicy": "ON_USE"
+      }
+    ],
+    "bCacheDeleted": true
+  },
+  {
+    "scenario": "rollback-source-drift",
+    "root": "/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-update-repro-wrH2WV/official-races-bNYxr0/rollback-source-drift",
+    "errorA": "controlled failed install after actual old-cache removal\n恢复未完成：旧缓存内容未恢复\n+ actual - expected\n\n+ 'eac6ad584a75873589d89a2bf5469be316fd73f2250b6afba8c08c20c9c05150'\n- '7d8cf18e44faa4012401930c7e6d3efe7b20deabb0df2edc92dbc6ab605b276f'\n。请手动检查插件安装。\n候选包保留：/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-update-repro-wrH2WV/official-races-bNYxr0/rollback-source-drift/next",
+    "actualOldBytesLost": true,
+    "restoredSourceDriftInstalled": true
+  }
+]

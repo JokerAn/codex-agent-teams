@@ -1,0 +1,18 @@
+TAP version 13
+# {"isolated":false,"hitWrite":true,"files":1,"invalid":[{"file":"coverage-111905-1792167888005-0.json","bytes":1155072,"error":"Unterminated string in JSON at position 1155072 (line 1 column 1155073)"}],"stderr":""}
+# Subtest: intentional kill preserves valid coverage inputs only when fixture collection is stopped
+ok 1 - intentional kill preserves valid coverage inputs only when fixture collection is stopped
+  ---
+  duration_ms: 472.818553
+  type: 'test'
+  ...
+1..1
+# Warning: Could not report code coverage. SyntaxError: Unterminated string in JSON at position 1155072 (line 1 column 1155073)
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 571.344449

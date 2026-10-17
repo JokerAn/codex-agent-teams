@@ -1,3 +1,4 @@
+import { writeFixtureExecutable } from './fixtures/coverage.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
@@ -222,7 +223,7 @@ test('prepared marketplace rejects symlink escape', t => {
 test('CLI doctor uses supplied configuration and reports invalid profiles without a turn', t => {
   const { root, configPath } = fixture(t);
   const binary = join(root, 'fake codex');
-  writeFileSync(binary, `#!/usr/bin/env node\nprocess.argv[2] = 'normal';\nawait import(${JSON.stringify(new URL('./fixtures/fake-app-server.js', import.meta.url).href)});\n`, { mode: 0o755 });
+  writeFixtureExecutable(binary, `#!/usr/bin/env node\nprocess.argv[2] = 'normal';\nawait import(${JSON.stringify(new URL('./fixtures/fake-app-server.js', import.meta.url).href)});\n`, { mode: 0o755 });
   const config = json(configPath);
   config.codexBin = binary;
   config.profiles.expert = { model: 'test-model', effort: 'high' };

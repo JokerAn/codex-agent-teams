@@ -1,0 +1,19 @@
+DEADLINE_PROBE {"status":"timed_out","phase":"timed_out","verificationCount":0}
+✖ the task deadline also covers its bound command and failed receipts cannot unlock a task (4324.48225ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4410.898709
+
+✖ failing tests:
+
+test at ../../../../private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/deadline-before.test.mjs:188:1
+✖ the task deadline also covers its bound command and failed receipts cannot unlock a task (4324.48225ms)
+  TypeError: Cannot read properties of undefined (reading '0')
+      at TestContext.<anonymous> (file:///private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/deadline-before.test.mjs:206:39)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)

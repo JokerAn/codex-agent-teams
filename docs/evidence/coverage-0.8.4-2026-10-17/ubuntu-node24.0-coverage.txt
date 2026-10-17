@@ -1,0 +1,2722 @@
+TAP version 13
+# Subtest: official lifecycle metadata records command completion while omitting all payloads
+ok 1 - official lifecycle metadata records command completion while omitting all payloads
+  ---
+  duration_ms: 7.825024
+  type: 'test'
+  ...
+# Subtest: partial/unknown items stay truthful, tool metadata and journal stay bounded by bytes
+ok 2 - partial/unknown items stay truthful, tool metadata and journal stay bounded by bytes
+  ---
+  duration_ms: 34.945825
+  type: 'test'
+  ...
+# (node:112110) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: one attempt binds a fresh worktree, real command and review evidence without changing the source
+ok 3 - one attempt binds a fresh worktree, real command and review evidence without changing the source
+  ---
+  duration_ms: 1456.569092
+  type: 'test'
+  ...
+# Subtest: worktree command uses the current attempt snapshot including explicit dirty baseline content
+ok 4 - worktree command uses the current attempt snapshot including explicit dirty baseline content
+  ---
+  duration_ms: 1442.712124
+  type: 'test'
+  ...
+# Subtest: default dirty rejection fails the attempt before spawning the member and retains its bound failure
+ok 5 - default dirty rejection fails the attempt before spawning the member and retains its bound failure
+  ---
+  duration_ms: 198.743974
+  type: 'test'
+  ...
+# Subtest: member blockers preserve their worktree and do not execute the verification command
+ok 6 - member blockers preserve their worktree and do not execute the verification command
+  ---
+  duration_ms: 649.431556
+  type: 'test'
+  ...
+# Subtest: verification failure preserves the member report but cannot pass review or unlock dependents
+ok 7 - verification failure preserves the member report but cannot pass review or unlock dependents
+  ---
+  duration_ms: 1594.878118
+  type: 'test'
+  ...
+# Subtest: read-only member changes stop verification before any command runs
+ok 8 - read-only member changes stop verification before any command runs
+  ---
+  duration_ms: 763.032033
+  type: 'test'
+  ...
+# Subtest: an exit-zero command that changes task inputs does not make the attempt reviewable
+ok 9 - an exit-zero command that changes task inputs does not make the attempt reviewable
+  ---
+  duration_ms: 1164.341545
+  type: 'test'
+  ...
+# Subtest: review refuses source edits after validation and cleanup remains blocked until explicit cancel
+ok 10 - review refuses source edits after validation and cleanup remains blocked until explicit cancel
+  ---
+  duration_ms: 1226.560128
+  type: 'test'
+  ...
+# Subtest: review refuses modified command log evidence
+ok 11 - review refuses modified command log evidence
+  ---
+  duration_ms: 1367.218411
+  type: 'test'
+  ...
+# Subtest: review refuses missing command log evidence
+ok 12 - review refuses missing command log evidence
+  ---
+  duration_ms: 1031.023691
+  type: 'test'
+  ...
+# Subtest: retry creates a new worktree and verification id; old review and old workspace cannot satisfy it
+ok 13 - retry creates a new worktree and verification id; old review and old workspace cannot satisfy it
+  ---
+  duration_ms: 2334.186588
+  type: 'test'
+  ...
+# Subtest: mismatched current-attempt verification receipt cannot pass review
+ok 14 - mismatched current-attempt verification receipt cannot pass review
+  ---
+  duration_ms: 1270.608754
+  type: 'test'
+  ...
+# Subtest: cancelling a task during its command keeps it active until the bound process exits
+ok 15 - cancelling a task during its command keeps it active until the bound process exits
+  ---
+  duration_ms: 1103.112877
+  type: 'test'
+  ...
+# Subtest: the task deadline also covers its bound command and failed receipts cannot unlock a task
+ok 16 - the task deadline also covers its bound command and failed receipts cannot unlock a task
+  ---
+  duration_ms: 3412.298058
+  type: 'test'
+  ...
+# Subtest: verified-worktree tasks are exclusive; ordinary read-only tasks retain their existing execution path
+ok 17 - verified-worktree tasks are exclusive; ordinary read-only tasks retain their existing execution path
+  ---
+  duration_ms: 646.597623
+  type: 'test'
+  ...
+# Subtest: controlled App Server protocol fixture and CLI complete a bound attempt without calling a model
+ok 18 - controlled App Server protocol fixture and CLI complete a bound attempt without calling a model
+  ---
+  duration_ms: 5895.491634
+  type: 'test'
+  ...
+# Subtest: task packet includes the explicit verification contract but not runtime ids or old logs
+ok 19 - task packet includes the explicit verification contract but not runtime ids or old logs
+  ---
+  duration_ms: 0.896849
+  type: 'test'
+  ...
+# Subtest: workspace binding transaction rolls back the task pointer when SQLite refuses the workspace row
+ok 20 - workspace binding transaction rolls back the task pointer when SQLite refuses the workspace row
+  ---
+  duration_ms: 81.982889
+  type: 'test'
+  ...
+# Subtest: a live member group blocks verification, retry and workspace deletion even after a backend report
+ok 21 - a live member group blocks verification, retry and workspace deletion even after a backend report
+  ---
+  duration_ms: 662.341514
+  type: 'test'
+  ...
+# Subtest: crash during a bound command preserves the atomic binding and refuses live orphan recovery
+ok 22 - crash during a bound command preserves the atomic binding and refuses live orphan recovery
+  ---
+  duration_ms: 1127.491542
+  type: 'test'
+  ...
+# Subtest: cancelled before preparation creates no workspace and never launches a member
+ok 23 - cancelled before preparation creates no workspace and never launches a member
+  ---
+  duration_ms: 87.451608
+  type: 'test'
+  ...
+# Subtest: timed_out before preparation creates no workspace and never launches a member
+ok 24 - timed_out before preparation creates no workspace and never launches a member
+  ---
+  duration_ms: 67.626136
+  type: 'test'
+  ...
+# Subtest: a synchronous preparation that exhausts the deadline never launches a member
+ok 25 - a synchronous preparation that exhausts the deadline never launches a member
+  ---
+  duration_ms: 1451.335475
+  type: 'test'
+  ...
+# Subtest: verification-generated ignored output can pass unchanged-input review and requires explicit cleanup
+ok 26 - verification-generated ignored output can pass unchanged-input review and requires explicit cleanup
+  ---
+  duration_ms: 1050.687427
+  type: 'test'
+  ...
+# (node:112111) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: protocol race, isolation overrides, structured output, usage and cleanup
+ok 27 - protocol race, isolation overrides, structured output, usage and cleanup
+  ---
+  duration_ms: 409.912421
+  type: 'test'
+  ...
+# Subtest: production backend passes exact effort or omits the property without forcing a default
+    # Subtest: low
+    ok 1 - low
+      ---
+      duration_ms: 294.335757
+      type: 'test'
+      ...
+    # Subtest: high
+    ok 2 - high
+      ---
+      duration_ms: 295.531847
+      type: 'test'
+      ...
+    # Subtest: max
+    ok 3 - max
+      ---
+      duration_ms: 380.314693
+      type: 'test'
+      ...
+    # Subtest: omitted
+    ok 4 - omitted
+      ---
+      duration_ms: 283.682815
+      type: 'test'
+      ...
+    1..4
+ok 28 - production backend passes exact effort or omits the property without forcing a default
+  ---
+  duration_ms: 1611.288464
+  type: 'test'
+  ...
+# Subtest: concurrent runs on one production backend keep each turn effort isolated
+ok 29 - concurrent runs on one production backend keep each turn effort isolated
+  ---
+  duration_ms: 578.323689
+  type: 'test'
+  ...
+# Subtest: protocol fixture rejects missing strict required fields at top level and inside criteria
+ok 30 - protocol fixture rejects missing strict required fields at top level and inside criteria
+  ---
+  duration_ms: 282.475309
+  type: 'test'
+  ...
+# Subtest: invalid acceptance refuses schema generation before any member process launch
+ok 31 - invalid acceptance refuses schema generation before any member process launch
+  ---
+  duration_ms: 2.722755
+  type: 'test'
+  ...
+# Subtest: bad-request preserves the original error and classifies by official code, with exit confirmed
+ok 32 - bad-request preserves the original error and classifies by official code, with exit confirmed
+  ---
+  duration_ms: 450.742371
+  type: 'test'
+  ...
+# Subtest: unclassified-turn-error preserves the original error and classifies by official code, with exit confirmed
+ok 33 - unclassified-turn-error preserves the original error and classifies by official code, with exit confirmed
+  ---
+  duration_ms: 490.908713
+  type: 'test'
+  ...
+# Subtest: backend records bounded official action metadata into the owning attempt without command payloads
+ok 34 - backend records bounded official action metadata into the owning attempt without command payloads
+  ---
+  duration_ms: 1240.654003
+  type: 'test'
+  ...
+# Subtest: oversized pre-reply action records truncation without poisoning turn execution or losing per-item limits
+ok 35 - oversized pre-reply action records truncation without poisoning turn execution or losing per-item limits
+  ---
+  duration_ms: 431.696798
+  type: 'test'
+  ...
+# Subtest: TERM send failure still escalates to KILL and confirms exit, preserving cleanup error
+ok 36 - TERM send failure still escalates to KILL and confirms exit, preserving cleanup error
+  ---
+  duration_ms: 685.549894
+  type: 'test'
+  ...
+# Subtest: launch with no persisted PID and no exit receipt stays unconfirmed within the same runtime
+ok 37 - launch with no persisted PID and no exit receipt stays unconfirmed within the same runtime
+  ---
+  duration_ms: 124.192793
+  type: 'test'
+  ...
+# Subtest: actual child plus injected PID persistence and signal failures cannot be redispatched as exited
+ok 38 - actual child plus injected PID persistence and signal failures cannot be redispatched as exited
+  ---
+  duration_ms: 2453.317083
+  type: 'test'
+  ...
+# Subtest: diagnostic handshake enumerates models without starting inference
+ok 39 - diagnostic handshake enumerates models without starting inference
+  ---
+  duration_ms: 361.013007
+  type: 'test'
+  ...
+# Subtest: approval fails without reporting successful execution and reaps child
+ok 40 - approval fails without reporting successful execution and reaps child
+  ---
+  duration_ms: 362.200972
+  type: 'test'
+  ...
+# Subtest: crash fails without reporting successful execution and reaps child
+ok 41 - crash fails without reporting successful execution and reaps child
+  ---
+  duration_ms: 319.770655
+  type: 'test'
+  ...
+# Subtest: bad-json fails without reporting successful execution and reaps child
+ok 42 - bad-json fails without reporting successful execution and reaps child
+  ---
+  duration_ms: 300.050349
+  type: 'test'
+  ...
+# Subtest: timeout fails without reporting successful execution and reaps child
+ok 43 - timeout fails without reporting successful execution and reaps child
+  ---
+  duration_ms: 1064.669764
+  type: 'test'
+  ...
+# Subtest: unsafe fails without reporting successful execution and reaps child
+ok 44 - unsafe fails without reporting successful execution and reaps child
+  ---
+  duration_ms: 310.22664
+  type: 'test'
+  ...
+# Subtest: abort interrupts and reaps a hanging member
+ok 45 - abort interrupts and reaps a hanging member
+  ---
+  duration_ms: 328.750981
+  type: 'test'
+  ...
+# Subtest: already aborted signal does not leave a spawned process
+ok 46 - already aborted signal does not leave a spawned process
+  ---
+  duration_ms: 38.597221
+  type: 'test'
+  ...
+# Subtest: real-host regression: MCP override keys are plain dotted paths, unusual keys fail closed
+ok 47 - real-host regression: MCP override keys are plain dotted paths, unusual keys fail closed
+  ---
+  duration_ms: 5.966786
+  type: 'test'
+  ...
+# Subtest: doctor can verify real permission response without a model turn
+ok 48 - doctor can verify real permission response without a model turn
+  ---
+  duration_ms: 375.981412
+  type: 'test'
+  ...
+# Subtest: doctor checks configured profiles and rejects unavailable models or efforts
+ok 49 - doctor checks configured profiles and rejects unavailable models or efforts
+  ---
+  duration_ms: 945.01626
+  type: 'test'
+  ...
+# Subtest: doctor only reports plugin discovery when both skill and MCP server are visible
+ok 50 - doctor only reports plugin discovery when both skill and MCP server are visible
+  ---
+  duration_ms: 673.400215
+  type: 'test'
+  ...
+# Subtest: real backend persists launch phase before spawning and reports exit only after cleanup
+ok 51 - real backend persists launch phase before spawning and reports exit only after cleanup
+  ---
+  duration_ms: 362.268892
+  type: 'test'
+  ...
+# Subtest: wrong-cwd rejects read-only before inference and confirms exit
+ok 52 - wrong-cwd rejects read-only before inference and confirms exit
+  ---
+  duration_ms: 421.494894
+  type: 'test'
+  ...
+# Subtest: wrong-cwd rejects review before inference and confirms exit
+ok 53 - wrong-cwd rejects review before inference and confirms exit
+  ---
+  duration_ms: 404.343306
+  type: 'test'
+  ...
+# Subtest: wrong-cwd rejects workspace-write before inference and confirms exit
+ok 54 - wrong-cwd rejects workspace-write before inference and confirms exit
+  ---
+  duration_ms: 380.718445
+  type: 'test'
+  ...
+# Subtest: missing-cwd rejects read-only before inference and confirms exit
+ok 55 - missing-cwd rejects read-only before inference and confirms exit
+  ---
+  duration_ms: 306.116304
+  type: 'test'
+  ...
+# Subtest: missing-cwd rejects review before inference and confirms exit
+ok 56 - missing-cwd rejects review before inference and confirms exit
+  ---
+  duration_ms: 342.504588
+  type: 'test'
+  ...
+# Subtest: missing-cwd rejects workspace-write before inference and confirms exit
+ok 57 - missing-cwd rejects workspace-write before inference and confirms exit
+  ---
+  duration_ms: 393.250085
+  type: 'test'
+  ...
+# Subtest: invalid-cwd rejects read-only before inference and confirms exit
+ok 58 - invalid-cwd rejects read-only before inference and confirms exit
+  ---
+  duration_ms: 320.409559
+  type: 'test'
+  ...
+# Subtest: invalid-cwd rejects review before inference and confirms exit
+ok 59 - invalid-cwd rejects review before inference and confirms exit
+  ---
+  duration_ms: 303.670625
+  type: 'test'
+  ...
+# Subtest: invalid-cwd rejects workspace-write before inference and confirms exit
+ok 60 - invalid-cwd rejects workspace-write before inference and confirms exit
+  ---
+  duration_ms: 292.895644
+  type: 'test'
+  ...
+# Subtest: read-only accepts canonical host cwd for a symlinked request
+ok 61 - read-only accepts canonical host cwd for a symlinked request
+  ---
+  duration_ms: 261.870913
+  type: 'test'
+  ...
+# Subtest: workspace-write accepts canonical host cwd for a symlinked request
+ok 62 - workspace-write accepts canonical host cwd for a symlinked request
+  ---
+  duration_ms: 285.949595
+  type: 'test'
+  ...
+# Subtest: doctor refuses an unexpected cwd without starting inference
+ok 63 - doctor refuses an unexpected cwd without starting inference
+  ---
+  duration_ms: 361.104679
+  type: 'test'
+  ...
+# Subtest: invalid-json releases protocol buffer, rejects pending requests and discards later output
+ok 64 - invalid-json releases protocol buffer, rejects pending requests and discards later output
+  ---
+  duration_ms: 261.496924
+  type: 'test'
+  ...
+# Subtest: oversized-frame releases protocol buffer, rejects pending requests and discards later output
+ok 65 - oversized-frame releases protocol buffer, rejects pending requests and discards later output
+  ---
+  duration_ms: 291.791761
+  type: 'test'
+  ...
+# Subtest: protocol byte accounting handles partial unicode frames and multiple notifications
+ok 66 - protocol byte accounting handles partial unicode frames and multiple notifications
+  ---
+  duration_ms: 245.339849
+  type: 'test'
+  ...
+# Subtest: continuous oversized output ignoring TERM fails and is reaped before backend exit
+ok 67 - continuous oversized output ignoring TERM fails and is reaped before backend exit
+  ---
+  duration_ms: 704.789072
+  type: 'test'
+  ...
+# Subtest: a legal boundary-sized frame followed by another frame in the same chunk is accepted
+ok 68 - a legal boundary-sized frame followed by another frame in the same chunk is accepted
+  ---
+  duration_ms: 403.912782
+  type: 'test'
+  ...
+# Subtest: run preserves both execution and cleanup failures without reporting exit
+ok 69 - run preserves both execution and cleanup failures without reporting exit
+  ---
+  duration_ms: 424.909552
+  type: 'test'
+  ...
+# Subtest: run preserves cleanup-only failure without reporting exit
+ok 70 - run preserves cleanup-only failure without reporting exit
+  ---
+  duration_ms: 296.09493
+  type: 'test'
+  ...
+# Subtest: probe preserves both execution and cleanup failures without reporting exit
+ok 71 - probe preserves both execution and cleanup failures without reporting exit
+  ---
+  duration_ms: 302.782612
+  type: 'test'
+  ...
+# Subtest: probe preserves cleanup-only failure without reporting exit
+ok 72 - probe preserves cleanup-only failure without reporting exit
+  ---
+  duration_ms: 280.868035
+  type: 'test'
+  ...
+# Subtest: runtime persists both failure messages and refuses retries while cleanup is unconfirmed
+ok 73 - runtime persists both failure messages and refuses retries while cleanup is unconfirmed
+  ---
+  duration_ms: 438.880568
+  type: 'test'
+  ...
+# Subtest: binary discovery prefers PATH, falls back to desktop and respects explicit paths
+ok 74 - binary discovery prefers PATH, falls back to desktop and respects explicit paths
+  ---
+  duration_ms: 6.050575
+  type: 'test'
+  ...
+# Subtest: build rejects a missing explicit binary before npm bootstrap or package writes
+ok 75 - build rejects a missing explicit binary before npm bootstrap or package writes
+  ---
+  duration_ms: 210.28389
+  type: 'test'
+  ...
+# Subtest: build rejects Windows before dependency installation or configuration reads
+ok 76 - build rejects Windows before dependency installation or configuration reads
+  ---
+  duration_ms: 238.486701
+  type: 'test'
+  ...
+# Subtest: strict CLI honors explicit absolute binary without rewriting config
+ok 77 - strict CLI honors explicit absolute binary without rewriting config
+  ---
+  duration_ms: 2586.820231
+  type: 'test'
+  ...
+# Subtest: strict CLI honors explicit relative with spaces binary without rewriting config
+ok 78 - strict CLI honors explicit relative with spaces binary without rewriting config
+  ---
+  duration_ms: 2893.065291
+  type: 'test'
+  ...
+# Subtest: strict CLI honors explicit PATH command binary without rewriting config
+ok 79 - strict CLI honors explicit PATH command binary without rewriting config
+  ---
+  duration_ms: 2532.371381
+  type: 'test'
+  ...
+# Subtest: strict CLI rejects an explicit missing binary instead of using valid config
+ok 80 - strict CLI rejects an explicit missing binary instead of using valid config
+  ---
+  duration_ms: 394.662619
+  type: 'test'
+  ...
+# Subtest: strict CLI preserves configured binary when no override is supplied
+ok 81 - strict CLI preserves configured binary when no override is supplied
+  ---
+  duration_ms: 2050.872741
+  type: 'test'
+  ...
+# Subtest: CLI help and native pack need neither strict dependencies nor binary resolver
+ok 82 - CLI help and native pack need neither strict dependencies nor binary resolver
+  ---
+  duration_ms: 294.681421
+  type: 'test'
+  ...
+# Subtest: CLI rejects unknown commands before loading strict dependencies
+ok 83 - CLI rejects unknown commands before loading strict dependencies
+  ---
+  duration_ms: 148.592175
+  type: 'test'
+  ...
+# (node:112231) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: foreground waits show phase changes and periodic observations without completing or cancelling a member
+ok 84 - foreground waits show phase changes and periodic observations without completing or cancelling a member
+  ---
+  duration_ms: 259.570718
+  type: 'test'
+  ...
+# Subtest: foreground waits preserve cancellation and wait for runtime exit
+ok 85 - foreground waits preserve cancellation and wait for runtime exit
+  ---
+  duration_ms: 96.795082
+  type: 'test'
+  ...
+# Subtest: CLI start prints receipts on stderr and leaves stdout as one JSON result with saved human confirmation
+ok 86 - CLI start prints receipts on stderr and leaves stdout as one JSON result with saved human confirmation
+  ---
+  duration_ms: 2038.196108
+  type: 'test'
+  ...
+# Subtest: CLI SIGTERM prints the final cancellation receipt before releasing its store owner
+ok 87 - CLI SIGTERM prints the final cancellation receipt before releasing its store owner
+  ---
+  duration_ms: 2283.95928
+  type: 'test'
+  ...
+# Subtest: CLI SIGTERM during model input exits without selecting models or starting a member
+ok 88 - CLI SIGTERM during model input exits without selecting models or starting a member
+  ---
+  duration_ms: 1312.247734
+  type: 'test'
+  ...
+# (node:113938) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: global config needs no project, CLI selects its cwd or override, and old fixed configs stay fixed
+ok 89 - global config needs no project, CLI selects its cwd or override, and old fixed configs stay fixed
+  ---
+  duration_ms: 16.268864
+  type: 'test'
+  ...
+# Subtest: the same global config observes either CLI cwd without creating a workspace owner
+ok 90 - the same global config observes either CLI cwd without creating a workspace owner
+  ---
+  duration_ms: 1325.891014
+  type: 'test'
+  ...
+# Subtest: CLI status works from a copied Unicode and space checkout without creating project state
+ok 91 - CLI status works from a copied Unicode and space checkout without creating project state
+  ---
+  duration_ms: 503.717976
+  type: 'test'
+  ...
+# (node:114434) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: structured output schema requires optional stored limitations
+ok 92 - structured output schema requires optional stored limitations
+  ---
+  duration_ms: 13.541485
+  type: 'test'
+  ...
+# Subtest: strict generation guard rejects missing required properties at every object level
+ok 93 - strict generation guard rejects missing required properties at every object level
+  ---
+  duration_ms: 5.309138
+  type: 'test'
+  ...
+# Subtest: completion requires captain review before unlocking a dependency
+ok 94 - completion requires captain review before unlocking a dependency
+  ---
+  duration_ms: 228.867109
+  type: 'test'
+  ...
+# Subtest: fresh packet excludes arbitrary parent-history fields; schema rejects them
+ok 95 - fresh packet excludes arbitrary parent-history fields; schema rejects them
+  ---
+  duration_ms: 53.654536
+  type: 'test'
+  ...
+# Subtest: unknown top-level fields are rejected with their names and a path migration hint
+ok 96 - unknown top-level fields are rejected with their names and a path migration hint
+  ---
+  duration_ms: 2.009275
+  type: 'test'
+  ...
+# Subtest: unknown executionPlan fields remain strict and explain allowedPaths versus requiredFiles
+ok 97 - unknown executionPlan fields remain strict and explain allowedPaths versus requiredFiles
+  ---
+  duration_ms: 4.877359
+  type: 'test'
+  ...
+# Subtest: valid executionPlan fields keep their values and task defaults stay conservative
+ok 98 - valid executionPlan fields keep their values and task defaults stay conservative
+  ---
+  duration_ms: 1.798323
+  type: 'test'
+  ...
+# Subtest: no implicit downgrade; qualified profile needs task-specific eligibility
+ok 99 - no implicit downgrade; qualified profile needs task-specific eligibility
+  ---
+  duration_ms: 88.501073
+  type: 'test'
+  ...
+# Subtest: qualified rejection retries on expert and old attempt cannot write back
+ok 100 - qualified rejection retries on expert and old attempt cannot write back
+  ---
+  duration_ms: 170.772743
+  type: 'test'
+  ...
+# Subtest: claims without matching criteria or evidence cannot pass
+ok 101 - claims without matching criteria or evidence cannot pass
+  ---
+  duration_ms: 87.913424
+  type: 'test'
+  ...
+# Subtest: blocker report never enters the review-pass path
+ok 102 - blocker report never enters the review-pass path
+  ---
+  duration_ms: 75.974476
+  type: 'test'
+  ...
+# Subtest: completed reports with limitations await review, contradictory blockers diagnose without retry
+    # Subtest: false
+    ok 1 - false
+      ---
+      duration_ms: 111.180294
+      type: 'test'
+      ...
+    # Subtest: true
+    ok 2 - true
+      ---
+      duration_ms: 39.880017
+      type: 'test'
+      ...
+    1..2
+ok 103 - completed reports with limitations await review, contradictory blockers diagnose without retry
+  ---
+  duration_ms: 153.736234
+  type: 'test'
+  ...
+# Subtest: all criteria need real captain evidence in contract order
+ok 104 - all criteria need real captain evidence in contract order
+  ---
+  duration_ms: 63.443296
+  type: 'test'
+  ...
+# Subtest: concurrency, bounded wait and cancellation preserve capacity until exit
+ok 105 - concurrency, bounded wait and cancellation preserve capacity until exit
+  ---
+  duration_ms: 73.99245
+  type: 'test'
+  ...
+# Subtest: deadline cancels backend and records failure honestly
+ok 106 - deadline cancels backend and records failure honestly
+  ---
+  duration_ms: 85.113963
+  type: 'test'
+  ...
+# Subtest: a captain cancellation stays distinct from a deadline overrun
+ok 107 - a captain cancellation stays distinct from a deadline overrun
+  ---
+  duration_ms: 51.401601
+  type: 'test'
+  ...
+# Subtest: a cancellation that lands just before the deadline stays a cancellation
+ok 108 - a cancellation that lands just before the deadline stays a cancellation
+  ---
+  duration_ms: 83.836125
+  type: 'test'
+  ...
+# Subtest: state has one owner and survives reopening
+ok 109 - state has one owner and survives reopening
+  ---
+  duration_ms: 56.408332
+  type: 'test'
+  ...
+# Subtest: unclean exit marks running task interrupted, never replays it
+ok 110 - unclean exit marks running task interrupted, never replays it
+  ---
+  duration_ms: 252.934917
+  type: 'test'
+  ...
+# Subtest: retry guidance reaches the fresh member without replaying raw conversation
+ok 111 - retry guidance reaches the fresh member without replaying raw conversation
+  ---
+  duration_ms: 96.197393
+  type: 'test'
+  ...
+# Subtest: no unbounded failure retry loop
+ok 112 - no unbounded failure retry loop
+  ---
+  duration_ms: 205.16721
+  type: 'test'
+  ...
+# Subtest: retry failed cannot expose the previous attempt execution
+ok 113 - retry failed cannot expose the previous attempt execution
+  ---
+  duration_ms: 160.594746
+  type: 'test'
+  ...
+# Subtest: retry cancelled cannot expose the previous attempt execution
+ok 114 - retry cancelled cannot expose the previous attempt execution
+  ---
+  duration_ms: 160.535455
+  type: 'test'
+  ...
+# Subtest: retry invalid-result cannot expose the previous attempt execution
+ok 115 - retry invalid-result cannot expose the previous attempt execution
+  ---
+  duration_ms: 162.853514
+  type: 'test'
+  ...
+# Subtest: importing fixture helpers preserves caller coverage and exact output
+ok 116 - importing fixture helpers preserves caller coverage and exact output
+  ---
+  duration_ms: 148.651506
+  type: 'test'
+  ...
+# Subtest: fixtureEnv clones custom and default environments and preserves binary output
+ok 117 - fixtureEnv clones custom and default environments and preserves binary output
+  ---
+  duration_ms: 78.154913
+  type: 'test'
+  ...
+# Subtest: fixtureNode isolates before startup and leaves explicit exits byte-for-byte clean
+ok 118 - fixtureNode isolates before startup and leaves explicit exits byte-for-byte clean
+  ---
+  duration_ms: 251.885864
+  type: 'test'
+  ...
+# Subtest: fixtureNode keeps pure CJS children and grandchildren out of coverage
+ok 119 - fixtureNode keeps pure CJS children and grandchildren out of coverage
+  ---
+  duration_ms: 463.004278
+  type: 'test'
+  ...
+# Subtest: fixtureAppServer preserves normal fake protocol and crash output without profiles
+ok 120 - fixtureAppServer preserves normal fake protocol and crash output without profiles
+  ---
+  duration_ms: 352.463506
+  type: 'test'
+  ...
+# Subtest: AppServerClient retains real outer guard coverage while its fake server is isolated
+ok 121 - AppServerClient retains real outer guard coverage while its fake server is isolated
+  ---
+  duration_ms: 1224.557578
+  type: 'test'
+  ...
+# Subtest: generated executable strips a shebang, quotes its path and forwards argv unchanged
+ok 122 - generated executable strips a shebang, quotes its path and forwards argv unchanged
+  ---
+  duration_ms: 203.835167
+  type: 'test'
+  ...
+# Subtest: generated executable quotes an absolute Node path containing spaces and a single quote
+ok 123 - generated executable quotes an absolute Node path containing spaces and a single quote
+  ---
+  duration_ms: 365.875955
+  type: 'test'
+  ...
+# Subtest: generated executable clears coverage before Node starts and descendants inherit isolation
+ok 124 - generated executable clears coverage before Node starts and descendants inherit isolation
+  ---
+  duration_ms: 415.516232
+  type: 'test'
+  ...
+# (node:115391) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: hook dispatch requires explicit task workspace across projects; SDK schema agrees while queries stay taskId-only
+ok 125 - hook dispatch requires explicit task workspace across projects; SDK schema agrees while queries stay taskId-only
+  ---
+  duration_ms: 557.887503
+  type: 'test'
+  ...
+# Subtest: real command-hook inputs bind the host turn; interrupt cancels only its work and blocks late starts
+ok 126 - real command-hook inputs bind the host turn; interrupt cancels only its work and blocks late starts
+  ---
+  duration_ms: 400.951319
+  type: 'test'
+  ...
+# Subtest: cancellation tombstone precedes binding and async discovery; forged token and cross-turn rebinding fail
+ok 127 - cancellation tombstone precedes binding and async discovery; forged token and cross-turn rebinding fail
+  ---
+  duration_ms: 230.676018
+  type: 'test'
+  ...
+# Subtest: SessionEnd cancels all turns of one session and never another session; shutdown removes its endpoint
+ok 128 - SessionEnd cancels all turns of one session and never another session; shutdown removes its endpoint
+  ---
+  duration_ms: 157.044223
+  type: 'test'
+  ...
+# Subtest: Interrupt during live model discovery refuses late start before any attempt is created
+ok 129 - Interrupt during live model discovery refuses late start before any attempt is created
+  ---
+  duration_ms: 131.334465
+  type: 'test'
+  ...
+# Subtest: production stdio MCP requires command-hook ticket and confirms owned backend exit on Interrupt
+ok 130 - production stdio MCP requires command-hook ticket and confirms owned backend exit on Interrupt
+  ---
+  duration_ms: 2734.903649
+  type: 'test'
+  ...
+# Subtest: unreachable registered endpoint reports unknown exit rather than a silent success
+ok 131 - unreachable registered endpoint reports unknown exit rather than a silent success
+  ---
+  duration_ms: 76.345092
+  type: 'test'
+  ...
+# Subtest: old controller cannot remove a successor endpoint and publish repairs a missing endpoint
+ok 132 - old controller cannot remove a successor endpoint and publish repairs a missing endpoint
+  ---
+  duration_ms: 103.038073
+  type: 'test'
+  ...
+# Subtest: rejected start and integrate requests preserve the accepted attempt interruption owner
+ok 133 - rejected start and integrate requests preserve the accepted attempt interruption owner
+  ---
+  duration_ms: 567.969136
+  type: 'test'
+  ...
+# Subtest: reconnect keeps status read-only; zero-time wait republishes endpoint for a saved task
+ok 134 - reconnect keeps status read-only; zero-time wait republishes endpoint for a saved task
+  ---
+  duration_ms: 147.800158
+  type: 'test'
+  ...
+# (node:116201) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: SIGKILL runtime reaps guarded member and its TERM-ignoring descendant
+ok 135 - SIGKILL runtime reaps guarded member and its TERM-ignoring descendant
+  ---
+  duration_ms: 949.753213
+  type: 'test'
+  ...
+# Subtest: SIGKILL runtime reaps guarded verification and its TERM-ignoring descendant
+ok 136 - SIGKILL runtime reaps guarded verification and its TERM-ignoring descendant
+  ---
+  duration_ms: 1427.735902
+  type: 'test'
+  ...
+# (node:116917) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: global SDK connection writes, reviews and integrates two Git projects into the correct sources
+ok 137 - global SDK connection writes, reviews and integrates two Git projects into the correct sources
+  ---
+  duration_ms: 10893.321056
+  type: 'test'
+  ...
+# (node:117157) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: one SDK connection routes two projects without owner acquisition during inventory, models or status
+ok 138 - one SDK connection routes two projects without owner acquisition during inventory, models or status
+  ---
+  duration_ms: 328.019968
+  type: 'test'
+  ...
+# Subtest: SDK live panels reuse per-project viewers without owner acquisition and close with their connection
+ok 139 - SDK live panels reuse per-project viewers without owner acquisition and close with their connection
+  ---
+  duration_ms: 334.297994
+  type: 'test'
+  ...
+# Subtest: SDK incremental cursors are project-bound and expire on reconnect without acquiring an owner
+ok 140 - SDK incremental cursors are project-bound and expire on reconnect without acquiring an owner
+  ---
+  duration_ms: 326.384056
+  type: 'test'
+  ...
+# Subtest: model approvals, task ids, reviews and forget stay within their project on one connection
+ok 141 - model approvals, task ids, reviews and forget stay within their project on one connection
+  ---
+  duration_ms: 1274.298878
+  type: 'test'
+  ...
+# Subtest: parallel forms are isolated and an in-flight discovery cannot race a same-project confirmation
+ok 142 - parallel forms are isolated and an in-flight discovery cannot race a same-project confirmation
+  ---
+  duration_ms: 672.270179
+  type: 'test'
+  ...
+# Subtest: reconnect requires explicit context and restores remembered choices only for that workspace
+ok 143 - reconnect requires explicit context and restores remembered choices only for that workspace
+  ---
+  duration_ms: 560.667353
+  type: 'test'
+  ...
+# Subtest: duplicate task ids require an explicit project and workspace plus taskId identifies its own record
+ok 144 - duplicate task ids require an explicit project and workspace plus taskId identifies its own record
+  ---
+  duration_ms: 215.655581
+  type: 'test'
+  ...
+# Subtest: stdio serve routes without a fallback runtime and closeAll releases every project owner
+ok 145 - stdio serve routes without a fallback runtime and closeAll releases every project owner
+  ---
+  duration_ms: 1037.208839
+  type: 'test'
+  ...
+# (node:118628) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: SDK summary/catalog and selected panel validate combinations without acquiring runtime
+ok 146 - SDK summary/catalog and selected panel validate combinations without acquiring runtime
+  ---
+  duration_ms: 331.942316
+  type: 'test'
+  ...
+# Subtest: SDK completed analysis exposes limitations without blockers and still requires captain review
+ok 147 - SDK completed analysis exposes limitations without blockers and still requires captain review
+  ---
+  duration_ms: 180.758003
+  type: 'test'
+  ...
+# Subtest: SDK review receipt stays bounded and retains full evidence through explicit status
+ok 148 - SDK review receipt stays bounded and retains full evidence through explicit status
+  ---
+  duration_ms: 223.452566
+  type: 'test'
+  ...
+# Subtest: SDK incremental status and wait return bounded receipts and preserve legacy results
+ok 149 - SDK incremental status and wait return bounded receipts and preserve legacy results
+  ---
+  duration_ms: 124.293337
+  type: 'test'
+  ...
+# MCP unchanged response: 716 bytes including receipt
+# Subtest: compact SDK status and overview share orphan rules without acquiring runtime
+ok 150 - compact SDK status and overview share orphan rules without acquiring runtime
+  ---
+  duration_ms: 57.833293
+  type: 'test'
+  ...
+# Subtest: direct legacy SDK server rejects workspace arguments before cancel or forget can affect its fixed project
+ok 151 - direct legacy SDK server rejects workspace arguments before cancel or forget can affect its fixed project
+  ---
+  duration_ms: 94.703773
+  type: 'test'
+  ...
+# Subtest: SDK form capability matrix distinguishes undeclared, legacy empty, explicit form and URL-only clients
+    # Subtest: undeclared
+    ok 1 - undeclared
+      ---
+      duration_ms: 23.766149
+      type: 'test'
+      ...
+    # Subtest: legacy
+    ok 2 - legacy
+      ---
+      duration_ms: 83.443555
+      type: 'test'
+      ...
+    # Subtest: form
+    ok 3 - form
+      ---
+      duration_ms: 39.498612
+      type: 'test'
+      ...
+    # Subtest: URL-only
+    ok 4 - URL-only
+      ---
+      duration_ms: 29.628063
+      type: 'test'
+      ...
+    1..4
+ok 152 - SDK form capability matrix distinguishes undeclared, legacy empty, explicit form and URL-only clients
+  ---
+  duration_ms: 178.159245
+  type: 'test'
+  ...
+# Subtest: active members and manual verification reject model changes before opening a host form
+    # Subtest: member
+    ok 1 - member
+      ---
+      duration_ms: 25.612721
+      type: 'test'
+      ...
+    # Subtest: verification
+    ok 2 - verification
+      ---
+      duration_ms: 37.49717
+      type: 'test'
+      ...
+    1..2
+ok 153 - active members and manual verification reject model changes before opening a host form
+  ---
+  duration_ms: 64.735803
+  type: 'test'
+  ...
+# Subtest: real SDK client connects over stdio; contracts validate before any paid call
+ok 154 - real SDK client connects over stdio; contracts validate before any paid call
+  ---
+  duration_ms: 1005.701834
+  type: 'test'
+  ...
+# Subtest: MCP observation coexists with a live owner while mutating tools still respect ownership
+ok 155 - MCP observation coexists with a live owner while mutating tools still respect ownership
+  ---
+  duration_ms: 1628.712651
+  type: 'test'
+  ...
+# (node:119052) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: legacy qualified review cannot change expert model or effort, while non-review eligibility remains
+ok 156 - legacy qualified review cannot change expert model or effort, while non-review eligibility remains
+  ---
+  duration_ms: 3.65927
+  type: 'test'
+  ...
+# Subtest: routing uses explicit simplicity, protects review/uncertain tasks and allows expert override
+ok 157 - routing uses explicit simplicity, protects review/uncertain tasks and allows expert override
+  ---
+  duration_ms: 0.488486
+  type: 'test'
+  ...
+# Subtest: form choices preserve exact model/effort pairs and never infer approval or capabilities
+ok 158 - form choices preserve exact model/effort pairs and never infer approval or capabilities
+  ---
+  duration_ms: 9.155486
+  type: 'test'
+  ...
+# Subtest: terminal default remembers only after final human confirmation; no disables it and invalid input cancels
+ok 159 - terminal default remembers only after final human confirmation; no disables it and invalid input cancels
+  ---
+  duration_ms: 25.833131
+  type: 'test'
+  ...
+# Subtest: aborting any pending terminal prompt rejects without persisting or destroying stdin
+    # Subtest: 强模型编号：
+    ok 1 - 强模型编号：
+      ---
+      duration_ms: 114.171255
+      type: 'test'
+      ...
+    # Subtest: 简单任务模型编号（0 = 全部使用强模型）：
+    ok 2 - 简单任务模型编号（0 = 全部使用强模型）：
+      ---
+      duration_ms: 49.302831
+      type: 'test'
+      ...
+    # Subtest: 允许重启复用？默认 yes
+    ok 3 - 允许重启复用？默认 yes
+      ---
+      duration_ms: 57.855792
+      type: 'test'
+      ...
+    # Subtest: 确认此分工？输入 yes：
+    ok 4 - 确认此分工？输入 yes：
+      ---
+      duration_ms: 46.874859
+      type: 'test'
+      ...
+    1..4
+ok 160 - aborting any pending terminal prompt rejects without persisting or destroying stdin
+  ---
+  duration_ms: 268.807885
+  type: 'test'
+  ...
+# Subtest: terminal EOF and Ctrl+C reject a pending confirmation without an external signal
+    # Subtest: EOF
+    ok 1 - EOF
+      ---
+      duration_ms: 10.382826
+      type: 'test'
+      ...
+    # Subtest: Ctrl+C
+    ok 2 - Ctrl+C
+      ---
+      duration_ms: 1.95961
+      type: 'test'
+      ...
+    1..2
+ok 161 - terminal EOF and Ctrl+C reject a pending confirmation without an external signal
+  ---
+  duration_ms: 12.732759
+  type: 'test'
+  ...
+# Subtest: confirmed runtime records selection per attempt, retries on expert and rejects active reconfiguration
+ok 162 - confirmed runtime records selection per attempt, retries on expert and rejects active reconfiguration
+  ---
+  duration_ms: 212.189474
+  type: 'test'
+  ...
+# Subtest: host discovery paginates, excludes hidden choices and returns only model settings
+ok 163 - host discovery paginates, excludes hidden choices and returns only model settings
+  ---
+  duration_ms: 284.379813
+  type: 'test'
+  ...
+# Subtest: real SDK user form gates start, decline/cancel/invalid input do not approve; approval expires on restart
+ok 164 - real SDK user form gates start, decline/cancel/invalid input do not approve; approval expires on restart
+  ---
+  duration_ms: 5693.82694
+  type: 'test'
+  ...
+# (node:122328) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: unsupported host and agent-supplied approval cannot bypass confirmation; CLI non-TTY fails closed
+ok 165 - unsupported host and agent-supplied approval cannot bypass confirmation; CLI non-TTY fails closed
+  ---
+  duration_ms: 3188.599838
+  type: 'test'
+  ...
+# Subtest: a model removed while the user answers is rejected; a pending form blocks concurrent starts
+ok 166 - a model removed while the user answers is rejected; a pending form blocks concurrent starts
+  ---
+  duration_ms: 2153.178519
+  type: 'test'
+  ...
+# Subtest: explicitly submitted default remember survives restart without a form; cancellation and forget preserve their contracts
+ok 167 - explicitly submitted default remember survives restart without a form; cancellation and forget preserve their contracts
+  ---
+  duration_ms: 6650.66051
+  type: 'test'
+  ...
+# Subtest: missing or invalid remember cannot change an existing selection or its saved preference
+ok 168 - missing or invalid remember cannot change an existing selection or its saved preference
+  ---
+  duration_ms: 4305.68479
+  type: 'test'
+  ...
+# Subtest: pending and declined confirmation do not acquire the workspace owner or authorize implicit start
+ok 169 - pending and declined confirmation do not acquire the workspace owner or authorize implicit start
+  ---
+  duration_ms: 3038.386617
+  type: 'test'
+  ...
+# Subtest: captain models start without forms; overrides are validated, recorded and retries use expert
+ok 170 - captain models start without forms; overrides are validated, recorded and retries use expert
+  ---
+  duration_ms: 4890.244123
+  type: 'test'
+  ...
+# Subtest: CLI explicit models work without TTY and leave human preferences unset
+ok 171 - CLI explicit models work without TTY and leave human preferences unset
+  ---
+  duration_ms: 2546.52588
+  type: 'test'
+  ...
+# Subtest: production start refreshes live effort capabilities and rejects before member launch or attempt creation
+ok 172 - production start refreshes live effort capabilities and rejects before member launch or attempt creation
+  ---
+  duration_ms: 2209.708065
+  type: 'test'
+  ...
+# Subtest: concurrent captain dispatches keep roles in their own attempts without changing runtime profiles
+ok 173 - concurrent captain dispatches keep roles in their own attempts without changing runtime profiles
+  ---
+  duration_ms: 124.156894
+  type: 'test'
+  ...
+# Subtest: old expert-only preferences do not reject a contract using a new explicit simple role
+ok 174 - old expert-only preferences do not reject a contract using a new explicit simple role
+  ---
+  duration_ms: 57.147943
+  type: 'test'
+  ...
+# Subtest: saved selection fails closed if its model disappears, and session-only confirmation clears it
+ok 175 - saved selection fails closed if its model disappears, and session-only confirmation clears it
+  ---
+  duration_ms: 2940.814055
+  type: 'test'
+  ...
+# Subtest: MCP rejects an intended workspace different from the configured checkout before creating a task
+ok 176 - MCP rejects an intended workspace different from the configured checkout before creating a task
+  ---
+  duration_ms: 544.356171
+  type: 'test'
+  ...
+# Subtest: native packaging rejects missing or invalid release versions before creating output
+ok 177 - native packaging rejects missing or invalid release versions before creating output
+  ---
+  duration_ms: 100.959302
+  type: 'test'
+  ...
+# Subtest: native packaging requires nonempty package and plugin metadata
+ok 178 - native packaging requires nonempty package and plugin metadata
+  ---
+  duration_ms: 55.93139
+  type: 'test'
+  ...
+# Subtest: native packaging rejects additional manifest resources and unknown fields
+ok 179 - native packaging rejects additional manifest resources and unknown fields
+  ---
+  duration_ms: 21.016145
+  type: 'test'
+  ...
+# Subtest: native packaging accepts a release with prerelease and build identifiers
+ok 180 - native packaging accepts a release with prerelease and build identifiers
+  ---
+  duration_ms: 13.007042
+  type: 'test'
+  ...
+# Subtest: default package contains only one native skill and metadata; relocation needs no local config or runtime
+ok 181 - default package contains only one native skill and metadata; relocation needs no local config or runtime
+  ---
+  duration_ms: 9.783219
+  type: 'test'
+  ...
+# Subtest: native packaging rejects a linked source path before creating output: skills
+ok 182 - native packaging rejects a linked source path before creating output: skills
+  ---
+  duration_ms: 7.12917
+  type: 'test'
+  ...
+# Subtest: native packaging rejects a linked source path before creating output: skills/team
+ok 183 - native packaging rejects a linked source path before creating output: skills/team
+  ---
+  duration_ms: 8.781122
+  type: 'test'
+  ...
+# Subtest: native packaging rejects a linked source path before creating output: skills/team/SKILL.md
+ok 184 - native packaging rejects a linked source path before creating output: skills/team/SKILL.md
+  ---
+  duration_ms: 8.787789
+  type: 'test'
+  ...
+# Subtest: native package remains readable after removing its source checkout
+ok 185 - native package remains readable after removing its source checkout
+  ---
+  duration_ms: 10.326994
+  type: 'test'
+  ...
+# Subtest: native build succeeds from a dependency-free checkout with no Codex or npm executable
+ok 186 - native build succeeds from a dependency-free checkout with no Codex or npm executable
+  ---
+  duration_ms: 357.138595
+  type: 'test'
+  ...
+# Subtest: native output preserves existing files and refuses recursive/symlinked source destinations
+ok 187 - native output preserves existing files and refuses recursive/symlinked source destinations
+  ---
+  duration_ms: 2.154354
+  type: 'test'
+  ...
+# (node:120790) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: unchanged cursors avoid task packets and elapsed time does not manufacture updates
+ok 188 - unchanged cursors avoid task packets and elapsed time does not manufacture updates
+  ---
+  duration_ms: 10.86502
+  type: 'test'
+  ...
+# Subtest: cursors refuse tampering, reconnect and cross-project/task/attempt reuse
+ok 189 - cursors refuse tampering, reconnect and cross-project/task/attempt reuse
+  ---
+  duration_ms: 1.064761
+  type: 'test'
+  ...
+# Subtest: changed cursor feedback carries bounded next action and error
+ok 190 - changed cursor feedback carries bounded next action and error
+  ---
+  duration_ms: 0.491611
+  type: 'test'
+  ...
+# Subtest: changed summaries follow reviewer actions without falling back to the writer
+ok 191 - changed summaries follow reviewer actions without falling back to the writer
+  ---
+  duration_ms: 1.538706
+  type: 'test'
+  ...
+# Subtest: member-only changed summaries retain member action ownership
+ok 192 - member-only changed summaries retain member action ownership
+  ---
+  duration_ms: 0.223119
+  type: 'test'
+  ...
+# (node:120923) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:121467) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:121817) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:122281) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: configuration paths resolve from the config file, independent of launch cwd
+ok 193 - configuration paths resolve from the config file, independent of launch cwd
+  ---
+  duration_ms: 5.866581
+  type: 'test'
+  ...
+# Subtest: build binary override is captured in the package without rewriting user config
+ok 194 - build binary override is captured in the package without rewriting user config
+  ---
+  duration_ms: 887.965525
+  type: 'test'
+  ...
+# Subtest: packaging rejects unsupported platforms before reading config or creating output
+ok 195 - packaging rejects unsupported platforms before reading config or creating output
+  ---
+  duration_ms: 371.45056
+  type: 'test'
+  ...
+# Subtest: pack rejects a missing Codex executable before creating an output directory
+ok 196 - pack rejects a missing Codex executable before creating an output directory
+  ---
+  duration_ms: 31.564467
+  type: 'test'
+  ...
+# Subtest: package inherits host tools without saving builder PATH and uses exact Node for env shebangs
+ok 197 - package inherits host tools without saving builder PATH and uses exact Node for env shebangs
+  ---
+  duration_ms: 2256.898095
+  type: 'test'
+  ...
+# Subtest: POSIX launcher safely quotes a Node path containing spaces and a single quote
+ok 198 - POSIX launcher safely quotes a Node path containing spaces and a single quote
+  ---
+  duration_ms: 1205.033828
+  type: 'test'
+  ...
+# (node:122767) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: prepared package includes production dependencies, supports cache relocation and serves real SDK MCP
+ok 199 - prepared package includes production dependencies, supports cache relocation and serves real SDK MCP
+  ---
+  duration_ms: 1548.735319
+  type: 'test'
+  ...
+# Subtest: pack refuses existing output without overwriting it
+ok 200 - pack refuses existing output without overwriting it
+  ---
+  duration_ms: 1.49079
+  type: 'test'
+  ...
+# Subtest: pack refuses recursive copy targets including symlinked parents
+ok 201 - pack refuses recursive copy targets including symlinked parents
+  ---
+  duration_ms: 1.501623
+  type: 'test'
+  ...
+# Subtest: prepared marketplace rejects symlink escape
+ok 202 - prepared marketplace rejects symlink escape
+  ---
+  duration_ms: 1233.899714
+  type: 'test'
+  ...
+# Subtest: CLI doctor uses supplied configuration and reports invalid profiles without a turn
+ok 203 - CLI doctor uses supplied configuration and reports invalid profiles without a turn
+  ---
+  duration_ms: 1514.866679
+  type: 'test'
+  ...
+# (node:121148) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: identity distinguishes linked worktrees, accepts equivalent symlink and rejects copied preferences
+ok 204 - identity distinguishes linked worktrees, accepts equivalent symlink and rejects copied preferences
+  ---
+  duration_ms: 95.688829
+  type: 'test'
+  ...
+# Subtest: preflight records upward dependency resolution without executing module code or baseline tests
+ok 205 - preflight records upward dependency resolution without executing module code or baseline tests
+  ---
+  duration_ms: 21.807539
+  type: 'test'
+  ...
+# Subtest: preflight PATH resolution agrees with real verification launches
+ok 206 - preflight PATH resolution agrees with real verification launches
+  ---
+  duration_ms: 1477.385856
+  type: 'test'
+  ...
+# Subtest: missing executable, file or module fails before member inference and preserves structured evidence
+ok 207 - missing executable, file or module fails before member inference and preserves structured evidence
+  ---
+  duration_ms: 1242.792528
+  type: 'test'
+  ...
+# Subtest: task binding prevents starting in another checkout and legacy unbound tasks fail before inference
+ok 208 - task binding prevents starting in another checkout and legacy unbound tasks fail before inference
+  ---
+  duration_ms: 103.274778
+  type: 'test'
+  ...
+# Subtest: host failures classify by stable code, not by message text
+ok 209 - host failures classify by stable code, not by message text
+  ---
+  duration_ms: 6.670058
+  type: 'test'
+  ...
+# (node:121664) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: live panel reads changing state alongside owner without writing, and shutdown closes the listener
+ok 210 - live panel reads changing state alongside owner without writing, and shutdown closes the listener
+  ---
+  duration_ms: 223.096538
+  type: 'test'
+  ...
+# Subtest: viewer rejects unrecognized routes, methods and origins and reports read failures without leaking details
+ok 211 - viewer rejects unrecognized routes, methods and origins and reports read failures without leaking details
+  ---
+  duration_ms: 25.583097
+  type: 'test'
+  ...
+# Subtest: static exports remain offline while live pages poll and label stale observations
+ok 212 - static exports remain offline while live pages poll and label stale observations
+  ---
+  duration_ms: 0.467528
+  type: 'test'
+  ...
+# Subtest: selected live view explains 1 of 13, folds project history and searches all rows before the limit
+ok 213 - selected live view explains 1 of 13, folds project history and searches all rows before the limit
+  ---
+  duration_ms: 18.78721
+  type: 'test'
+  ...
+# Subtest: show more reads refreshed main limit instead of capturing the initial page limit
+ok 214 - show more reads refreshed main limit instead of capturing the initial page limit
+  ---
+  duration_ms: 2.833293
+  type: 'test'
+  ...
+# (node:121764) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: selected task counts differ from project history and filtering precedes limits without claiming session ownership
+ok 215 - selected task counts differ from project history and filtering precedes limits without claiming session ownership
+  ---
+  duration_ms: 26.57436
+  type: 'test'
+  ...
+# Subtest: 13-task summary and catalog omit long evidence and private owner metadata within bounded receipts
+ok 216 - 13-task summary and catalog omit long evidence and private owner metadata within bounded receipts
+  ---
+  duration_ms: 11.322925
+  type: 'test'
+  ...
+# Subtest: CLI and HTML preserve report limitations and bounded lifecycle evidence as observations
+ok 217 - CLI and HTML preserve report limitations and bounded lifecycle evidence as observations
+  ---
+  duration_ms: 514.654399
+  type: 'test'
+  ...
+# Subtest: observing an unused workspace does not create a database or acquire owner
+ok 218 - observing an unused workspace does not create a database or acquire owner
+  ---
+  duration_ms: 702.851485
+  type: 'test'
+  ...
+# Subtest: CLI and snapshot read alongside a live owner without modifying task/event/owner state
+ok 219 - CLI and snapshot read alongside a live owner without modifying task/event/owner state
+  ---
+  duration_ms: 2010.291954
+  type: 'test'
+  ...
+# Subtest: status never recovers stale running records or treats missing usage as zero
+ok 220 - status never recovers stale running records or treats missing usage as zero
+  ---
+  duration_ms: 34.738625
+  type: 'test'
+  ...
+# Subtest: overview prioritizes active tasks and waits, keeps counts complete and enforces limits
+ok 221 - overview prioritizes active tasks and waits, keeps counts complete and enforces limits
+  ---
+  duration_ms: 2.843584
+  type: 'test'
+  ...
+# Subtest: phase history records transitions once, preserves retries and keeps awaiting states honest
+ok 222 - phase history records transitions once, preserves retries and keeps awaiting states honest
+  ---
+  duration_ms: 101.987233
+  type: 'test'
+  ...
+# Subtest: early attempts keep their own verification and failure guidance wins over the status line
+ok 223 - early attempts keep their own verification and failure guidance wins over the status line
+  ---
+  duration_ms: 2.768504
+  type: 'test'
+  ...
+# Subtest: exit confirmation reports absence as unknown and cancel ignores a legacy stored failure
+ok 224 - exit confirmation reports absence as unknown and cancel ignores a legacy stored failure
+  ---
+  duration_ms: 1.431542
+  type: 'test'
+  ...
+# Subtest: status separates member/reviewer usage, command receipts and captain authority
+ok 225 - status separates member/reviewer usage, command receipts and captain authority
+  ---
+  duration_ms: 0.210618
+  type: 'test'
+  ...
+# Subtest: a member that broke the contract exposes what it actually returned
+ok 226 - a member that broke the contract exposes what it actually returned
+  ---
+  duration_ms: 0.331866
+  type: 'test'
+  ...
+# Subtest: HTML escapes repository-derived content, has no external requests and labels snapshots
+ok 227 - HTML escapes repository-derived content, has no external requests and labels snapshots
+  ---
+  duration_ms: 0.812685
+  type: 'test'
+  ...
+# Subtest: markPhase closes the previous phase and does not repeat identical transitions
+ok 228 - markPhase closes the previous phase and does not repeat identical transitions
+  ---
+  duration_ms: 0.075123
+  type: 'test'
+  ...
+# Subtest: legacy integrating records cannot invent an applying phase from task status
+ok 229 - legacy integrating records cannot invent an applying phase from task status
+  ---
+  duration_ms: 0.12333
+  type: 'test'
+  ...
+# Subtest: terminal legacy durations stay unknown without a recorded end time
+ok 230 - terminal legacy durations stay unknown without a recorded end time
+  ---
+  duration_ms: 0.591192
+  type: 'test'
+  ...
+# Subtest: missing owner warns about stale activity without recovering or suggesting duplicate execution
+ok 231 - missing owner warns about stale activity without recovering or suggesting duplicate execution
+  ---
+  duration_ms: 2.988831
+  type: 'test'
+  ...
+# Subtest: orphaned attempt history stops counting while recorded endpoints and live owners retain durations
+ok 232 - orphaned attempt history stops counting while recorded endpoints and live owners retain durations
+  ---
+  duration_ms: 3.479233
+  type: 'test'
+  ...
+# Subtest: recovery preserves execution endpoints and records observation separately from unknown stop times
+ok 233 - recovery preserves execution endpoints and records observation separately from unknown stop times
+  ---
+  duration_ms: 50.942118
+  type: 'test'
+  ...
+# Subtest: recovery still refuses a verification whose recorded child is alive
+ok 234 - recovery still refuses a verification whose recorded child is alive
+  ---
+  duration_ms: 251.204524
+  type: 'test'
+  ...
+# Subtest: tool receipts describe recorded facts for every tool shape without inventing progress
+ok 235 - tool receipts describe recorded facts for every tool shape without inventing progress
+  ---
+  duration_ms: 2.793337
+  type: 'test'
+  ...
+# Subtest: canonical home aliases share one lock, which can be reacquired after release
+ok 236 - canonical home aliases share one lock, which can be reacquired after release
+  ---
+  duration_ms: 13.133623
+  type: 'test'
+  ...
+# Subtest: releasing a replaced lock preserves the other owner record
+ok 237 - releasing a replaced lock preserves the other owner record
+  ---
+  duration_ms: 5.854873
+  type: 'test'
+  ...
+# Subtest: linked and partial locks are refused without following or deleting them
+ok 238 - linked and partial locks are refused without following or deleting them
+  ---
+  duration_ms: 1.17155
+  type: 'test'
+  ...
+# Subtest: a dead updater lock is retained until its CLI child exit can be checked manually
+ok 239 - a dead updater lock is retained until its CLI child exit can be checked manually
+  ---
+  duration_ms: 120.687028
+  type: 'test'
+  ...
+# (node:122305) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: native installation and rollback verify a dependency-free cache without requiring src
+ok 240 - native installation and rollback verify a dependency-free cache without requiring src
+  ---
+  duration_ms: 92.888453
+  type: 'test'
+  ...
+# Subtest: native installation rejects an extra skill and restores the old cache
+ok 241 - native installation rejects an extra skill and restores the old cache
+  ---
+  duration_ms: 23.000088
+  type: 'test'
+  ...
+# Subtest: native update copies genuinely different bytes; sameVersion=false
+ok 242 - native update copies genuinely different bytes; sameVersion=false
+  ---
+  duration_ms: 38.740677
+  type: 'test'
+  ...
+# Subtest: native failure restores genuinely old bytes; sameVersion=false
+ok 243 - native failure restores genuinely old bytes; sameVersion=false
+  ---
+  duration_ms: 30.882403
+  type: 'test'
+  ...
+# Subtest: native update copies genuinely different bytes; sameVersion=true
+ok 244 - native update copies genuinely different bytes; sameVersion=true
+  ---
+  duration_ms: 19.916802
+  type: 'test'
+  ...
+# Subtest: native failure restores genuinely old bytes; sameVersion=true
+ok 245 - native failure restores genuinely old bytes; sameVersion=true
+  ---
+  duration_ms: 30.019344
+  type: 'test'
+  ...
+# Subtest: rollback rejects old metadata accompanied by new cache bytes
+ok 246 - rollback rejects old metadata accompanied by new cache bytes
+  ---
+  duration_ms: 74.834889
+  type: 'test'
+  ...
+# Subtest: strict to native copies the selected mode and preserves rollback; failure=false
+ok 247 - strict to native copies the selected mode and preserves rollback; failure=false
+  ---
+  duration_ms: 1018.067584
+  type: 'test'
+  ...
+# Subtest: strict to native copies the selected mode and preserves rollback; failure=true
+ok 248 - strict to native copies the selected mode and preserves rollback; failure=true
+  ---
+  duration_ms: 1265.728505
+  type: 'test'
+  ...
+# Subtest: native inventory rejects extra skill in candidate before any mutation
+ok 249 - native inventory rejects extra skill in candidate before any mutation
+  ---
+  duration_ms: 14.971403
+  type: 'test'
+  ...
+# Subtest: native inventory rejects extra skill in old cache before any mutation
+ok 250 - native inventory rejects extra skill in old cache before any mutation
+  ---
+  duration_ms: 214.179463
+  type: 'test'
+  ...
+# Subtest: native inventory rejects extra skill in recovery source before any mutation
+ok 251 - native inventory rejects extra skill in recovery source before any mutation
+  ---
+  duration_ms: 11.846784
+  type: 'test'
+  ...
+# Subtest: native inventory rejects extra skill in identical pollution before any mutation
+ok 252 - native inventory rejects extra skill in identical pollution before any mutation
+  ---
+  duration_ms: 26.318201
+  type: 'test'
+  ...
+# Subtest: native inventory rejects installed extra skill and restores old bytes
+ok 253 - native inventory rejects installed extra skill and restores old bytes
+  ---
+  duration_ms: 46.135256
+  type: 'test'
+  ...
+# Subtest: native inventory rejects extra skill during rollback instead of reporting recovery
+ok 254 - native inventory rejects extra skill during rollback instead of reporting recovery
+  ---
+  duration_ms: 22.40873
+  type: 'test'
+  ...
+# Subtest: native inventory rejects root runtime file in candidate before any mutation
+ok 255 - native inventory rejects root runtime file in candidate before any mutation
+  ---
+  duration_ms: 10.213623
+  type: 'test'
+  ...
+# Subtest: native inventory rejects root runtime file in old cache before any mutation
+ok 256 - native inventory rejects root runtime file in old cache before any mutation
+  ---
+  duration_ms: 10.52578
+  type: 'test'
+  ...
+# Subtest: native inventory rejects root runtime file in recovery source before any mutation
+ok 257 - native inventory rejects root runtime file in recovery source before any mutation
+  ---
+  duration_ms: 11.487253
+  type: 'test'
+  ...
+# Subtest: native inventory rejects root runtime file in identical pollution before any mutation
+ok 258 - native inventory rejects root runtime file in identical pollution before any mutation
+  ---
+  duration_ms: 28.96275
+  type: 'test'
+  ...
+# Subtest: native inventory rejects installed root runtime file and restores old bytes
+ok 259 - native inventory rejects installed root runtime file and restores old bytes
+  ---
+  duration_ms: 65.24629
+  type: 'test'
+  ...
+# Subtest: native inventory rejects root runtime file during rollback instead of reporting recovery
+ok 260 - native inventory rejects root runtime file during rollback instead of reporting recovery
+  ---
+  duration_ms: 36.156543
+  type: 'test'
+  ...
+# Subtest: native inventory rejects team helper in candidate before any mutation
+ok 261 - native inventory rejects team helper in candidate before any mutation
+  ---
+  duration_ms: 10.511281
+  type: 'test'
+  ...
+# Subtest: native inventory rejects team helper in old cache before any mutation
+ok 262 - native inventory rejects team helper in old cache before any mutation
+  ---
+  duration_ms: 38.004907
+  type: 'test'
+  ...
+# Subtest: native inventory rejects team helper in recovery source before any mutation
+ok 263 - native inventory rejects team helper in recovery source before any mutation
+  ---
+  duration_ms: 18.620964
+  type: 'test'
+  ...
+# Subtest: native inventory rejects team helper in identical pollution before any mutation
+ok 264 - native inventory rejects team helper in identical pollution before any mutation
+  ---
+  duration_ms: 5.32643
+  type: 'test'
+  ...
+# Subtest: native inventory rejects installed team helper and restores old bytes
+ok 265 - native inventory rejects installed team helper and restores old bytes
+  ---
+  duration_ms: 20.768777
+  type: 'test'
+  ...
+# Subtest: native inventory rejects team helper during rollback instead of reporting recovery
+ok 266 - native inventory rejects team helper during rollback instead of reporting recovery
+  ---
+  duration_ms: 34.262472
+  type: 'test'
+  ...
+# Subtest: native inventory rejects empty directory in candidate before any mutation
+ok 267 - native inventory rejects empty directory in candidate before any mutation
+  ---
+  duration_ms: 22.202945
+  type: 'test'
+  ...
+# Subtest: native inventory rejects empty directory in old cache before any mutation
+ok 268 - native inventory rejects empty directory in old cache before any mutation
+  ---
+  duration_ms: 15.60676
+  type: 'test'
+  ...
+# Subtest: native inventory rejects empty directory in recovery source before any mutation
+ok 269 - native inventory rejects empty directory in recovery source before any mutation
+  ---
+  duration_ms: 11.529001
+  type: 'test'
+  ...
+# Subtest: native inventory rejects empty directory in identical pollution before any mutation
+ok 270 - native inventory rejects empty directory in identical pollution before any mutation
+  ---
+  duration_ms: 7.42487
+  type: 'test'
+  ...
+# Subtest: native inventory rejects installed empty directory and restores old bytes
+ok 271 - native inventory rejects installed empty directory and restores old bytes
+  ---
+  duration_ms: 44.794795
+  type: 'test'
+  ...
+# Subtest: native inventory rejects empty directory during rollback instead of reporting recovery
+ok 272 - native inventory rejects empty directory during rollback instead of reporting recovery
+  ---
+  duration_ms: 34.242849
+  type: 'test'
+  ...
+# Subtest: native inventory rejects unlisted symlink in candidate before any mutation
+ok 273 - native inventory rejects unlisted symlink in candidate before any mutation
+  ---
+  duration_ms: 11.265676
+  type: 'test'
+  ...
+# Subtest: native inventory rejects unlisted symlink in old cache before any mutation
+ok 274 - native inventory rejects unlisted symlink in old cache before any mutation
+  ---
+  duration_ms: 15.020359
+  type: 'test'
+  ...
+# Subtest: native inventory rejects unlisted symlink in recovery source before any mutation
+ok 275 - native inventory rejects unlisted symlink in recovery source before any mutation
+  ---
+  duration_ms: 19.139699
+  type: 'test'
+  ...
+# Subtest: native inventory rejects unlisted symlink in identical pollution before any mutation
+ok 276 - native inventory rejects unlisted symlink in identical pollution before any mutation
+  ---
+  duration_ms: 6.649684
+  type: 'test'
+  ...
+# Subtest: native inventory rejects installed unlisted symlink and restores old bytes
+ok 277 - native inventory rejects installed unlisted symlink and restores old bytes
+  ---
+  duration_ms: 41.060069
+  type: 'test'
+  ...
+# Subtest: native inventory rejects unlisted symlink during rollback instead of reporting recovery
+ok 278 - native inventory rejects unlisted symlink during rollback instead of reporting recovery
+  ---
+  duration_ms: 18.262642
+  type: 'test'
+  ...
+# Subtest: native inventory rejects missing required file in candidate before any mutation
+ok 279 - native inventory rejects missing required file in candidate before any mutation
+  ---
+  duration_ms: 4.887151
+  type: 'test'
+  ...
+# Subtest: native inventory rejects missing required file in old cache before any mutation
+ok 280 - native inventory rejects missing required file in old cache before any mutation
+  ---
+  duration_ms: 10.718858
+  type: 'test'
+  ...
+# Subtest: native inventory rejects missing required file in recovery source before any mutation
+ok 281 - native inventory rejects missing required file in recovery source before any mutation
+  ---
+  duration_ms: 6.810929
+  type: 'test'
+  ...
+# Subtest: native inventory rejects missing required file in identical pollution before any mutation
+ok 282 - native inventory rejects missing required file in identical pollution before any mutation
+  ---
+  duration_ms: 4.637449
+  type: 'test'
+  ...
+# Subtest: native inventory rejects installed missing required file and restores old bytes
+ok 283 - native inventory rejects installed missing required file and restores old bytes
+  ---
+  duration_ms: 12.416935
+  type: 'test'
+  ...
+# Subtest: native inventory rejects missing required file during rollback instead of reporting recovery
+ok 284 - native inventory rejects missing required file during rollback instead of reporting recovery
+  ---
+  duration_ms: 34.097561
+  type: 'test'
+  ...
+# Subtest: native update rejects leftover runtime source instead of reporting a lightweight installation
+ok 285 - native update rejects leftover runtime source instead of reporting a lightweight installation
+  ---
+  duration_ms: 30.044053
+  type: 'test'
+  ...
+# Subtest: official list without installedPath uses exact home/version cache identity; drift=false
+ok 286 - official list without installedPath uses exact home/version cache identity; drift=false
+  ---
+  duration_ms: 1051.312136
+  type: 'test'
+  ...
+# Subtest: official list without installedPath uses exact home/version cache identity; drift=true
+ok 287 - official list without installedPath uses exact home/version cache identity; drift=true
+  ---
+  duration_ms: 1525.385172
+  type: 'test'
+  ...
+# Subtest: update rejects modified installed mcp-launch and verifies restored original bytes
+ok 288 - update rejects modified installed mcp-launch and verifies restored original bytes
+  ---
+  duration_ms: 1761.38081
+  type: 'test'
+  ...
+# Subtest: update rejects missing installed mcp-launch and verifies restored original bytes
+ok 289 - update rejects missing installed mcp-launch and verifies restored original bytes
+  ---
+  duration_ms: 1582.829867
+  type: 'test'
+  ...
+# Subtest: update rejects modified installed mcp-launch.js and verifies restored original bytes
+ok 290 - update rejects modified installed mcp-launch.js and verifies restored original bytes
+  ---
+  duration_ms: 1368.378538
+  type: 'test'
+  ...
+# Subtest: update rejects missing installed mcp-launch.js and verifies restored original bytes
+ok 291 - update rejects missing installed mcp-launch.js and verifies restored original bytes
+  ---
+  duration_ms: 1397.899902
+  type: 'test'
+  ...
+# Subtest: update rejects modified installed mcp.json and verifies restored original bytes
+ok 292 - update rejects modified installed mcp.json and verifies restored original bytes
+  ---
+  duration_ms: 1765.410887
+  type: 'test'
+  ...
+# Subtest: update rejects missing installed mcp.json and verifies restored original bytes
+ok 293 - update rejects missing installed mcp.json and verifies restored original bytes
+  ---
+  duration_ms: 1520.398353
+  type: 'test'
+  ...
+# Subtest: update rejects modified installed .mcp.json and verifies restored original bytes
+ok 294 - update rejects modified installed .mcp.json and verifies restored original bytes
+  ---
+  duration_ms: 1418.888732
+  type: 'test'
+  ...
+# Subtest: update rejects missing installed .mcp.json and verifies restored original bytes
+ok 295 - update rejects missing installed .mcp.json and verifies restored original bytes
+  ---
+  duration_ms: 1448.046566
+  type: 'test'
+  ...
+# Subtest: update rejects modified installed teams.config.json and verifies restored original bytes
+ok 296 - update rejects modified installed teams.config.json and verifies restored original bytes
+  ---
+  duration_ms: 1623.481741
+  type: 'test'
+  ...
+# Subtest: update rejects missing installed teams.config.json and verifies restored original bytes
+ok 297 - update rejects missing installed teams.config.json and verifies restored original bytes
+  ---
+  duration_ms: 1302.493924
+  type: 'test'
+  ...
+# Subtest: critical cache identity rejects executable replacement and preserves rollback checks
+ok 298 - critical cache identity rejects executable replacement and preserves rollback checks
+  ---
+  duration_ms: 1403.36449
+  type: 'test'
+  ...
+# Subtest: critical cache identity rejects owner-executable replacement and preserves rollback checks
+ok 299 - critical cache identity rejects owner-executable replacement and preserves rollback checks
+  ---
+  duration_ms: 1365.220132
+  type: 'test'
+  ...
+# Subtest: critical cache identity rejects symlink replacement and preserves rollback checks
+ok 300 - critical cache identity rejects symlink replacement and preserves rollback checks
+  ---
+  duration_ms: 1116.072248
+  type: 'test'
+  ...
+# Subtest: critical cache identity rejects parent-symlink replacement and preserves rollback checks
+ok 301 - critical cache identity rejects parent-symlink replacement and preserves rollback checks
+  ---
+  duration_ms: 1168.160005
+  type: 'test'
+  ...
+# Subtest: update replaces only its own source/cache and verifies actual files, including paths with quotes
+ok 302 - update replaces only its own source/cache and verifies actual files, including paths with quotes
+  ---
+  duration_ms: 1025.386023
+  type: 'test'
+  ...
+# Subtest: update also supports first installation without removing an absent source/plugin
+ok 303 - update also supports first installation without removing an absent source/plugin
+  ---
+  duration_ms: 806.190234
+  type: 'test'
+  ...
+# Subtest: update restores the previous source and installation after source failure
+ok 304 - update restores the previous source and installation after source failure
+  ---
+  duration_ms: 1032.927561
+  type: 'test'
+  ...
+# Subtest: update restores the previous source and installation after install failure
+ok 305 - update restores the previous source and installation after install failure
+  ---
+  duration_ms: 996.081621
+  type: 'test'
+  ...
+# Subtest: update restores the previous source and installation after cache failure
+ok 306 - update restores the previous source and installation after cache failure
+  ---
+  duration_ms: 1048.83536
+  type: 'test'
+  ...
+# Subtest: a failed fresh installation removes its partial registration instead of inventing an old source
+ok 307 - a failed fresh installation removes its partial registration instead of inventing an old source
+  ---
+  duration_ms: 674.967966
+  type: 'test'
+  ...
+# Subtest: rollback failure is reported together with the original failure
+ok 308 - rollback failure is reported together with the original failure
+  ---
+  duration_ms: 752.012423
+  type: 'test'
+  ...
+# Subtest: rollback rejects same-version content drift in build-info.json
+ok 309 - rollback rejects same-version content drift in build-info.json
+  ---
+  duration_ms: 730.054388
+  type: 'test'
+  ...
+# Subtest: rollback rejects same-version content drift in src/contracts.js
+ok 310 - rollback rejects same-version content drift in src/contracts.js
+  ---
+  duration_ms: 741.714845
+  type: 'test'
+  ...
+# Subtest: update preserves the existing installation before mutation when recovery source is missing-marketplace
+ok 311 - update preserves the existing installation before mutation when recovery source is missing-marketplace
+  ---
+  duration_ms: 9.531185
+  type: 'test'
+  ...
+# Subtest: update preserves the existing installation before mutation when recovery source is missing-plugin
+ok 312 - update preserves the existing installation before mutation when recovery source is missing-plugin
+  ---
+  duration_ms: 21.290889
+  type: 'test'
+  ...
+# Subtest: update preserves the existing installation before mutation when recovery source is malformed-catalog
+ok 313 - update preserves the existing installation before mutation when recovery source is malformed-catalog
+  ---
+  duration_ms: 6.523896
+  type: 'test'
+  ...
+# Subtest: update preserves the existing installation before mutation when recovery source is changed-skill
+ok 314 - update preserves the existing installation before mutation when recovery source is changed-skill
+  ---
+  duration_ms: 6.062992
+  type: 'test'
+  ...
+# Subtest: update preserves the existing installation before mutation when recovery source is changed-build
+ok 315 - update preserves the existing installation before mutation when recovery source is changed-build
+  ---
+  duration_ms: 7.36333
+  type: 'test'
+  ...
+# Subtest: recovery source missing during registration preserves old cache and never uninstalls the plugin
+ok 316 - recovery source missing during registration preserves old cache and never uninstalls the plugin
+  ---
+  duration_ms: 9.094656
+  type: 'test'
+  ...
+# Subtest: recovery source changed during registration preserves old cache and never uninstalls the plugin
+ok 317 - recovery source changed during registration preserves old cache and never uninstalls the plugin
+  ---
+  duration_ms: 10.588947
+  type: 'test'
+  ...
+# Subtest: legacy installation without a verifiable identity is preserved before mutation
+ok 318 - legacy installation without a verifiable identity is preserved before mutation
+  ---
+  duration_ms: 485.998058
+  type: 'test'
+  ...
+# Subtest: update rejects a leftover portable manifest that would shadow the installed stop hooks
+ok 319 - update rejects a leftover portable manifest that would shadow the installed stop hooks
+  ---
+  duration_ms: 840.59847
+  type: 'test'
+  ...
+# Subtest: idle precheck is read-only, blocks owners and unfinished receipts, and permits an unused project
+ok 320 - idle precheck is read-only, blocks owners and unfinished receipts, and permits an unused project
+  ---
+  duration_ms: 51.673309
+  type: 'test'
+  ...
+# Subtest: CLI help and invalid binary never invoke build or installation
+ok 321 - CLI help and invalid binary never invoke build or installation
+  ---
+  duration_ms: 185.098857
+  type: 'test'
+  ...
+# Subtest: build failure stops the update before marketplace mutation
+ok 322 - build failure stops the update before marketplace mutation
+  ---
+  duration_ms: 157.543148
+  type: 'test'
+  ...
+# Subtest: a second process sharing Codex home is rejected before observing or mutating installation
+ok 323 - a second process sharing Codex home is rejected before observing or mutating installation
+  ---
+  duration_ms: 111.408846
+  type: 'test'
+  ...
+# Subtest: rollback preserves a foreign installation even when a non-cooperating CLI bypasses the update lock
+ok 324 - rollback preserves a foreign installation even when a non-cooperating CLI bypasses the update lock
+  ---
+  duration_ms: 18.511677
+  type: 'test'
+  ...
+# Subtest: late recovery-source drift restores original cache bytes from an independent backup
+ok 325 - late recovery-source drift restores original cache bytes from an independent backup
+  ---
+  duration_ms: 13.433656
+  type: 'test'
+  ...
+# Subtest: candidate semantic preflight rejects manifest-version without installation commands
+ok 326 - candidate semantic preflight rejects manifest-version without installation commands
+  ---
+  duration_ms: 5.607423
+  type: 'test'
+  ...
+# Subtest: candidate semantic preflight rejects unknown-mode without installation commands
+ok 327 - candidate semantic preflight rejects unknown-mode without installation commands
+  ---
+  duration_ms: 6.249987
+  type: 'test'
+  ...
+# Subtest: candidate semantic preflight rejects digest-drift without installation commands
+ok 328 - candidate semantic preflight rejects digest-drift without installation commands
+  ---
+  duration_ms: 6.993091
+  type: 'test'
+  ...
+# Subtest: candidate semantic preflight rejects manifest-resources without installation commands
+ok 329 - candidate semantic preflight rejects manifest-resources without installation commands
+  ---
+  duration_ms: 5.319264
+  type: 'test'
+  ...
+# Subtest: candidate semantic preflight rejects invalid-version without installation commands
+ok 330 - candidate semantic preflight rejects invalid-version without installation commands
+  ---
+  duration_ms: 8.341677
+  type: 'test'
+  ...
+# Subtest: damaged recovery backup is rejected before any restore installation
+ok 331 - damaged recovery backup is rejected before any restore installation
+  ---
+  duration_ms: 15.625843
+  type: 'test'
+  ...
+# Subtest: successful update cleans its backup and releases the lock; rollback retains the referenced backup
+ok 332 - successful update cleans its backup and releases the lock; rollback retains the referenced backup
+  ---
+  duration_ms: 19.899888
+  type: 'test'
+  ...
+# Subtest: default CLI adapter uses the same explicit Codex home as the update lock
+ok 333 - default CLI adapter uses the same explicit Codex home as the update lock
+  ---
+  duration_ms: 69.312011
+  type: 'test'
+  ...
+# (node:122582) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: real command preserves literal arguments, binary stdout/stderr and exit metadata without a shell
+ok 334 - real command preserves literal arguments, binary stdout/stderr and exit metadata without a shell
+  ---
+  duration_ms: 208.229635
+  type: 'test'
+  ...
+# Subtest: nonzero exit and missing executable are recorded as failures rather than successful checks
+ok 335 - nonzero exit and missing executable are recorded as failures rather than successful checks
+  ---
+  duration_ms: 484.425066
+  type: 'test'
+  ...
+# Subtest: timeout escalates to SIGKILL for a child that ignores SIGTERM
+ok 336 - timeout escalates to SIGKILL for a child that ignores SIGTERM
+  ---
+  duration_ms: 1334.407077
+  type: 'test'
+  ...
+# Subtest: pre-aborted execution launches no child and active abort retains logs until confirmed exit
+ok 337 - pre-aborted execution launches no child and active abort retains logs until confirmed exit
+  ---
+  duration_ms: 43.586622
+  type: 'test'
+  ...
+# Subtest: combined output limit bounds on-disk bytes, marks truncation and terminates the producer
+ok 338 - combined output limit bounds on-disk bytes, marks truncation and terminates the producer
+  ---
+  duration_ms: 186.42918
+  type: 'test'
+  ...
+# Subtest: descendants keeping pipes open are killed even after the command parent exited with zero
+ok 339 - descendants keeping pipes open are killed even after the command parent exited with zero
+  ---
+  duration_ms: 301.688491
+  type: 'test'
+  ...
+# Subtest: descendant receipt installs bounded cleanup even when group visibility briefly outlives guard close
+ok 340 - descendant receipt installs bounded cleanup even when group visibility briefly outlives guard close
+  ---
+  duration_ms: 546.930188
+  type: 'test'
+  ...
+# Subtest: command contract refuses shell fields, invalid deadlines, null bytes and implicit argv strings
+ok 341 - command contract refuses shell fields, invalid deadlines, null bytes and implicit argv strings
+  ---
+  duration_ms: 4.151298
+  type: 'test'
+  ...
+# Subtest: verification runs in the managed worktree and persists log receipt without changing the source
+ok 342 - verification runs in the managed worktree and persists log receipt without changing the source
+  ---
+  duration_ms: 882.759198
+  type: 'test'
+  ...
+# Subtest: command mutations are audited; exit-zero does not conceal source changes or accept an agent task
+ok 343 - command mutations are audited; exit-zero does not conceal source changes or accept an agent task
+  ---
+  duration_ms: 722.602388
+  type: 'test'
+  ...
+# Subtest: active verification blocks cleanup, another check and members until cancellation completes
+ok 344 - active verification blocks cleanup, another check and members until cancellation completes
+  ---
+  duration_ms: 660.565298
+  type: 'test'
+  ...
+# Subtest: runtime shutdown cancels verification before releasing the SQLite owner
+ok 345 - runtime shutdown cancels verification before releasing the SQLite owner
+  ---
+  duration_ms: 465.334829
+  type: 'test'
+  ...
+# Subtest: log root symlink and replaced worktree identity are refused before command execution
+ok 346 - log root symlink and replaced worktree identity are refused before command execution
+  ---
+  duration_ms: 355.356033
+  type: 'test'
+  ...
+# Subtest: recovery refuses a live orphan group; once exited it records interruption and never reruns the command
+ok 347 - recovery refuses a live orphan group; once exited it records interruption and never reruns the command
+  ---
+  duration_ms: 332.017162
+  type: 'test'
+  ...
+# Subtest: CLI reports failed command with exit status one and handles SIGTERM while retaining the result
+ok 348 - CLI reports failed command with exit status one and handles SIGTERM while retaining the result
+  ---
+  duration_ms: 1899.451062
+  type: 'test'
+  ...
+# Subtest: unconfirmed cleanup retains a blocking receipt and recovery never kills an old process group
+ok 349 - unconfirmed cleanup retains a blocking receipt and recovery never kills an old process group
+  ---
+  duration_ms: 2761.705457
+  type: 'test'
+  ...
+# (node:123001) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: dynamic router never guesses ambient cache cwd and requires disambiguation
+ok 350 - dynamic router never guesses ambient cache cwd and requires disambiguation
+  ---
+  duration_ms: 84.489987
+  type: 'test'
+  ...
+# Subtest: symlink aliases reuse a scope and all entry points reject replaced directory identities
+ok 351 - symlink aliases reuse a scope and all entry points reject replaced directory identities
+  ---
+  duration_ms: 52.926228
+  type: 'test'
+  ...
+# Subtest: fixed legacy workspace rejects explicit different projects
+ok 352 - fixed legacy workspace rejects explicit different projects
+  ---
+  duration_ms: 26.445864
+  type: 'test'
+  ...
+# Subtest: an explicit task project remains usable when an unrelated known directory is replaced
+ok 353 - an explicit task project remains usable when an unrelated known directory is replaced
+  ---
+  duration_ms: 101.694367
+  type: 'test'
+  ...
+# Subtest: task ids route from fresh snapshots, isolate dependencies and never acquire another owner
+ok 354 - task ids route from fresh snapshots, isolate dependencies and never acquire another owner
+  ---
+  duration_ms: 377.482185
+  type: 'test'
+  ...
+# Subtest: discovery probes selected project without creating state and guards identity after async discovery
+ok 355 - discovery probes selected project without creating state and guards identity after async discovery
+  ---
+  duration_ms: 76.285098
+  type: 'test'
+  ...
+# Subtest: default discovery uses configured Codex in the selected workspace without inference
+ok 356 - default discovery uses configured Codex in the selected workspace without inference
+  ---
+  duration_ms: 374.668726
+  type: 'test'
+  ...
+# Subtest: closing a router rejects a discovery completion without acquiring state
+ok 357 - closing a router rejects a discovery completion without acquiring state
+  ---
+  duration_ms: 42.259493
+  type: 'test'
+  ...
+# Subtest: reconnect requires explicit workspace, observes interruption without replay, then recovers lazily
+ok 358 - reconnect requires explicit workspace, observes interruption without replay, then recovers lazily
+  ---
+  duration_ms: 113.627649
+  type: 'test'
+  ...
+# Subtest: shutdown cancels active runtimes, waits for exit, closes all owners and aggregates failures
+ok 359 - shutdown cancels active runtimes, waits for exit, closes all owners and aggregates failures
+  ---
+  duration_ms: 121.588796
+  type: 'test'
+  ...
+# (node:123604) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: bidirectional file/directory changes support snapshot, candidate, apply and explicit discard
+    # Subtest: file-to-directory, staged=false
+    ok 1 - file-to-directory, staged=false
+      ---
+      duration_ms: 1495.739118
+      type: 'test'
+      ...
+    # Subtest: file-to-directory, staged=true
+    ok 2 - file-to-directory, staged=true
+      ---
+      duration_ms: 1463.525258
+      type: 'test'
+      ...
+    # Subtest: directory-to-file, staged=false
+    ok 3 - directory-to-file, staged=false
+      ---
+      duration_ms: 1303.3637
+      type: 'test'
+      ...
+    # Subtest: directory-to-file, staged=true
+    ok 4 - directory-to-file, staged=true
+      ---
+      duration_ms: 1382.851962
+      type: 'test'
+      ...
+    1..4
+ok 360 - bidirectional file/directory changes support snapshot, candidate, apply and explicit discard
+  ---
+  duration_ms: 5652.673791
+  type: 'test'
+  ...
+# Subtest: clean baseline creates an independent detached worktree, persists receipt and removes only its own artifacts
+ok 361 - clean baseline creates an independent detached worktree, persists receipt and removes only its own artifacts
+  ---
+  duration_ms: 387.070334
+  type: 'test'
+  ...
+# Subtest: dirty repositories are refused by default and failures are persisted
+ok 362 - dirty repositories are refused by default and failures are persisted
+  ---
+  duration_ms: 77.595812
+  type: 'test'
+  ...
+# Subtest: snapshot captures staged, unstaged, binary, deleted and untracked files without staging or stashing the source
+ok 363 - snapshot captures staged, unstaged, binary, deleted and untracked files without staging or stashing the source
+  ---
+  duration_ms: 327.700166
+  type: 'test'
+  ...
+# Subtest: management data stays out of snapshots even when the target repository has no ignore entry
+ok 364 - management data stays out of snapshots even when the target repository has no ignore entry
+  ---
+  duration_ms: 394.975607
+  type: 'test'
+  ...
+# Subtest: two preparations have separate indexes and files; cleanup preserves an unrelated worktree
+ok 365 - two preparations have separate indexes and files; cleanup preserves an unrelated worktree
+  ---
+  duration_ms: 595.719548
+  type: 'test'
+  ...
+# Subtest: scope audit accounts for rename source, destination and ignored/untracked files
+ok 366 - scope audit accounts for rename source, destination and ignored/untracked files
+  ---
+  duration_ms: 514.702418
+  type: 'test'
+  ...
+# Subtest: committed changes and ignored-only output cannot be silently removed
+ok 367 - committed changes and ignored-only output cannot be silently removed
+  ---
+  duration_ms: 820.895746
+  type: 'test'
+  ...
+# Subtest: byte-level audit catches changes hidden by assume-unchanged Git flags
+ok 368 - byte-level audit catches changes hidden by assume-unchanged Git flags
+  ---
+  duration_ms: 449.138013
+  type: 'test'
+  ...
+# Subtest: source edits after capture are reported without preventing safe clean worktree removal
+ok 369 - source edits after capture are reported without preventing safe clean worktree removal
+  ---
+  duration_ms: 426.277627
+  type: 'test'
+  ...
+# Subtest: symlinked managed state directory/database and forged worktree paths are refused
+ok 370 - symlinked managed state directory/database and forged worktree paths are refused
+  ---
+  duration_ms: 370.463648
+  type: 'test'
+  ...
+# Subtest: source --assume-unchanged flags cannot hide missing baseline content
+ok 371 - source --assume-unchanged flags cannot hide missing baseline content
+  ---
+  duration_ms: 95.836288
+  type: 'test'
+  ...
+# Subtest: source --skip-worktree flags cannot hide missing baseline content
+ok 372 - source --skip-worktree flags cannot hide missing baseline content
+  ---
+  duration_ms: 72.16376
+  type: 'test'
+  ...
+# Subtest: absolute/escaping symlinks and external Git filters fail before creating a worktree
+ok 373 - absolute/escaping symlinks and external Git filters fail before creating a worktree
+  ---
+  duration_ms: 110.665487
+  type: 'test'
+  ...
+# Subtest: unborn repositories, subdirectories, tracked management files and unmerged indexes are refused
+ok 374 - unborn repositories, subdirectories, tracked management files and unmerged indexes are refused
+  ---
+  duration_ms: 89.268352
+  type: 'test'
+  ...
+# Subtest: changed baseline ref, removed registration and a symlink replacement block destructive cleanup
+ok 375 - changed baseline ref, removed registration and a symlink replacement block destructive cleanup
+  ---
+  duration_ms: 412.169492
+  type: 'test'
+  ...
+# Subtest: abrupt exit marks workspace preparation/removal for recovery and never replays Git operations
+ok 376 - abrupt exit marks workspace preparation/removal for recovery and never replays Git operations
+  ---
+  duration_ms: 501.445554
+  type: 'test'
+  ...
+# Subtest: CLI preparation, audit and cleanup are persisted across processes without inference
+ok 377 - CLI preparation, audit and cleanup are persisted across processes without inference
+  ---
+  duration_ms: 2131.152493
+  type: 'test'
+  ...
+# Subtest: changes during baseline capture are detected and never accepted
+ok 378 - changes during baseline capture are detected and never accepted
+  ---
+  duration_ms: 166.611673
+  type: 'test'
+  ...
+# Subtest: partial preparation with a pinned ref remains recorded and can be conservatively cleaned
+ok 379 - partial preparation with a pinned ref remains recorded and can be conservatively cleaned
+  ---
+  duration_ms: 313.974691
+  type: 'test'
+  ...
+# Subtest: checkout hooks are disabled and relative internal symlinks retain their contents
+ok 380 - checkout hooks are disabled and relative internal symlinks retain their contents
+  ---
+  duration_ms: 259.97895
+  type: 'test'
+  ...
+# Subtest: submodules and sparse-checkout configuration are refused explicitly
+ok 381 - submodules and sparse-checkout configuration are refused explicitly
+  ---
+  duration_ms: 161.009542
+  type: 'test'
+  ...
+# Subtest: a checkout that normalizes source bytes is never marked ready
+ok 382 - a checkout that normalizes source bytes is never marked ready
+  ---
+  duration_ms: 263.846839
+  type: 'test'
+  ...
+# Subtest: swapping a managed Git file to another worktree cannot bypass identity checks
+ok 383 - swapping a managed Git file to another worktree cannot bypass identity checks
+  ---
+  duration_ms: 588.203983
+  type: 'test'
+  ...
+# Subtest: workspaces can be prepared from an existing linked worktree without touching the primary checkout
+ok 384 - workspaces can be prepared from an existing linked worktree without touching the primary checkout
+  ---
+  duration_ms: 361.743404
+  type: 'test'
+  ...
+# Subtest: capturing a patch tree does not itself change what the worktree digest reports
+ok 385 - capturing a patch tree does not itself change what the worktree digest reports
+  ---
+  duration_ms: 527.759304
+  type: 'test'
+  ...
+# (node:126572) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: deadline crossed in either synchronous evidence check cannot launch review or submit success
+    # Subtest: evidence check 1
+    ok 1 - evidence check 1
+      ---
+      duration_ms: 970.707564
+      type: 'test'
+      ...
+    # Subtest: evidence check 2
+    ok 2 - evidence check 2
+      ---
+      duration_ms: 1063.712561
+      type: 'test'
+      ...
+    1..2
+ok 386 - deadline crossed in either synchronous evidence check cannot launch review or submit success
+  ---
+  duration_ms: 2035.888458
+  type: 'test'
+  ...
+# Subtest: file/directory conversions complete runtime review, integration and source verification with user staging intact
+    # Subtest: false
+    ok 1 - false
+      ---
+      duration_ms: 1920.075128
+      type: 'test'
+      ...
+    # Subtest: true
+    ok 2 - true
+      ---
+      duration_ms: 2098.011402
+      type: 'test'
+      ...
+    1..2
+ok 387 - file/directory conversions complete runtime review, integration and source verification with user staging intact
+  ---
+  duration_ms: 4021.84938
+  type: 'test'
+  ...
+# Subtest: write contract requires expert, explicit paths and verification; reserved/escaping paths are refused
+ok 388 - write contract requires expert, explicit paths and verification; reserved/escaping paths are refused
+  ---
+  duration_ms: 6.311777
+  type: 'test'
+  ...
+# Subtest: write -> real verification -> fresh expert review -> captain -> explicit integration -> source test
+ok 389 - write -> real verification -> fresh expert review -> captain -> explicit integration -> source test
+  ---
+  duration_ms: 1845.202797
+  type: 'test'
+  ...
+# Subtest: dirty snapshot integration preserves user staged and unstaged files and exact source index
+ok 390 - dirty snapshot integration preserves user staged and unstaged files and exact source index
+  ---
+  duration_ms: 1836.703883
+  type: 'test'
+  ...
+# Subtest: member outside violation fails before expert review or integration
+ok 391 - member outside violation fails before expert review or integration
+  ---
+  duration_ms: 346.23285
+  type: 'test'
+  ...
+# Subtest: member ignored violation fails before expert review or integration
+ok 392 - member ignored violation fails before expert review or integration
+  ---
+  duration_ms: 327.416308
+  type: 'test'
+  ...
+# Subtest: member commit violation fails before expert review or integration
+ok 393 - member commit violation fails before expert review or integration
+  ---
+  duration_ms: 394.283888
+  type: 'test'
+  ...
+# Subtest: independent reviewer reviewReject prevents captain acceptance
+ok 394 - independent reviewer reviewReject prevents captain acceptance
+  ---
+  duration_ms: 881.975179
+  type: 'test'
+  ...
+# Subtest: independent reviewer reviewMutate prevents captain acceptance
+ok 395 - independent reviewer reviewMutate prevents captain acceptance
+  ---
+  duration_ms: 994.45166
+  type: 'test'
+  ...
+# Subtest: changed source is refused without clobbering edits or applying any patch
+ok 396 - changed source is refused without clobbering edits or applying any patch
+  ---
+  duration_ms: 1001.704621
+  type: 'test'
+  ...
+# Subtest: candidate patch tampering is rejected before review or integration
+ok 397 - candidate patch tampering is rejected before review or integration
+  ---
+  duration_ms: 1031.423104
+  type: 'test'
+  ...
+# Subtest: post-integration verification failure retains applied changes and blocks false success
+ok 398 - post-integration verification failure retains applied changes and blocks false success
+  ---
+  duration_ms: 1468.938801
+  type: 'test'
+  ...
+# Subtest: crash after patch application becomes integration_failed and never automatically reapplies
+ok 399 - crash after patch application becomes integration_failed and never automatically reapplies
+  ---
+  duration_ms: 1285.743395
+  type: 'test'
+  ...
+# Subtest: binary additions and deletions integrate through a Git patch and preserve original source staging
+ok 400 - binary additions and deletions integrate through a Git patch and preserve original source staging
+  ---
+  duration_ms: 851.272741
+  type: 'test'
+  ...
+# Subtest: App Server enforces write permission echo and reviewer receives read-only permission
+ok 401 - App Server enforces write permission echo and reviewer receives read-only permission
+  ---
+  duration_ms: 319.675869
+  type: 'test'
+  ...
+# Subtest: MCP write contract -> asynchronous integration with human preferences
+ok 402 - MCP write contract -> asynchronous integration with human preferences
+  ---
+  duration_ms: 2697.828062
+  type: 'test'
+  ...
+# Subtest: MCP write contract -> asynchronous integration with explicit captain models without forms
+ok 403 - MCP write contract -> asynchronous integration with explicit captain models without forms
+  ---
+  duration_ms: 1965.242964
+  type: 'test'
+  ...
+# Subtest: a reviewer exception is recorded with its process metadata and never causes integration
+ok 404 - a reviewer exception is recorded with its process metadata and never causes integration
+  ---
+  duration_ms: 418.491706
+  type: 'test'
+  ...
+# Subtest: failed but live reviewer blocks every new task until its exit is confirmed on reopen
+ok 405 - failed but live reviewer blocks every new task until its exit is confirmed on reopen
+  ---
+  duration_ms: 437.560409
+  type: 'test'
+  ...
+# Subtest: integration cancellation waits for source verification exit and retains the applied patch
+ok 406 - integration cancellation waits for source verification exit and retains the applied patch
+  ---
+  duration_ms: 679.329768
+  type: 'test'
+  ...
+# Subtest: staging-only source drift also refuses integration while preserving the user index
+ok 407 - staging-only source drift also refuses integration while preserving the user index
+  ---
+  duration_ms: 561.494691
+  type: 'test'
+  ...
+# Subtest: independent reviewer cannot reuse the writer thread or substitute an unapproved model
+ok 408 - independent reviewer cannot reuse the writer thread or substitute an unapproved model
+  ---
+  duration_ms: 530.917026
+  type: 'test'
+  ...
+# Subtest: integration that exhausts its deadline during synchronous apply does not launch a source command
+ok 409 - integration that exhausts its deadline during synchronous apply does not launch a source command
+  ---
+  duration_ms: 1736.994905
+  type: 'test'
+  ...
+# Subtest: crash before member PID persistence remains blocked rather than silently replaying an unknown launch
+ok 410 - crash before member PID persistence remains blocked rather than silently replaying an unknown launch
+  ---
+  duration_ms: 23.235375
+  type: 'test'
+  ...
+1..410
+# tests 436
+# suites 0
+# pass 436
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 75089.782438
+# start of coverage report
+# -------------------------------------------------------------------------------------------------------
+# file                 | line % | branch % | funcs % | uncovered lines
+# -------------------------------------------------------------------------------------------------------
+# src                  |        |          |         |
+#  actions.js          | 100.00 |    98.65 |  100.00 |
+#  app-server.js       |  99.69 |    87.56 |   86.67 | 251
+#  cli-progress.js     | 100.00 |   100.00 |  100.00 |
+#  cli.js              |  77.58 |    17.95 |   85.71 | 21-52 63-66 69-70 156-158 187-188 197-198 200-204
+#  config.js           | 100.00 |    86.36 |  100.00 |
+#  contracts.js        |  97.01 |    88.89 |  100.00 | 125-126 131-132
+#  host-hook.js        |  93.44 |    80.00 |  100.00 | 56-59
+#  host-lifecycle.js   |  97.87 |    81.72 |   87.50 | 107-109
+#  managed-process.js  | 100.00 |    57.14 |   66.67 |
+#  mcp.js              |  99.11 |    92.59 |   82.35 | 202-203
+#  models.js           | 100.00 |    93.44 |  100.00 |
+#  observation.js      | 100.00 |    91.67 |   85.71 |
+#  plugin-package.js   |  92.96 |    85.44 |  100.00 | 31-32 60-61 83-84 98-99 102-103
+#  plugin.js           |  93.75 |    84.21 |  100.00 | 44-45 61-62 66-67 71-72
+#  policy.js           | 100.00 |    97.96 |  100.00 |
+#  preflight.js        | 100.00 |   100.00 |  100.00 |
+#  process-group.js    | 100.00 |   100.00 |   83.33 |
+#  process-guard.js    | 100.00 |    66.67 |  100.00 |
+#  runtime.js          |  99.61 |    90.03 |   98.33 | 260-261
+#  status-panel.js     |  96.23 |    92.68 |  100.00 | 27-28
+#  status.js           | 100.00 |    94.83 |  100.00 |
+#  store.js            | 100.00 |    96.40 |  100.00 |
+#  verification.js     | 100.00 |    88.37 |   95.65 |
+#  workspace-router.js | 100.00 |   100.00 |  100.00 |
+#  workspace.js        |  99.23 |    89.14 |  100.00 | 231-232
+# -------------------------------------------------------------------------------------------------------
+# all files            |  97.40 |    89.83 |   95.06 |
+# -------------------------------------------------------------------------------------------------------
+# end of coverage report

@@ -1,13 +1,14 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
-import { existsSync, lstatSync, readFileSync, readdirSync } from 'node:fs';
+import { cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { homedir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 import { resolveCodexBin } from './codex-bin.js';
+import { acquireUpdateLock } from './update-lock.js';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const marketplaceName = 'codex-agent-teams-local';
@@ -40,6 +41,7 @@ function installationIdentity(path) {
   };
   if (!regular('build-info.json')) return null;
   const build = json(join(path, 'build-info.json'));
+  if (!['native', 'strict'].includes(build.mode)) throw new Error('缓存 build.mode 模式无效');
   if (typeof build.version !== 'string' || !/^[a-f0-9]{64}$/.test(build.sourceDigest ?? '')) return null;
   // Validate src itself before enumerating it.
   const src = regular('src', true);
@@ -71,6 +73,20 @@ function installationIdentity(path) {
     } else hash.update('\0absent');
     hash.update('\0');
   }
+  return hash.digest('hex');
+}
+function cacheStamp(path) {
+  const hash = createHash('sha256');
+  const visit = (file, relative = '') => {
+    const stat = lstatSync(file);
+    hash.update(`${relative}\0${stat.mode}\0`);
+    if (stat.isSymbolicLink()) hash.update(readlinkSync(file));
+    else if (stat.isDirectory()) {
+      if (relative !== 'node_modules') for (const name of readdirSync(file).sort()) visit(join(file, name), relative ? `${relative}/${name}` : name);
+    } else if (stat.isFile()) hash.update(readFileSync(file));
+    hash.update('\0');
+  };
+  visit(path);
   return hash.digest('hex');
 }
 const alive = (pid, group = false) => {
@@ -105,100 +121,155 @@ export function assertUpdateIdle(workspace) {
   } finally { db.close(); }
 }
 
-function codexCommand(binary, args) {
+function codexCommand(binary, args, codexHome) {
   try {
-    return JSON.parse(execFileSync(binary, args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 30000, maxBuffer: 4 * 1024 * 1024 }));
+    return JSON.parse(execFileSync(binary, args, { cwd: root, env: { ...process.env, CODEX_HOME: codexHome }, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 30000, maxBuffer: 4 * 1024 * 1024 }));
   } catch (error) {
     throw new Error(`codex ${args.join(' ')} 失败：${String(error.stderr || error.message).trim().slice(-2400)}`, { cause: error });
   }
 }
 
 /** Called only by the explicitly invoked update command, after a successful build/doctor. */
-export async function installPreparedPlugin({ binary, marketplaceRoot, workspace = root, codexHome = process.env.CODEX_HOME ?? join(homedir(), '.codex'), command = args => codexCommand(binary, args) }) {
-  const { pluginTarget } = await import('../src/plugin-package.js');
+export async function installPreparedPlugin({ binary, marketplaceRoot, workspace = root, codexHome = process.env.CODEX_HOME ?? join(homedir(), '.codex'), command = args => codexCommand(binary, args, codexHome) }) {
+  const { pluginTarget, validatePreparedPlugin } = await import('../src/plugin-package.js');
   const target = pluginTarget(marketplaceRoot);
+  const expected = validatePreparedPlugin(target.pluginRoot);
   const expectedIdentity = installationIdentity(target.pluginRoot);
   assert(expectedIdentity, '候选包缺少有效关键文件身份');
-  const expected = json(join(target.pluginRoot, 'build-info.json'));
   assert.equal(expected.version, json(join(target.pluginRoot, 'package.json')).version, '候选包版本不一致');
   assert.match(expected.sourceDigest, /^[a-f0-9]{64}$/);
   const listMarkets = () => command(['plugin', 'marketplace', 'list', '--json']).marketplaces;
   const listPlugins = () => command(['plugin', 'list', '--marketplace', marketplaceName, '--json']).installed;
-  const beforeMarkets = listMarkets();
-  const previous = beforeMarkets.find(entry => entry.name === marketplaceName);
-  if (previous && previous.marketplaceSource?.sourceType !== 'local') throw new Error('现有同名 marketplace 不是本地来源；请先手动核对来源，未执行替换。');
-  const installedBefore = listPlugins();
-  if (installedBefore.some(entry => entry.pluginId !== selector)) throw new Error('同名 marketplace 中还有其他已安装插件；未执行替换。');
-  const previousPlugin = installedBefore.find(entry => entry.pluginId === selector);
-  if (previousPlugin && !previous) throw new Error('已安装插件缺少可恢复的 marketplace 来源；未执行替换。');
-  if (previousPlugin?.enabled === false) throw new Error('当前插件已禁用；请先启用或手动管理该安装，未执行替换。');
-  // The local CLI list omits installedPath. Its add receipt confirms this exact
-  // versioned cache layout. Resolve only that path in the effective Codex home;
-  // never enumerate caches or fingerprint the mutable marketplace as installed.
-  const previousPath = previousPlugin?.installedPath ?? (typeof previousPlugin?.version === 'string' && /^[A-Za-z0-9][A-Za-z0-9._+-]*$/.test(previousPlugin.version)
-    ? join(resolve(codexHome), 'plugins', 'cache', marketplaceName, pluginName, previousPlugin.version) : undefined);
-  const previousIdentity = installationIdentity(previousPath);
-  const assertRecoverySource = () => {
-    if (!previousPlugin) return;
-    try {
-      assert(previousIdentity, '旧缓存缺少可验证的关键文件身份，需人工核对并迁移旧安装');
-      const recovery = pluginTarget(previous.marketplaceSource.source);
-      if (installationIdentity(recovery.pluginRoot) !== previousIdentity) {
-        throw new Error('来源关键文件与旧缓存不一致');
-      }
-    } catch (error) {
-      throw new Error(`旧插件恢复来源不可确认：${error.message}。本阶段未修改插件安装；${previousIdentity ? '请先恢复与旧缓存一致的来源，再重试更新' : '请人工核对并迁移此旧安装'}。`, { cause: error });
-    }
-  };
-  // Do not remove a working cache if rollback would depend on a missing or
-  // changed source. Check again after registration, immediately before removal.
-  assertRecoverySource();
-  assertUpdateIdle(workspace);
-  let marketplaceChanged = false, pluginChanged = false;
-  const mutate = args => command([...args, '--json']);
+  const lock = acquireUpdateLock(codexHome);
   try {
-    // Keep the old installation until the new marketplace source is registered.
-    marketplaceChanged = true;
-    if (previous) mutate(['plugin', 'marketplace', 'remove', marketplaceName]);
-    mutate(['plugin', 'marketplace', 'add', target.marketplaceRoot]);
-    assertUpdateIdle(workspace);
+    const beforeMarkets = listMarkets();
+    const previous = beforeMarkets.find(entry => entry.name === marketplaceName);
+    if (previous && previous.marketplaceSource?.sourceType !== 'local') throw new Error('现有同名 marketplace 不是本地来源；请先手动核对来源，未执行替换。');
+    const installedBefore = listPlugins();
+    if (installedBefore.some(entry => entry.pluginId !== selector)) throw new Error('同名 marketplace 中还有其他已安装插件；未执行替换。');
+    const previousPlugin = installedBefore.find(entry => entry.pluginId === selector);
+    if (previousPlugin && !previous) throw new Error('已安装插件缺少可恢复的 marketplace 来源；未执行替换。');
+    if (previousPlugin?.enabled === false) throw new Error('当前插件已禁用；请先启用或手动管理该安装，未执行替换。');
+    // The local CLI list omits installedPath. Its add receipt confirms this exact
+    // versioned cache layout. Resolve only that path in the effective Codex home;
+    // never enumerate caches or fingerprint the mutable marketplace as installed.
+    const previousPath = previousPlugin?.installedPath ?? (typeof previousPlugin?.version === 'string' && /^[A-Za-z0-9][A-Za-z0-9._+-]*$/.test(previousPlugin.version)
+      ? join(resolve(codexHome), 'plugins', 'cache', marketplaceName, pluginName, previousPlugin.version) : undefined);
+    const previousIdentity = installationIdentity(previousPath);
+    const assertRecoverySource = () => {
+      if (!previousPlugin) return;
+      try {
+        assert(previousIdentity, '旧缓存缺少可验证的关键文件身份，需人工核对并迁移旧安装');
+        const recovery = pluginTarget(previous.marketplaceSource.source);
+        if (installationIdentity(recovery.pluginRoot) !== previousIdentity) {
+          throw new Error('来源关键文件与旧缓存不一致');
+        }
+      } catch (error) {
+        throw new Error(`旧插件恢复来源不可确认：${error.message}。本阶段未修改插件安装；${previousIdentity ? '请先恢复与旧缓存一致的来源，再重试更新' : '请人工核对并迁移此旧安装'}。`, { cause: error });
+      }
+    };
+    // Do not remove a working cache if rollback would depend on a missing or
+    // changed source. Check again after registration, immediately before removal.
     assertRecoverySource();
-    pluginChanged = true;
-    if (previousPlugin) mutate(['plugin', 'remove', selector]);
-    const installed = mutate(['plugin', 'add', selector]);
-    if (!existsSync(join(target.pluginRoot, 'plugin.json'))) assert.equal(existsSync(join(installed.installedPath, 'plugin.json')), false, '实际缓存残留根manifest，会遮蔽停止hooks');
-    assert.equal(installationIdentity(installed.installedPath), expectedIdentity, '实际缓存关键文件或执行位与候选不一致');
-    const actual = json(join(installed.installedPath, 'build-info.json'));
-    assert.equal(actual.version, expected.version, '实际缓存版本与新包不符');
-    assert.equal(actual.sourceDigest, expected.sourceDigest, '实际缓存摘要与新包不符');
-    const afterMarkets = listMarkets();
-    assert.equal(afterMarkets.find(entry => entry.name === marketplaceName)?.root, target.marketplaceRoot, '实际 marketplace 来源不符');
-    for (const entry of beforeMarkets.filter(entry => entry.name !== marketplaceName)) {
-      assert.deepEqual(afterMarkets.find(value => value.name === entry.name), entry, '其他 marketplace 发生变化');
+    assertUpdateIdle(workspace);
+    let recovery;
+    if (previousPlugin) {
+      const marketplaceRoot = mkdtempSync(join(lock.home, '.codex-agent-teams-recovery-'));
+      const pluginRoot = join(marketplaceRoot, 'plugins', pluginName);
+      try {
+        cpSync(previousPath, pluginRoot, { recursive: true });
+        assert.equal(installationIdentity(pluginRoot), previousIdentity, '恢复副本与旧缓存不符');
+        mkdirSync(join(marketplaceRoot, '.agents/plugins'), { recursive: true });
+        writeFileSync(join(marketplaceRoot, '.agents/plugins/marketplace.json'), JSON.stringify({
+          name: marketplaceName, interface: { displayName: 'Codex Agent Teams recovery' },
+          plugins: [{ name: pluginName, source: { source: 'local', path: `./plugins/${pluginName}` },
+            policy: { installation: 'AVAILABLE', authentication: 'ON_USE' }, category: 'Productivity' }],
+        }) + '\n');
+        recovery = { marketplaceRoot, pluginRoot };
+      } catch (error) { rmSync(marketplaceRoot, { recursive: true, force: true }); throw error; }
     }
-    return { installedPath: installed.installedPath, version: actual.version, sourceDigest: actual.sourceDigest, marketplaceRoot: target.marketplaceRoot };
-  } catch (error) {
-    const recoveryErrors = [];
-    const recover = action => { try { action(); } catch (failure) { recoveryErrors.push(failure.message); } };
-    if (pluginChanged) recover(() => { if (listPlugins().some(entry => entry.pluginId === selector)) mutate(['plugin', 'remove', selector]); });
-    if (marketplaceChanged) {
-      recover(() => { if (listMarkets().some(entry => entry.name === marketplaceName)) mutate(['plugin', 'marketplace', 'remove', marketplaceName]); });
-      if (previous) recover(() => mutate(['plugin', 'marketplace', 'add', previous.marketplaceSource.source]));
+    let marketplaceChanged = false, pluginChanged = false, installedCheckpoint;
+    const mutate = args => { lock.assertOwned(); return command([...args, '--json']); };
+    const assertRollbackOwnership = () => {
+      lock.assertOwned();
+      const market = listMarkets().find(entry => entry.name === marketplaceName);
+      if (market && market.root !== target.marketplaceRoot && market.root !== previous?.root) {
+        throw new Error('外部 marketplace 已变化，更新所有权不再属于本事务');
+      }
+      if (pluginChanged) {
+        const current = listPlugins().find(entry => entry.pluginId === selector);
+        if (installedCheckpoint) {
+          assert.deepEqual(current, installedCheckpoint.metadata, '其他更新改变了插件安装元数据，失去回滚所有权');
+          assert.equal(cacheStamp(installedCheckpoint.path), installedCheckpoint.stamp, '外部缓存内容已变化，失去回滚所有权');
+        } else if (current && !(current.version === previousPlugin?.version && installationIdentity(previousPath) === previousIdentity)) {
+          throw new Error('当前插件不是本事务可确认的安装，失去回滚所有权');
+        }
+      }
+    };
+    try {
+      // Keep the old installation until the new marketplace source is registered.
+      marketplaceChanged = true;
+      if (previous) mutate(['plugin', 'marketplace', 'remove', marketplaceName]);
+      mutate(['plugin', 'marketplace', 'add', target.marketplaceRoot]);
+      assertUpdateIdle(workspace);
+      assertRecoverySource();
+      pluginChanged = true;
+      if (previousPlugin) mutate(['plugin', 'remove', selector]);
+      validatePreparedPlugin(target.pluginRoot);
+      assert.equal(installationIdentity(target.pluginRoot), expectedIdentity, '候选包在预检后发生变化');
+      const installed = mutate(['plugin', 'add', selector]);
+      installedCheckpoint = { path: installed.installedPath, metadata: listPlugins().find(entry => entry.pluginId === selector), stamp: cacheStamp(installed.installedPath) };
+      assert.equal(installedCheckpoint.metadata?.version, expected.version, '官方插件列表版本与候选不一致');
+      if (!existsSync(join(target.pluginRoot, 'plugin.json'))) assert.equal(existsSync(join(installed.installedPath, 'plugin.json')), false, '实际缓存残留根manifest，会遮蔽停止hooks');
+      assert.equal(installationIdentity(installed.installedPath), expectedIdentity, '实际缓存关键文件或执行位与候选不一致');
+      validatePreparedPlugin(installed.installedPath);
+      const actual = json(join(installed.installedPath, 'build-info.json'));
+      assert.equal(actual.version, expected.version, '实际缓存版本与新包不符');
+      assert.equal(actual.sourceDigest, expected.sourceDigest, '实际缓存摘要与新包不符');
+      const afterMarkets = listMarkets();
+      assert.equal(afterMarkets.find(entry => entry.name === marketplaceName)?.root, target.marketplaceRoot, '实际 marketplace 来源不符');
+      for (const entry of beforeMarkets.filter(entry => entry.name !== marketplaceName)) {
+        assert.deepEqual(afterMarkets.find(value => value.name === entry.name), entry, '其他 marketplace 发生变化');
+      }
+      if (recovery) rmSync(recovery.marketplaceRoot, { recursive: true, force: true });
+      return { installedPath: installed.installedPath, version: actual.version, sourceDigest: actual.sourceDigest, marketplaceRoot: target.marketplaceRoot };
+    } catch (error) {
+      try { assertRollbackOwnership(); }
+      catch (ownershipError) {
+        throw new Error(`${error.message}\n${ownershipError.message}。未自动删除或回滚当前安装。${recovery ? `\n恢复副本保留：${recovery.marketplaceRoot}` : ''}\n候选包保留：${target.marketplaceRoot}`, { cause: error });
+      }
+      const recoveryErrors = [];
+      const recover = action => { try { action(); } catch (failure) { recoveryErrors.push(failure.message); } };
+      if (pluginChanged) recover(() => { if (listPlugins().some(entry => entry.pluginId === selector)) mutate(['plugin', 'remove', selector]); });
+      if (marketplaceChanged) {
+        recover(() => { if (listMarkets().some(entry => entry.name === marketplaceName)) mutate(['plugin', 'marketplace', 'remove', marketplaceName]); });
+      }
+      let restoredPath;
+      if (pluginChanged && previousPlugin) recover(() => {
+        assert(recovery, '缺少旧缓存恢复副本');
+        assert.equal(installationIdentity(recovery.pluginRoot), previousIdentity, '恢复副本与旧缓存不符，拒绝回装');
+        mutate(['plugin', 'marketplace', 'add', recovery.marketplaceRoot]);
+        assert.equal(installationIdentity(recovery.pluginRoot), previousIdentity, '恢复副本与旧缓存不符，拒绝回装');
+        restoredPath = mutate(['plugin', 'add', selector]).installedPath;
+      });
+      if (marketplaceChanged) {
+        recover(() => { if (listMarkets().some(entry => entry.name === marketplaceName)) mutate(['plugin', 'marketplace', 'remove', marketplaceName]); });
+        if (previous) recover(() => mutate(['plugin', 'marketplace', 'add', previous.marketplaceSource.source]));
+      }
+      recover(() => {
+        assert.deepEqual(listMarkets().find(entry => entry.name === marketplaceName), previous, '旧 marketplace 未恢复');
+        const restored = listPlugins().find(entry => entry.pluginId === selector);
+        assert.equal(restored?.version, previousPlugin?.version, '旧插件版本未恢复');
+        assert.equal(restored?.enabled, previousPlugin?.enabled, '旧插件启用状态未恢复');
+        if (previousIdentity) assert.equal(installationIdentity(restored?.installedPath ?? restoredPath ?? previousPath), previousIdentity, '旧缓存内容未恢复');
+      });
+      const recovered = previousPlugin && !previousIdentity
+        ? '原 marketplace 与插件安装元数据已恢复；旧缓存内容未确认，请手动核对。'
+        : '原 marketplace 与插件安装状态已恢复（已核对原缓存关键文件；运行依赖未逐文件核对）。';
+      if (recovery && !pluginChanged && !recoveryErrors.length) { rmSync(recovery.marketplaceRoot, { recursive: true, force: true }); recovery = undefined; }
+      throw new Error(`${error.message}\n${recoveryErrors.length ? `恢复未完成：${recoveryErrors.join('; ')}。请手动检查插件安装。` : recovered}${recovery ? `\n恢复副本保留：${recovery.marketplaceRoot}` : ''}\n候选包保留：${target.marketplaceRoot}`, { cause: error });
     }
-    let restoredPath;
-    if (pluginChanged && previousPlugin) recover(() => { restoredPath = mutate(['plugin', 'add', selector]).installedPath; });
-    recover(() => {
-      assert.deepEqual(listMarkets().find(entry => entry.name === marketplaceName), previous, '旧 marketplace 未恢复');
-      const restored = listPlugins().find(entry => entry.pluginId === selector);
-      assert.equal(restored?.version, previousPlugin?.version, '旧插件版本未恢复');
-      assert.equal(restored?.enabled, previousPlugin?.enabled, '旧插件启用状态未恢复');
-      if (previousIdentity) assert.equal(installationIdentity(restored?.installedPath ?? restoredPath ?? previousPath), previousIdentity, '旧缓存内容未恢复');
-    });
-    const recovered = previousPlugin && !previousIdentity
-      ? '原 marketplace 与插件安装元数据已恢复；旧缓存内容未确认，请手动核对。'
-      : '原 marketplace 与插件安装状态已恢复（已核对原缓存关键文件；运行依赖未逐文件核对）。';
-    throw new Error(`${error.message}\n${recoveryErrors.length ? `恢复未完成：${recoveryErrors.join('; ')}。请手动检查插件安装。` : recovered}\n候选包保留：${target.marketplaceRoot}`, { cause: error });
-  }
+  } finally { lock.release(); }
 }
 
 async function main() {

@@ -1,0 +1,95 @@
+TAP version 13
+# Subtest: candidate semantic preflight rejects manifest-version without installation commands
+not ok 1 - candidate semantic preflight rejects manifest-version without installation commands
+  ---
+  duration_ms: 39.391708
+  type: 'test'
+  location: '/Users/anshunli/单纯回话/codex-agent-teams/tests/update.test.js:476:3'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'rejects'
+  stack: |-
+    async TestContext.<anonymous> (file:///Users/anshunli/%E5%8D%95%E7%BA%AF%E5%9B%9E%E8%AF%9D/codex-agent-teams/tests/update.test.js:489:5)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+# Subtest: candidate semantic preflight rejects unknown-mode without installation commands
+not ok 2 - candidate semantic preflight rejects unknown-mode without installation commands
+  ---
+  duration_ms: 29.079333
+  type: 'test'
+  location: '/Users/anshunli/单纯回话/codex-agent-teams/tests/update.test.js:476:3'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'rejects'
+  stack: |-
+    async TestContext.<anonymous> (file:///Users/anshunli/%E5%8D%95%E7%BA%AF%E5%9B%9E%E8%AF%9D/codex-agent-teams/tests/update.test.js:489:5)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: candidate semantic preflight rejects digest-drift without installation commands
+not ok 3 - candidate semantic preflight rejects digest-drift without installation commands
+  ---
+  duration_ms: 25.212083
+  type: 'test'
+  location: '/Users/anshunli/单纯回话/codex-agent-teams/tests/update.test.js:476:3'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'rejects'
+  stack: |-
+    async TestContext.<anonymous> (file:///Users/anshunli/%E5%8D%95%E7%BA%AF%E5%9B%9E%E8%AF%9D/codex-agent-teams/tests/update.test.js:489:5)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: candidate semantic preflight rejects manifest-resources without installation commands
+not ok 4 - candidate semantic preflight rejects manifest-resources without installation commands
+  ---
+  duration_ms: 24.52325
+  type: 'test'
+  location: '/Users/anshunli/单纯回话/codex-agent-teams/tests/update.test.js:476:3'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'rejects'
+  stack: |-
+    async TestContext.<anonymous> (file:///Users/anshunli/%E5%8D%95%E7%BA%AF%E5%9B%9E%E8%AF%9D/codex-agent-teams/tests/update.test.js:489:5)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: candidate semantic preflight rejects invalid-version without installation commands
+not ok 5 - candidate semantic preflight rejects invalid-version without installation commands
+  ---
+  duration_ms: 24.431625
+  type: 'test'
+  location: '/Users/anshunli/单纯回话/codex-agent-teams/tests/update.test.js:476:3'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'rejects'
+  stack: |-
+    async TestContext.<anonymous> (file:///Users/anshunli/%E5%8D%95%E7%BA%AF%E5%9B%9E%E8%AF%9D/codex-agent-teams/tests/update.test.js:489:5)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 0
+# fail 5
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 235.994

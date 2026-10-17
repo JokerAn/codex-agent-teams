@@ -1,0 +1,178 @@
+TAP version 13
+# Subtest: importing fixture helpers preserves caller coverage and exact output
+ok 1 - importing fixture helpers preserves caller coverage and exact output
+  ---
+  duration_ms: 44.108875
+  type: 'test'
+  ...
+# Subtest: fixtureEnv clones custom and default environments and preserves binary output
+ok 2 - fixtureEnv clones custom and default environments and preserves binary output
+  ---
+  duration_ms: 40.287208
+  type: 'test'
+  ...
+# Subtest: fixtureNode isolates before startup and leaves explicit exits byte-for-byte clean
+ok 3 - fixtureNode isolates before startup and leaves explicit exits byte-for-byte clean
+  ---
+  duration_ms: 73.103125
+  type: 'test'
+  ...
+# Subtest: fixtureNode keeps pure CJS children and grandchildren out of coverage
+ok 4 - fixtureNode keeps pure CJS children and grandchildren out of coverage
+  ---
+  duration_ms: 105.580125
+  type: 'test'
+  ...
+# Subtest: fixtureAppServer preserves normal fake protocol and crash output without profiles
+ok 5 - fixtureAppServer preserves normal fake protocol and crash output without profiles
+  ---
+  duration_ms: 70.63475
+  type: 'test'
+  ...
+# Subtest: AppServerClient retains real outer guard coverage while its fake server is isolated
+ok 6 - AppServerClient retains real outer guard coverage while its fake server is isolated
+  ---
+  duration_ms: 514.97575
+  type: 'test'
+  ...
+# Subtest: generated executable strips a shebang, quotes its path and forwards argv unchanged
+ok 7 - generated executable strips a shebang, quotes its path and forwards argv unchanged
+  ---
+  duration_ms: 417.744041
+  type: 'test'
+  ...
+# Subtest: generated executable quotes an absolute Node path containing spaces and a single quote
+ok 8 - generated executable quotes an absolute Node path containing spaces and a single quote
+  ---
+  duration_ms: 382.391208
+  type: 'test'
+  ...
+# Subtest: generated executable clears coverage before Node starts and descendants inherit isolation
+ok 9 - generated executable clears coverage before Node starts and descendants inherit isolation
+  ---
+  duration_ms: 387.934541
+  type: 'test'
+  ...
+# Subtest: SIGKILL runtime reaps guarded member and its TERM-ignoring descendant
+ok 10 - SIGKILL runtime reaps guarded member and its TERM-ignoring descendant
+  ---
+  duration_ms: 454.865875
+  type: 'test'
+  ...
+# Subtest: SIGKILL runtime reaps guarded verification and its TERM-ignoring descendant
+ok 11 - SIGKILL runtime reaps guarded verification and its TERM-ignoring descendant
+  ---
+  duration_ms: 494.2065
+  type: 'test'
+  ...
+# Subtest: real command preserves literal arguments, binary stdout/stderr and exit metadata without a shell
+ok 12 - real command preserves literal arguments, binary stdout/stderr and exit metadata without a shell
+  ---
+  duration_ms: 100.658417
+  type: 'test'
+  ...
+# Subtest: nonzero exit and missing executable are recorded as failures rather than successful checks
+ok 13 - nonzero exit and missing executable are recorded as failures rather than successful checks
+  ---
+  duration_ms: 123.583916
+  type: 'test'
+  ...
+# Subtest: timeout escalates to SIGKILL for a child that ignores SIGTERM
+ok 14 - timeout escalates to SIGKILL for a child that ignores SIGTERM
+  ---
+  duration_ms: 1314.243583
+  type: 'test'
+  ...
+# Subtest: pre-aborted execution launches no child and active abort retains logs until confirmed exit
+ok 15 - pre-aborted execution launches no child and active abort retains logs until confirmed exit
+  ---
+  duration_ms: 7.037541
+  type: 'test'
+  ...
+# Subtest: combined output limit bounds on-disk bytes, marks truncation and terminates the producer
+ok 16 - combined output limit bounds on-disk bytes, marks truncation and terminates the producer
+  ---
+  duration_ms: 114.258209
+  type: 'test'
+  ...
+# Subtest: descendants keeping pipes open are killed even after the command parent exited with zero
+ok 17 - descendants keeping pipes open are killed even after the command parent exited with zero
+  ---
+  duration_ms: 243.012
+  type: 'test'
+  ...
+# Subtest: descendant receipt installs bounded cleanup even when group visibility briefly outlives guard close
+ok 18 - descendant receipt installs bounded cleanup even when group visibility briefly outlives guard close
+  ---
+  duration_ms: 402.928167
+  type: 'test'
+  ...
+# Subtest: macOS denied group signal falls back to verified members and confirms cleanup
+ok 19 - macOS denied group signal falls back to verified members and confirms cleanup
+  ---
+  duration_ms: 45.84325
+  type: 'test'
+  ...
+# Subtest: command contract refuses shell fields, invalid deadlines, null bytes and implicit argv strings
+ok 20 - command contract refuses shell fields, invalid deadlines, null bytes and implicit argv strings
+  ---
+  duration_ms: 1.196625
+  type: 'test'
+  ...
+# Subtest: verification runs in the managed worktree and persists log receipt without changing the source
+ok 21 - verification runs in the managed worktree and persists log receipt without changing the source
+  ---
+  duration_ms: 1755.116916
+  type: 'test'
+  ...
+# Subtest: command mutations are audited; exit-zero does not conceal source changes or accept an agent task
+ok 22 - command mutations are audited; exit-zero does not conceal source changes or accept an agent task
+  ---
+  duration_ms: 2074.390291
+  type: 'test'
+  ...
+# Subtest: active verification blocks cleanup, another check and members until cancellation completes
+ok 23 - active verification blocks cleanup, another check and members until cancellation completes
+  ---
+  duration_ms: 1664.703292
+  type: 'test'
+  ...
+# Subtest: runtime shutdown cancels verification before releasing the SQLite owner
+ok 24 - runtime shutdown cancels verification before releasing the SQLite owner
+  ---
+  duration_ms: 1643.121708
+  type: 'test'
+  ...
+# Subtest: log root symlink and replaced worktree identity are refused before command execution
+ok 25 - log root symlink and replaced worktree identity are refused before command execution
+  ---
+  duration_ms: 1489.185959
+  type: 'test'
+  ...
+# Subtest: recovery refuses a live orphan group; once exited it records interruption and never reruns the command
+ok 26 - recovery refuses a live orphan group; once exited it records interruption and never reruns the command
+  ---
+  duration_ms: 1063.432875
+  type: 'test'
+  ...
+# Subtest: CLI reports failed command with exit status one and handles SIGTERM while retaining the result
+ok 27 - CLI reports failed command with exit status one and handles SIGTERM while retaining the result
+  ---
+  duration_ms: 2556.571833
+  type: 'test'
+  ...
+# Subtest: unconfirmed cleanup retains a blocking receipt and recovery never kills an old process group
+ok 28 - unconfirmed cleanup retains a blocking receipt and recovery never kills an old process group
+  ---
+  duration_ms: 3745.619417
+  type: 'test'
+  ...
+1..28
+# tests 28
+# suites 0
+# pass 28
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 18437.628542

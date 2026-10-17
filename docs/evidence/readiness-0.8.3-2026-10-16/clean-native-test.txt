@@ -1,0 +1,19 @@
+✔ native packaging rejects missing or invalid release versions before creating output (28.920833ms)
+✔ native packaging requires nonempty package and plugin metadata (10.42875ms)
+✔ native packaging rejects additional manifest resources and unknown fields (11.309667ms)
+✔ native packaging accepts a release with prerelease and build identifiers (7.448041ms)
+✔ default package contains only one native skill and metadata; relocation needs no local config or runtime (7.703584ms)
+✔ native packaging rejects a linked source path before creating output: skills (4.590125ms)
+✔ native packaging rejects a linked source path before creating output: skills/team (3.80525ms)
+✔ native packaging rejects a linked source path before creating output: skills/team/SKILL.md (3.607833ms)
+✔ native package remains readable after removing its source checkout (6.091333ms)
+✔ native build succeeds from a dependency-free checkout with no Codex or npm executable (100.230958ms)
+✔ native output preserves existing files and refuses recursive/symlinked source destinations (1.218959ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 239.309958

@@ -1,0 +1,182 @@
+{
+  "results": [
+    {
+      "id": "local-tests",
+      "args": [
+        "--test",
+        "--test-reporter=tap",
+        "tests/store.test.mjs",
+        "tests/card.test.mjs",
+        "tests/list.test.mjs"
+      ],
+      "scope": "provider found unit + consumer missing doubles; not real missing integration",
+      "command": "node --test --test-reporter=tap tests/store.test.mjs tests/card.test.mjs tests/list.test.mjs",
+      "executable": "/Users/anshunli/.nvm/versions/node/v24.21.0/bin/node",
+      "runtime": "v24.21.0",
+      "startedAt": "2026-10-17T16:14:30.793Z",
+      "endedAt": "2026-10-17T16:14:31.040Z",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "totals": {
+        "tests": 3,
+        "pass": 3,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "before": {
+        "contract.json": "ba996b4e52687b41cab7304ca2607d7378bf070a2d2a548926148bd4d296a448",
+        "handoff.json": "e045506f383dda5112207b07da421ff29c01f1ab5412d47336d8d63c0ac926f1",
+        "package.json": "218fcf1bd7a2c52f0db5d5388910d7ae2603cdd7be7e2d1e6aca56ba386396fc",
+        "src/store.mjs": "e44d738323ca040dc2194450960c0cf837f37d876947fa1e3073886c3dd6d691",
+        "src/card.mjs": "38483d8d9c174992b557cfca281b0a6f1588960bf0c384d79d3866cb2d561bfc",
+        "src/list.mjs": "304275bc16988a97ccad940fbf3695b43c72e027bfb55c1a58cee6a0f4122720",
+        "src/banner.mjs": "40e42685104a98ecb1656ef668aa1ceae05fca5682fd53d0b017f0f3868231bc",
+        "tests/store.test.mjs": "e0698dbee090c3ea4d64934a2ce1745c0a8ddea4385a5e5d449955905b1c230d",
+        "tests/card.test.mjs": "06d7cd891845dee81d6a15c08537f836f4a5e3fa45de828265f920dcfe79f674",
+        "tests/list.test.mjs": "2ab002147120c70b2c03361fc4a98d0efbe489ea76bddc34bbba7f47d36f86fc",
+        "tests/integration.test.mjs": "dc886af45e1e6baceca615105a6c80b86535311bf58b7702f7088c7c42576e12"
+      },
+      "after": {
+        "contract.json": "ba996b4e52687b41cab7304ca2607d7378bf070a2d2a548926148bd4d296a448",
+        "handoff.json": "e045506f383dda5112207b07da421ff29c01f1ab5412d47336d8d63c0ac926f1",
+        "package.json": "218fcf1bd7a2c52f0db5d5388910d7ae2603cdd7be7e2d1e6aca56ba386396fc",
+        "src/store.mjs": "e44d738323ca040dc2194450960c0cf837f37d876947fa1e3073886c3dd6d691",
+        "src/card.mjs": "38483d8d9c174992b557cfca281b0a6f1588960bf0c384d79d3866cb2d561bfc",
+        "src/list.mjs": "304275bc16988a97ccad940fbf3695b43c72e027bfb55c1a58cee6a0f4122720",
+        "src/banner.mjs": "40e42685104a98ecb1656ef668aa1ceae05fca5682fd53d0b017f0f3868231bc",
+        "tests/store.test.mjs": "e0698dbee090c3ea4d64934a2ce1745c0a8ddea4385a5e5d449955905b1c230d",
+        "tests/card.test.mjs": "06d7cd891845dee81d6a15c08537f836f4a5e3fa45de828265f920dcfe79f674",
+        "tests/list.test.mjs": "2ab002147120c70b2c03361fc4a98d0efbe489ea76bddc34bbba7f47d36f86fc",
+        "tests/integration.test.mjs": "dc886af45e1e6baceca615105a6c80b86535311bf58b7702f7088c7c42576e12"
+      },
+      "inputsStable": true,
+      "log": "review/local-tests.log",
+      "environmentOverrides": {
+        "NODE_V8_COVERAGE": ""
+      }
+    },
+    {
+      "id": "available-integration",
+      "args": [
+        "--test",
+        "--test-reporter=tap",
+        "--test-name-pattern=^available:",
+        "tests/integration.test.mjs"
+      ],
+      "scope": "real found and invalid-input paths; injected I/O rejection; original missing tests excluded",
+      "command": "node --test --test-reporter=tap --test-name-pattern=^available: tests/integration.test.mjs",
+      "executable": "/Users/anshunli/.nvm/versions/node/v24.21.0/bin/node",
+      "runtime": "v24.21.0",
+      "startedAt": "2026-10-17T16:14:31.045Z",
+      "endedAt": "2026-10-17T16:14:31.318Z",
+      "exitCode": 1,
+      "signal": null,
+      "error": null,
+      "totals": {
+        "tests": 6,
+        "pass": 5,
+        "fail": 1,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "before": {
+        "contract.json": "ba996b4e52687b41cab7304ca2607d7378bf070a2d2a548926148bd4d296a448",
+        "handoff.json": "e045506f383dda5112207b07da421ff29c01f1ab5412d47336d8d63c0ac926f1",
+        "package.json": "218fcf1bd7a2c52f0db5d5388910d7ae2603cdd7be7e2d1e6aca56ba386396fc",
+        "src/store.mjs": "e44d738323ca040dc2194450960c0cf837f37d876947fa1e3073886c3dd6d691",
+        "src/card.mjs": "38483d8d9c174992b557cfca281b0a6f1588960bf0c384d79d3866cb2d561bfc",
+        "src/list.mjs": "304275bc16988a97ccad940fbf3695b43c72e027bfb55c1a58cee6a0f4122720",
+        "src/banner.mjs": "40e42685104a98ecb1656ef668aa1ceae05fca5682fd53d0b017f0f3868231bc",
+        "tests/store.test.mjs": "e0698dbee090c3ea4d64934a2ce1745c0a8ddea4385a5e5d449955905b1c230d",
+        "tests/card.test.mjs": "06d7cd891845dee81d6a15c08537f836f4a5e3fa45de828265f920dcfe79f674",
+        "tests/list.test.mjs": "2ab002147120c70b2c03361fc4a98d0efbe489ea76bddc34bbba7f47d36f86fc",
+        "tests/integration.test.mjs": "dc886af45e1e6baceca615105a6c80b86535311bf58b7702f7088c7c42576e12"
+      },
+      "after": {
+        "contract.json": "ba996b4e52687b41cab7304ca2607d7378bf070a2d2a548926148bd4d296a448",
+        "handoff.json": "e045506f383dda5112207b07da421ff29c01f1ab5412d47336d8d63c0ac926f1",
+        "package.json": "218fcf1bd7a2c52f0db5d5388910d7ae2603cdd7be7e2d1e6aca56ba386396fc",
+        "src/store.mjs": "e44d738323ca040dc2194450960c0cf837f37d876947fa1e3073886c3dd6d691",
+        "src/card.mjs": "38483d8d9c174992b557cfca281b0a6f1588960bf0c384d79d3866cb2d561bfc",
+        "src/list.mjs": "304275bc16988a97ccad940fbf3695b43c72e027bfb55c1a58cee6a0f4122720",
+        "src/banner.mjs": "40e42685104a98ecb1656ef668aa1ceae05fca5682fd53d0b017f0f3868231bc",
+        "tests/store.test.mjs": "e0698dbee090c3ea4d64934a2ce1745c0a8ddea4385a5e5d449955905b1c230d",
+        "tests/card.test.mjs": "06d7cd891845dee81d6a15c08537f836f4a5e3fa45de828265f920dcfe79f674",
+        "tests/list.test.mjs": "2ab002147120c70b2c03361fc4a98d0efbe489ea76bddc34bbba7f47d36f86fc",
+        "tests/integration.test.mjs": "dc886af45e1e6baceca615105a6c80b86535311bf58b7702f7088c7c42576e12"
+      },
+      "inputsStable": true,
+      "log": "review/available-integration.log",
+      "environmentOverrides": {
+        "NODE_V8_COVERAGE": ""
+      }
+    },
+    {
+      "id": "syntax",
+      "args": [
+        "--check",
+        "tests/integration.test.mjs"
+      ],
+      "scope": "syntax check of the only edited code file",
+      "command": "node --check tests/integration.test.mjs",
+      "executable": "/Users/anshunli/.nvm/versions/node/v24.21.0/bin/node",
+      "runtime": "v24.21.0",
+      "startedAt": "2026-10-17T16:14:31.319Z",
+      "endedAt": "2026-10-17T16:14:31.407Z",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "totals": {},
+      "before": {
+        "contract.json": "ba996b4e52687b41cab7304ca2607d7378bf070a2d2a548926148bd4d296a448",
+        "handoff.json": "e045506f383dda5112207b07da421ff29c01f1ab5412d47336d8d63c0ac926f1",
+        "package.json": "218fcf1bd7a2c52f0db5d5388910d7ae2603cdd7be7e2d1e6aca56ba386396fc",
+        "src/store.mjs": "e44d738323ca040dc2194450960c0cf837f37d876947fa1e3073886c3dd6d691",
+        "src/card.mjs": "38483d8d9c174992b557cfca281b0a6f1588960bf0c384d79d3866cb2d561bfc",
+        "src/list.mjs": "304275bc16988a97ccad940fbf3695b43c72e027bfb55c1a58cee6a0f4122720",
+        "src/banner.mjs": "40e42685104a98ecb1656ef668aa1ceae05fca5682fd53d0b017f0f3868231bc",
+        "tests/store.test.mjs": "e0698dbee090c3ea4d64934a2ce1745c0a8ddea4385a5e5d449955905b1c230d",
+        "tests/card.test.mjs": "06d7cd891845dee81d6a15c08537f836f4a5e3fa45de828265f920dcfe79f674",
+        "tests/list.test.mjs": "2ab002147120c70b2c03361fc4a98d0efbe489ea76bddc34bbba7f47d36f86fc",
+        "tests/integration.test.mjs": "dc886af45e1e6baceca615105a6c80b86535311bf58b7702f7088c7c42576e12"
+      },
+      "after": {
+        "contract.json": "ba996b4e52687b41cab7304ca2607d7378bf070a2d2a548926148bd4d296a448",
+        "handoff.json": "e045506f383dda5112207b07da421ff29c01f1ab5412d47336d8d63c0ac926f1",
+        "package.json": "218fcf1bd7a2c52f0db5d5388910d7ae2603cdd7be7e2d1e6aca56ba386396fc",
+        "src/store.mjs": "e44d738323ca040dc2194450960c0cf837f37d876947fa1e3073886c3dd6d691",
+        "src/card.mjs": "38483d8d9c174992b557cfca281b0a6f1588960bf0c384d79d3866cb2d561bfc",
+        "src/list.mjs": "304275bc16988a97ccad940fbf3695b43c72e027bfb55c1a58cee6a0f4122720",
+        "src/banner.mjs": "40e42685104a98ecb1656ef668aa1ceae05fca5682fd53d0b017f0f3868231bc",
+        "tests/store.test.mjs": "e0698dbee090c3ea4d64934a2ce1745c0a8ddea4385a5e5d449955905b1c230d",
+        "tests/card.test.mjs": "06d7cd891845dee81d6a15c08537f836f4a5e3fa45de828265f920dcfe79f674",
+        "tests/list.test.mjs": "2ab002147120c70b2c03361fc4a98d0efbe489ea76bddc34bbba7f47d36f86fc",
+        "tests/integration.test.mjs": "dc886af45e1e6baceca615105a6c80b86535311bf58b7702f7088c7c42576e12"
+      },
+      "inputsStable": true,
+      "log": "review/syntax.log",
+      "environmentOverrides": {
+        "NODE_V8_COVERAGE": ""
+      }
+    }
+  ],
+  "notRun": [
+    {
+      "command": "npm test",
+      "reason": "fullSuite belongs to lead after provider handoff; provider not handed off"
+    },
+    {
+      "command": "node --test tests/integration.test.mjs",
+      "reason": "two real missing cases depend on pending provider missing implementation"
+    },
+    {
+      "command": "npm run build",
+      "reason": "package.json has no build script; final build pending and dist writes not authorized"
+    }
+  ],
+  "environmentNote": "Non-login shell PATH resolves Node v24.21.0. The first login-shell inventory returned v26.10.0; no tests used it."
+}

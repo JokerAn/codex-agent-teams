@@ -1,3 +1,4 @@
+import { fixtureAppServer } from './fixtures/coverage.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
@@ -10,7 +11,7 @@ import { setup, contract } from './helpers.js';
 import { outputSchemaFor } from '../src/contracts.js';
 
 const fixture = fileURLToPath(new URL('./fixtures/fake-app-server.js', import.meta.url));
-const backend = mode => new CodexBackend({ binary: process.execPath, args: [fixture, mode], requestTimeoutMs: 1000 });
+const backend = mode => new CodexBackend({ ...fixtureAppServer([fixture, mode]), requestTimeoutMs: 1000 });
 const request = signal => ({ cwd: process.cwd(), selection: { model: 'test-model', effort: 'high' }, acceptance: ['prove it'], prompt: JSON.stringify({ acceptance: ['prove it'] }), signal });
 
 test('protocol race, isolation overrides, structured output, usage and cleanup', async () => {
@@ -58,7 +59,7 @@ test('concurrent runs on one production backend keep each turn effort isolated',
 });
 
 test('protocol fixture rejects missing strict required fields at top level and inside criteria', async t => {
-  const client = new AppServerClient({ binary: process.execPath, args: [fixture, 'normal'], requestTimeoutMs: 1000 });
+  const client = new AppServerClient({ ...fixtureAppServer([fixture, 'normal']), requestTimeoutMs: 1000 });
   t.after(() => client.stop());
   await client.initialize();
   await client.request('thread/start', { cwd: process.cwd(), model: 'test-model', sandbox: 'read-only', approvalPolicy: 'never',
@@ -125,7 +126,7 @@ test('oversized pre-reply action records truncation without poisoning turn execu
 });
 
 test('TERM send failure still escalates to KILL and confirms exit, preserving cleanup error', async t => {
-  const client = new AppServerClient({ binary: process.execPath, args: [fixture, 'hang'] });
+  const client = new AppServerClient({ ...fixtureAppServer([fixture, 'hang']) });
   const kill = process.kill; let killed = false;
   t.after(async () => { if (processAlive(client.child.pid, true)) kill(-client.child.pid, 'SIGKILL'); await client.closed; });
   await client.initialize();
@@ -271,7 +272,7 @@ test('doctor refuses an unexpected cwd without starting inference', async () => 
 
 for (const failure of ['invalid-json', 'oversized-frame']) {
   test(`${failure} releases protocol buffer, rejects pending requests and discards later output`, async t => {
-    const client = new AppServerClient({ binary: process.execPath, args: [fixture, 'normal'], requestTimeoutMs: 1000 });
+    const client = new AppServerClient({ ...fixtureAppServer([fixture, 'normal']), requestTimeoutMs: 1000 });
     t.after(() => client.stop());
     await client.initialize();
     const notifications = [], errors = [];
@@ -300,7 +301,7 @@ for (const failure of ['invalid-json', 'oversized-frame']) {
 }
 
 test('protocol byte accounting handles partial unicode frames and multiple notifications', async t => {
-  const client = new AppServerClient({ binary: process.execPath, args: [fixture, 'normal'] });
+  const client = new AppServerClient({ ...fixtureAppServer([fixture, 'normal']) });
   t.after(() => client.stop());
   await client.initialize();
   const notifications = [];
@@ -324,7 +325,7 @@ test('continuous oversized output ignoring TERM fails and is reaped before backe
 
 
 test('a legal boundary-sized frame followed by another frame in the same chunk is accepted', async t => {
-  const client = new AppServerClient({ binary: process.execPath, args: [fixture, 'normal'] });
+  const client = new AppServerClient({ ...fixtureAppServer([fixture, 'normal']) });
   t.after(() => client.stop());
   await client.initialize();
   const notifications=[];

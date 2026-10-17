@@ -1,0 +1,22 @@
+{
+  "node": "v24.0.0",
+  "platform": "linux",
+  "root": "/tmp/teams-coverage-write-race-cMvEyb",
+  "cases": [
+    {
+      "isolated": false,
+      "testPass": 1,
+      "testFail": 0,
+      "exitCode": 1,
+      "coverageReported": false
+    },
+    {
+      "isolated": true,
+      "testPass": 1,
+      "testFail": 0,
+      "exitCode": 0,
+      "coverageReported": true
+    }
+  ],
+  "inferenceStarted": false
+}

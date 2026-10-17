@@ -1,0 +1,15 @@
+{
+  ".codex-plugin/plugin.json": "7935fdb2b52574df9742f51b3056991d16bc72b298e3ef53756701eca0a618a7",
+  ".github/workflows/ci.yml": "19ce9fb1ab3f9df94d1e11fc247edea43fbcbd564d2c5adc16c4d48fc20a3b56",
+  "package-lock.json": "d5d56f3d8e6db9ce25a1248406b606a24caaa8408b55204e7a5d120c8235690e",
+  "package.json": "78b9584cdaf3e3c720a8d3753ccd171a9d3e6371c741096cdb6143fd786ce810",
+  "plugin.json": "1dd6c8da43fa6950565e6a6ba8d3ec47f46bc2fbc5f841cf05a7a47e985f3a88",
+  "scripts/coverage-diagnostics.js": "8a0970ed2ccf3a00602ac3d56ffac4a89e28feecbe66dbe4f6d43094562fbab0",
+  "scripts/update-lock.js": "09076ed03f5f851e04bf922e09677ac22e5ccdfb7aa5b13ca9b6a016ed3e3c62",
+  "scripts/update.js": "d4cebc7f575442a11ccacb80d68247f204e7edd4786784c91074754e6b224791",
+  "src/plugin-package.js": "8b19f1f1a6538024b49869f750ebe425502bef722e7cbcebe3f7d54326fed342",
+  "tests/attempt.test.js": "97e3cec3bbc2f723898e6418a4f720ba9e96c03004d95300e71d76881f51c206",
+  "tests/config.test.js": "8ec9549b0025633bd544072c0d78b773b886a07b607e918f99b824af9c9008d6",
+  "tests/update-lock.test.js": "10a745fde31df356252f1795551034bc62c455699c2e26452204e5c6894a52e2",
+  "tests/update.test.js": "37dfb78677a6913f68d227c2bcc74aaa418a4838b3bba8354347f70f46c52b15"
+}

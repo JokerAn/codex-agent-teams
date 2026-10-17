@@ -1,0 +1,56 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtempSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { DatabaseSync } from 'node:sqlite';
+import { TaskStore, processAlive } from '/Users/anshunli/单纯回话/codex-agent-teams/src/store.js';
+import { CodexBackend } from '/Users/anshunli/单纯回话/codex-agent-teams/src/app-server.js';
+const root = dirname(fileURLToPath(import.meta.url));
+
+test('EPERM on signal zero is treated as live; recovery refuses and preserves verification until ESRCH is established', t => {
+  const path = join(mkdtempSync(join(root, 'eperm-state-')), 'state.sqlite');
+  const pid = 123456789;
+  const store = new TaskStore(path);
+  store.saveWorkspace({ id: 'probe-workspace', status: 'ready', verifications: [{ id: 'probe-check', status: 'running', cleanupConfirmed: false, launchAttempted: true, childPid: pid }] }, 'seed');
+  store.close();
+  const original = process.kill, calls = [];
+  t.mock.method(process, 'kill', function (target, signal) {
+    if (target === -pid && signal === 0) { calls.push({ target, signal, error: 'EPERM' }); throw Object.assign(new Error('controlled signal-zero denial'), { code: 'EPERM' }); }
+    return original.call(process, target, signal);
+  });
+  assert.equal(processAlive(pid, true), true);
+  assert.throws(() => new TaskStore(path), /may have a live process group/);
+  const db = new DatabaseSync(path);
+  const persisted = JSON.parse(db.prepare('SELECT data FROM workspaces WHERE id=?').get('probe-workspace').data);
+  assert.equal(persisted.verifications[0].status, 'running'); assert.equal(persisted.verifications[0].cleanupConfirmed, false);
+  assert.equal(db.prepare("SELECT value FROM meta WHERE key='owner'").get(), undefined); db.close();
+  t.mock.restoreAll(); assert.equal(processAlive(pid, true), false);
+  const recovered = new TaskStore(path);
+  assert.equal(recovered.getWorkspace('probe-workspace').verifications[0].status, 'interrupted'); recovered.close();
+  console.log('EVIDENCE eperm-recovery', JSON.stringify({ path, calls, refusedWhilePermissionUnknown: true, noStateMutation: true, recoveredOnlyAfterESRCH: true }));
+});
+
+test('macOS production backend cleanup uses verified per-process fallback when the CI-style direct group kill gets EPERM', async t => {
+  assert.equal(process.platform, 'darwin', 'This controlled fallback test requires macOS');
+  const original = process.kill, calls = []; let pid;
+  t.mock.method(process, 'kill', function (target, signal) {
+    if (pid && target === -pid && signal !== 0) { calls.push({ target, signal, kind: 'group-denied' }); throw Object.assign(new Error('controlled macOS group EPERM'), { code: 'EPERM' }); }
+    if (pid && target > 0 && signal !== 0) calls.push({ target, signal, kind: 'verified-individual-signal' });
+    return original.call(process, target, signal);
+  });
+  t.after(() => { t.mock.restoreAll(); if (pid && processAlive(pid, true)) { try { original.call(process, -pid, 'SIGKILL'); } catch {} } });
+  const backend = new CodexBackend({ binary: process.execPath, args: ['/Users/anshunli/单纯回话/codex-agent-teams/tests/fixtures/fake-app-server.js', 'normal'], requestTimeoutMs: 1000 });
+  let reproducedDirectCleanup = false;
+  const updates = [];
+  const result = await backend.run({ cwd: root, selection: { model: 'test-model', effort: 'high' }, acceptance: ['controlled proof'], prompt: JSON.stringify({ acceptance: ['controlled proof'] }), signal: new AbortController().signal,
+    onProgress: update => {
+      updates.push(update); pid ??= update.childPid;
+      if (pid && !reproducedDirectCleanup) { assert.throws(() => process.kill(-pid, 'SIGKILL'), e => e.code === 'EPERM'); reproducedDirectCleanup = true; }
+    } });
+  assert.equal(result.result.criteria[0].satisfied, true);
+  assert.equal(updates.at(-1).memberLaunch, 'exited'); assert.equal(processAlive(pid, true), false);
+  assert.ok(calls.some(c => c.kind === 'group-denied' && c.signal === 'SIGTERM'));
+  assert.ok(calls.some(c => c.kind === 'verified-individual-signal'));
+  console.log('EVIDENCE eperm-backend-cleanup', JSON.stringify({ node: process.version, platform: process.platform, pid, reproducedDirectCleanup, calls, actualGroupExitConfirmed: true, memberLaunch: updates.at(-1).memberLaunch }));
+});

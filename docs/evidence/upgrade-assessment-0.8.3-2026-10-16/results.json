@@ -1,0 +1,82 @@
+{
+  "cwd": "/Users/anshunli/单纯回话/codex-agent-teams",
+  "node": "v24.21.0",
+  "evidence": "/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-upgrade-assessment-0Ami8h",
+  "results": [
+    {
+      "name": "package-anomalies",
+      "args": [
+        "docs/evidence/readiness-0.8.3-2026-10-16/reproduce-package-anomalies.mjs"
+      ],
+      "status": 0,
+      "durationMs": 443,
+      "rawEvidence": "/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-update-repro-CZyx3g/official-anomalies-0eLdL5/results.json",
+      "findings": {
+        "manifestReturn": "0.8.3",
+        "manifestInstalled": "99.0.0",
+        "unknownModeInstalled": true,
+        "extraFileCopied": true
+      },
+      "savedEvidence": "package-anomalies.json"
+    },
+    {
+      "name": "update-races",
+      "args": [
+        "docs/evidence/readiness-0.8.3-2026-10-16/reproduce-update-races.mjs"
+      ],
+      "status": 0,
+      "durationMs": 1142,
+      "rawEvidence": "/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-update-repro-wrH2WV/official-races-bNYxr0/results.json",
+      "findings": {
+        "bSucceededVersion": "0.8.4",
+        "finalVersion": "0.8.2",
+        "bCacheDeleted": true,
+        "rollbackOldBytesLost": true,
+        "driftedBytesInstalled": true
+      },
+      "savedEvidence": "update-races.json"
+    },
+    {
+      "name": "native-and-config",
+      "args": [
+        "--test",
+        "--test-reporter=tap",
+        "tests/native-plugin.test.js",
+        "tests/config.test.js"
+      ],
+      "status": 1,
+      "durationMs": 385,
+      "summary": [
+        "not ok 2 - the same global config observes either CLI cwd without creating a workspace owner",
+        "# tests 13",
+        "# pass 12",
+        "# fail 1",
+        "# cancelled 0",
+        "# skipped 0",
+        "# duration_ms 335.611959"
+      ]
+    }
+  ],
+  "head": "6d263a8670c32e24005a2f893087324531ca91cf",
+  "indexTreeBefore": "edc7d40e7b51fcba293198a0c374b0c82d6474de",
+  "purpose": "Upgrade assessment only; successful reproduction asserts existing defects, not a successful fix",
+  "scope": "Current source, last source commit and pre-existing staged readiness evidence; temporary Codex homes only; no inference",
+  "fullSuiteRerun": false,
+  "runtimeSourceChanged": false,
+  "postflight": {
+    "headUnchanged": true,
+    "indexTreeUnchanged": true,
+    "runtimeSourceUnchanged": true,
+    "unstagedDiffCheck": "passed",
+    "existingStagedDiffCheck": {
+      "exitCode": 2,
+      "cause": "pre-existing raw evidence trailing whitespace; preserved unchanged",
+      "files": [
+        "docs/evidence/readiness-0.8.3-2026-10-16/ci-failure-excerpts.txt",
+        "docs/evidence/readiness-0.8.3-2026-10-16/config-unicode-original.txt",
+        "docs/evidence/readiness-0.8.3-2026-10-16/full-coverage.txt"
+      ]
+    },
+    "documentLinksChecked": 16
+  }
+}

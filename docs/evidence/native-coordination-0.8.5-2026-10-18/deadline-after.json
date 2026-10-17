@@ -1,0 +1,39 @@
+{
+  "command": [
+    "node",
+    "--test",
+    "--test-name-pattern=^the task deadline",
+    "/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/deadline-after.test.mjs"
+  ],
+  "cwd": "/Users/anshunli/单纯回话/codex-agent-teams",
+  "startedAt": "2026-10-17T16:22:12.665482+00:00",
+  "finishedAt": "2026-10-17T16:22:19.216673+00:00",
+  "wallSeconds": 6.552,
+  "exitCode": 0,
+  "scope": "deadline-after",
+  "counts": {
+    "tests": 1,
+    "suites": 0,
+    "pass": 1,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "runtime": {
+    "node": "v24.21.0",
+    "nodePath": "/Users/anshunli/.nvm/versions/node/v24.21.0/bin/node",
+    "platform": "darwin",
+    "machine": "arm64"
+  },
+  "dependencyReadiness": "existing node_modules, lockfile and installed lock fingerprinted; no install during this run",
+  "inputs": {
+    "beforeSha256": "d8a96bcb5fe3f0b94a266930225fbbafe9d6473ced59accf4fad9e1054c9fe2b",
+    "afterSha256": "d8a96bcb5fe3f0b94a266930225fbbafe9d6473ced59accf4fad9e1054c9fe2b",
+    "sameAtEndpoints": true,
+    "changedFiles": [],
+    "fileCount": 74,
+    "limit": "Endpoint fingerprints do not exclude a transient edit followed by restoration."
+  },
+  "log": "deadline-after.txt"
+}

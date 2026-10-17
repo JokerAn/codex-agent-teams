@@ -1,0 +1,120 @@
+{
+  "leadRechecked": true,
+  "results": [
+    {
+      "name": "official-update-races",
+      "script": "/tmp/codex-native-audit-JsNqIkJM/official-update-races.mjs",
+      "exitCode": 0,
+      "durationMs": 792,
+      "evidence": "/tmp/codex-native-audit-JsNqIkJM/official-races-F3JdrU/results.json",
+      "data": [
+        {
+          "scenario": "concurrent-updates",
+          "root": "/tmp/codex-native-audit-JsNqIkJM/official-races-F3JdrU/concurrent-updates",
+          "successfulB": {
+            "installedPath": "/private/tmp/codex-native-audit-JsNqIkJM/official-races-F3JdrU/concurrent-updates/home/plugins/cache/codex-agent-teams-local/codex-agent-teams/0.8.4",
+            "version": "0.8.4",
+            "sourceDigest": "44ae7b36a7c5879285c20c0e0e5b2f3df5ad4b0c49815f47276d4ca64815314e",
+            "marketplaceRoot": "/private/tmp/codex-native-audit-JsNqIkJM/official-races-F3JdrU/concurrent-updates/other"
+          },
+          "errorA": "实际 marketplace 来源不符\n+ actual - expected\n\n+ '/private/tmp/codex-native-audit-JsNqIkJM/official-races-F3JdrU/concurrent-updates/other'\n- '/private/tmp/codex-native-audit-JsNqIkJM/official-races-F3JdrU/concurrent-updates/next'\n\n原 marketplace 与插件安装状态已恢复（已核对原缓存关键文件；运行依赖未逐文件核对）。\n候选包保留：/private/tmp/codex-native-audit-JsNqIkJM/official-races-F3JdrU/concurrent-updates/next",
+          "final": [
+            {
+              "pluginId": "codex-agent-teams@codex-agent-teams-local",
+              "name": "codex-agent-teams",
+              "marketplaceName": "codex-agent-teams-local",
+              "version": "0.8.2",
+              "installed": true,
+              "enabled": true,
+              "source": {
+                "source": "local",
+                "path": "/private/tmp/codex-native-audit-JsNqIkJM/official-races-F3JdrU/concurrent-updates/old/plugins/codex-agent-teams"
+              },
+              "marketplaceSource": {
+                "sourceType": "local",
+                "source": "/private/tmp/codex-native-audit-JsNqIkJM/official-races-F3JdrU/concurrent-updates/old"
+              },
+              "installPolicy": "AVAILABLE",
+              "authPolicy": "ON_USE"
+            }
+          ],
+          "bCacheDeleted": true
+        },
+        {
+          "scenario": "rollback-source-drift",
+          "root": "/tmp/codex-native-audit-JsNqIkJM/official-races-F3JdrU/rollback-source-drift",
+          "errorA": "controlled failed install after actual old-cache removal\n恢复未完成：旧缓存内容未恢复\n+ actual - expected\n\n+ '54d802c51504c878d3c0f1e4d724db2dd6684929aeac1617882c6529fe9dbc8f'\n- 'b3de43c34ae1a2d9f5afe96132274cbfec2e31a6d506e80c51b9f77d176b0148'\n。请手动检查插件安装。\n候选包保留：/private/tmp/codex-native-audit-JsNqIkJM/official-races-F3JdrU/rollback-source-drift/next",
+          "actualOldBytesLost": true,
+          "restoredSourceDriftInstalled": true
+        }
+      ]
+    },
+    {
+      "name": "official-anomalies",
+      "script": "/tmp/codex-native-audit-JsNqIkJM/official-anomalies.mjs",
+      "exitCode": 0,
+      "durationMs": 263,
+      "evidence": "/tmp/codex-native-audit-JsNqIkJM/official-anomalies-ZgeOgW/results.json",
+      "data": [
+        {
+          "anomaly": "manifest-version-mismatch",
+          "result": {
+            "installedPath": "/private/tmp/codex-native-audit-JsNqIkJM/official-anomalies-ZgeOgW/manifest-version-mismatch/home/plugins/cache/codex-agent-teams-local/codex-agent-teams/99.0.0",
+            "version": "0.8.3",
+            "sourceDigest": "3fc5e3e1ba457034e70f95489092a112fdbeb36128f997bb24d09185ac86b91e",
+            "marketplaceRoot": "/private/tmp/codex-native-audit-JsNqIkJM/official-anomalies-ZgeOgW/manifest-version-mismatch/candidate"
+          },
+          "installed": [
+            {
+              "pluginId": "codex-agent-teams@codex-agent-teams-local",
+              "name": "codex-agent-teams",
+              "marketplaceName": "codex-agent-teams-local",
+              "version": "99.0.0",
+              "installed": true,
+              "enabled": true,
+              "source": {
+                "source": "local",
+                "path": "/private/tmp/codex-native-audit-JsNqIkJM/official-anomalies-ZgeOgW/manifest-version-mismatch/candidate/plugins/codex-agent-teams"
+              },
+              "marketplaceSource": {
+                "sourceType": "local",
+                "source": "/private/tmp/codex-native-audit-JsNqIkJM/official-anomalies-ZgeOgW/manifest-version-mismatch/candidate"
+              },
+              "installPolicy": "AVAILABLE",
+              "authPolicy": "ON_USE"
+            }
+          ]
+        },
+        {
+          "anomaly": "unknown-mode",
+          "result": {
+            "installedPath": "/private/tmp/codex-native-audit-JsNqIkJM/official-anomalies-ZgeOgW/unknown-mode/home/plugins/cache/codex-agent-teams-local/codex-agent-teams/0.8.3",
+            "version": "0.8.3",
+            "sourceDigest": "3fc5e3e1ba457034e70f95489092a112fdbeb36128f997bb24d09185ac86b91e",
+            "marketplaceRoot": "/private/tmp/codex-native-audit-JsNqIkJM/official-anomalies-ZgeOgW/unknown-mode/candidate"
+          },
+          "installed": [
+            {
+              "pluginId": "codex-agent-teams@codex-agent-teams-local",
+              "name": "codex-agent-teams",
+              "marketplaceName": "codex-agent-teams-local",
+              "version": "0.8.3",
+              "installed": true,
+              "enabled": true,
+              "source": {
+                "source": "local",
+                "path": "/private/tmp/codex-native-audit-JsNqIkJM/official-anomalies-ZgeOgW/unknown-mode/candidate/plugins/codex-agent-teams"
+              },
+              "marketplaceSource": {
+                "sourceType": "local",
+                "source": "/private/tmp/codex-native-audit-JsNqIkJM/official-anomalies-ZgeOgW/unknown-mode/candidate"
+              },
+              "installPolicy": "AVAILABLE",
+              "authPolicy": "ON_USE"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

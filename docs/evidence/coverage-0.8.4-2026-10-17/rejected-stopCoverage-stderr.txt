@@ -1,0 +1,20 @@
+✖ failing tests:
+
+test at tests/verification.test.js:38:1
+✖ real command preserves literal arguments, binary stdout/stderr and exit metadata without a shell (142.202084ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+
+  + "$(touch injected); `touch injected` && 空格Failed to get 'result' from coverage profile response:\n" +
+  +   '{"id":4,"error":{"code":-32000,"message":"Precise coverage has not been started."}}\n'
+  - '$(touch injected); `touch injected` && 空格'
+
+      at TestContext.<anonymous> (file:///Users/anshunli/%E5%8D%95%E7%BA%AF%E5%9B%9E%E8%AF%9D/codex-agent-teams/tests/verification.test.js:47:10)
+      at async Test.run (node:internal/test_runner/test:1069:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:332:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '$(touch injected); `touch injected` && 空格Failed to get \'result\' from coverage profile response:\n{"id":4,"error":{"code":-32000,"message":"Precise coverage has not been started."}}\n',
+    expected: '$(touch injected); `touch injected` && 空格',
+    operator: 'strictEqual'
+  }

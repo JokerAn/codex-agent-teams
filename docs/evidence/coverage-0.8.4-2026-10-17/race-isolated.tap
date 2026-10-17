@@ -1,0 +1,25 @@
+TAP version 13
+# {"isolated":true,"hitWrite":false,"files":0,"invalid":[],"stderr":""}
+# Subtest: intentional kill preserves valid coverage inputs only when fixture collection is stopped
+ok 1 - intentional kill preserves valid coverage inputs only when fixture collection is stopped
+  ---
+  duration_ms: 2396.254013
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2530.229924
+# start of coverage report
+# ----------------------------------------------------------
+# file      | line % | branch % | funcs % | uncovered lines
+# ----------------------------------------------------------
+# ----------------------------------------------------------
+# all files | 100.00 |   100.00 |  100.00 |
+# ----------------------------------------------------------
+# end of coverage report

@@ -1,3 +1,4 @@
+import { fixtureEnv } from './fixtures/coverage.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
@@ -366,7 +367,7 @@ test('recovery still refuses a verification whose recorded child is alive', asyn
   const { spawn } = await import('node:child_process');
   const f = fixture(t), store = new TaskStore(f.path);
   // processAlive(pid, true) probes the process GROUP, so the fixture needs a real detached leader.
-  const child = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 20000)'], { detached: true, stdio: 'ignore' });
+  const child = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 20000)'], { env: fixtureEnv(), detached: true, stdio: 'ignore' });
   t.after(() => { try { process.kill(child.pid, 'SIGKILL'); } catch { /* already gone */ } });
   await delay(200);
   store.saveWorkspace({ id: 'w', status: 'ready', verifications: [

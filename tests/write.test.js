@@ -1,3 +1,4 @@
+import { fixtureAppServer, fixtureEnv, writeFixtureExecutable } from './fixtures/coverage.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -231,11 +232,11 @@ test('binary additions and deletions integrate through a Git patch and preserve 
 
 test('App Server enforces write permission echo and reviewer receives read-only permission', async t => {
   const f = fixture(t), fixturePath = resolve('tests/fixtures/fake-app-server.js');
-  const backend = new CodexBackend({ binary: process.execPath, args: [fixturePath, 'write'], requestTimeoutMs: 1000 });
+  const backend = new CodexBackend({ ...fixtureAppServer([fixturePath, 'write']), requestTimeoutMs: 1000 });
   const controller = new AbortController();
   const result = await backend.run({ cwd: f.repo, selection: f.config.profiles.expert, acceptance, prompt: JSON.stringify({ acceptance }), signal: controller.signal, mode: 'workspace-write' });
   assert.equal(result.actualModel, 'test-model');
-  await assert.rejects(new CodexBackend({ binary: process.execPath, args: [fixturePath, 'unsafe-write'], requestTimeoutMs: 1000 }).run({ cwd: f.repo, selection: f.config.profiles.expert, acceptance, prompt: JSON.stringify({ acceptance }), signal: controller.signal, mode: 'workspace-write' }), /did not confirm/);
+  await assert.rejects(new CodexBackend({ ...fixtureAppServer([fixturePath, 'unsafe-write']), requestTimeoutMs: 1000 }).run({ cwd: f.repo, selection: f.config.profiles.expert, acceptance, prompt: JSON.stringify({ acceptance }), signal: controller.signal, mode: 'workspace-write' }), /did not confirm/);
 });
 
 for (const captainModels of [false, true]) test(`MCP write contract -> asynchronous integration with ${captainModels ? 'explicit captain models without forms' : 'human preferences'}`, async t => {
@@ -244,7 +245,7 @@ for (const captainModels of [false, true]) test(`MCP write contract -> asynchron
   const f = fixture(t); await f.runtime.close();
   const binary = join(f.root, 'fake-write-codex');
   const fixturePath = new URL('./fixtures/fake-app-server.js', import.meta.url).href;
-  writeFileSync(binary, `#!/usr/bin/env node\nprocess.argv[2]='write-runtime';await import(${JSON.stringify(fixturePath)});\n`, { mode: 0o755 });
+  writeFixtureExecutable(binary, `#!/usr/bin/env node\nprocess.argv[2]='write-runtime';await import(${JSON.stringify(fixturePath)});\n`, { mode: 0o755 });
   const config = join(f.root, 'config.json'); writeFileSync(config, JSON.stringify({ ...f.config, codexBin: binary }));
   const client = new Client({ name: 'write-tools', version: '0.1.0' }, { capabilities: captainModels ? {} : { elicitation: { form: {} } } });
   if (!captainModels) client.setRequestHandler('elicitation/create', async () => ({ action: 'accept', content: {
@@ -291,7 +292,7 @@ test('a reviewer exception is recorded with its process metadata and never cause
 test('failed but live reviewer blocks every new task until its exit is confirmed on reopen', async t => {
   const { spawn } = await import('node:child_process'), { once } = await import('node:events');
   const { processAlive } = await import('../src/store.js');
-  const child = spawn(process.execPath, ['-e', 'setInterval(()=>{},1000)'], { detached: true, stdio: 'ignore' });
+  const child = spawn(process.execPath, ['-e', 'setInterval(()=>{},1000)'], { env: fixtureEnv(), detached: true, stdio: 'ignore' });
   const f = fixture(t, { backend: { run: async req => {
     if (req.role !== 'review') { writeFileSync(join(req.cwd, 'sum.js'), 'export const sum=(a,b)=>a+b;\n'); return { result: report(), actualModel: 'test-model' }; }
     req.onProgress({ childPid: child.pid }); throw new Error('review cleanup failed');

@@ -1,0 +1,28 @@
+{
+  "headUnchanged": true,
+  "indexTreeUnchanged": true,
+  "stagedFiles": 35,
+  "sourceSnapshotUnchanged": true,
+  "nodeCheckFiles": 22,
+  "workingDiffCheck": "passed",
+  "latestDocumentLinksChecked": 13,
+  "formalInstalledCacheVersion": "0.8.3",
+  "formalInstalledCacheUnchanged": true,
+  "metadataVersion": "0.8.4",
+  "modelConfigurationWritePerformed": false,
+  "allThisTurnChangesUnstaged": true,
+  "deliveryDirectory": "/Users/anshunli/单纯回话/codex-agent-teams",
+  "worktrees": "/Users/anshunli/单纯回话/codex-agent-teams 6d263a8 [main]",
+  "commitPushOrFormalUpdate": false,
+  "remoteCIUpdatedWorkingTreeTested": false,
+  "cleanup": {
+    "versions": {
+      "24.0.0": "v24.0.0",
+      "24.21.0": "v24.21.0"
+    },
+    "remainingOwnedNodeProcesses": [],
+    "temporaryLinuxRuntimesAndRawProfilesRemoved": true,
+    "evidenceCopiedBeforeCleanup": true,
+    "colimaVMAndExistingServicesLeftRunning": true
+  }
+}

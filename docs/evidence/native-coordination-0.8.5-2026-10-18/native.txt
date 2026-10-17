@@ -1,0 +1,37 @@
+
+> codex-agent-teams-local@0.8.5 test:native
+> node --test tests/native-plugin.test.js
+
+✔ native packaging rejects missing or invalid release versions before creating output (32.344625ms)
+✔ native packaging requires nonempty package and plugin metadata (13.492959ms)
+✔ native packaging rejects additional manifest resources and unknown fields (11.767416ms)
+✔ native packaging accepts a release with prerelease and build identifiers (8.440167ms)
+✔ default package contains only one native skill and metadata; relocation needs no local config or runtime (9.343625ms)
+✔ native packaging rejects a linked source path before creating output: skills (5.425292ms)
+✔ native packaging rejects a linked source path before creating output: skills/team (4.981708ms)
+✔ native packaging rejects a linked source path before creating output: skills/team/SKILL.md (3.81575ms)
+✔ native package remains readable after removing its source checkout (7.9845ms)
+✔ native build succeeds from a dependency-free checkout with no Codex or npm executable (112.421834ms)
+✔ native output preserves existing files and refuses recursive/symlinked source destinations (1.277834ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 269.681834
+
+STDERR
+npm warn Unknown user config "SASS_BINARY_SITE". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "PHANTOMJS_CDNURL". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "ELECTRON_MIRROR". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "NVM_NODEJS_ORG_MIRROR". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "CHROMEDRIVER_CDNURL". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "OPERADRIVER". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "ELECTRON_BUILDER_BINARIES_MIRROR". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "PYTHON_MIRROR". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "phantomjs_cdnurl". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "chromedriver_cdnurl". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "sass_binary_site". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "//registry.npmmirror.com" (https://registry.npmmirror.com). This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.

@@ -1,0 +1,469 @@
+{
+  "schema": 1,
+  "provenance": "actual local Node child-process scenario; not agent or account telemetry",
+  "runtime": "v24.21.0",
+  "executable": "/Users/anshunli/.nvm/versions/node/v24.21.0/bin/node",
+  "cwd": "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/exercise/review/concurrent",
+  "protectedBefore": {
+    "card-test.tap": "7b0241c3f066183d242419004ab7945211c9a6fe47cd8856bb45e31ae3dfd66a",
+    "contract.json": "ba996b4e52687b41cab7304ca2607d7378bf070a2d2a548926148bd4d296a448",
+    "handoff.json": "e045506f383dda5112207b07da421ff29c01f1ab5412d47336d8d63c0ac926f1",
+    "host-records.json": "3a3538a50980d189f7e7b844205fff61a9b4e4363c19b2c4abe4b8640611c22a",
+    "notes.txt": "d0ff20e0adf7171b45c68297cd835f86b4818592a72e1cfd0205dc711f47b654",
+    "package.json": "218fcf1bd7a2c52f0db5d5388910d7ae2603cdd7be7e2d1e6aca56ba386396fc",
+    "review/available-integration.log": "7cb1b547c6dd2b7f53888311e74bd6a8381802c2a6397476edfeaa8d87198b4f",
+    "review/final-state.json": "ce81fcee2a3828a495c58c74612d8143ee3b4017762a3fce9715e5c2e35beeba",
+    "review/handoff-review.md": "eec14c9435b2d01058660a5d8b90b52282168776f5a9bb4e9849cafdf993e2cb",
+    "review/initial-state.json": "c373cf8a75d4ab68379c4a6e7e82ccaa28fccdb9d5d613700ab3da7d48404ae1",
+    "review/local-tests.log": "cefed908e8150ed28a32ff78e7a9222a3eefe92c4484ab2dc066bae70eff1ed4",
+    "review/member-notifications.md": "9aa93f4da6ead10d24ed1f2c02ef8fa2f48b31a08c9be0110816108a8af25a85",
+    "review/retrospective.md": "c294a1622b257c2df1d3e5aa2b3288674f1b68b9ff2dbd68db7992fa14a8a12e",
+    "review/syntax.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "review/verification.json": "839330d8e471b02ac4922163a7745ac47bac51611ae5205aa2e6121cfcdc0480",
+    "src/banner.mjs": "40e42685104a98ecb1656ef668aa1ceae05fca5682fd53d0b017f0f3868231bc",
+    "src/card.mjs": "38483d8d9c174992b557cfca281b0a6f1588960bf0c384d79d3866cb2d561bfc",
+    "src/list.mjs": "304275bc16988a97ccad940fbf3695b43c72e027bfb55c1a58cee6a0f4122720",
+    "src/store.mjs": "e44d738323ca040dc2194450960c0cf837f37d876947fa1e3073886c3dd6d691",
+    "tests/card.test.mjs": "06d7cd891845dee81d6a15c08537f836f4a5e3fa45de828265f920dcfe79f674",
+    "tests/integration.test.mjs": "dc886af45e1e6baceca615105a6c80b86535311bf58b7702f7088c7c42576e12",
+    "tests/list.test.mjs": "2ab002147120c70b2c03361fc4a98d0efbe489ea76bddc34bbba7f47d36f86fc",
+    "tests/store.test.mjs": "e0698dbee090c3ea4d64934a2ce1745c0a8ddea4385a5e5d449955905b1c230d",
+    ".git/index": "8dfc382e3c0b6a2f2b83871a68c8a8b52666ef02cd13bad991b34aa691098f51",
+    ".git/HEAD": "28d25bf82af4c0e2b72f50959b2beb859e3e60b9630a5e8c603dad4ddb2b6e80"
+  },
+  "events": [
+    {
+      "seq": 1,
+      "time": "2026-10-17T16:24:02.713Z",
+      "monotonicNs": "94754337233625",
+      "parentPid": 29181,
+      "round": "first",
+      "type": "before-snapshot",
+      "hashes": {
+        "input.json": "011a019ebfe8db9a99a380bad0913980f0a5cf6c9e35f54a6af560345cd7b079",
+        "card.mjs": "3abd0114ef3f9ee1f60703941e5e1aa779b4c7fd86d30a39179ee4a17b1f89be",
+        "validate.mjs": "2629a6aec0de3b7cac0aa95203819406a43d05270881a07491d71126e0d4fe24",
+        "mutate.mjs": "07160e5baac03020a2962044f8ebbd705dbc6040d1a1ba1321713f99ef98123d",
+        "run.mjs": "c829ab8bf84901471666b221e9c40c67b263b280753db600dd5153c933e3944f"
+      }
+    },
+    {
+      "seq": 2,
+      "time": "2026-10-17T16:24:02.716Z",
+      "monotonicNs": "94754339131083",
+      "parentPid": 29181,
+      "round": "first",
+      "type": "validator:spawned",
+      "childPid": 29329,
+      "executable": "/Users/anshunli/.nvm/versions/node/v24.21.0/bin/node",
+      "argv": [
+        "validate.mjs"
+      ],
+      "ipc": true
+    },
+    {
+      "seq": 3,
+      "time": "2026-10-17T16:24:02.765Z",
+      "monotonicNs": "94754387774125",
+      "parentPid": 29181,
+      "round": "first",
+      "type": "validator:message",
+      "childPid": 29329,
+      "message": {
+        "type": "input-read",
+        "sha256": "011a019ebfe8db9a99a380bad0913980f0a5cf6c9e35f54a6af560345cd7b079",
+        "actual": "Record: a",
+        "expected": "Record: a",
+        "pid": 29329
+      }
+    },
+    {
+      "seq": 4,
+      "time": "2026-10-17T16:24:02.766Z",
+      "monotonicNs": "94754389179583",
+      "parentPid": 29181,
+      "round": "first",
+      "type": "writer:spawned",
+      "childPid": 29362,
+      "executable": "/Users/anshunli/.nvm/versions/node/v24.21.0/bin/node",
+      "argv": [
+        "mutate.mjs"
+      ],
+      "ipc": true
+    },
+    {
+      "seq": 5,
+      "time": "2026-10-17T16:24:02.808Z",
+      "monotonicNs": "94754430750041",
+      "parentPid": 29181,
+      "round": "first",
+      "type": "writer:message",
+      "childPid": 29362,
+      "message": {
+        "type": "writer-ready",
+        "pid": 29362
+      }
+    },
+    {
+      "seq": 6,
+      "time": "2026-10-17T16:24:02.808Z",
+      "monotonicNs": "94754430813041",
+      "parentPid": 29181,
+      "round": "first",
+      "type": "writer:send",
+      "childPid": 29362,
+      "message": {
+        "type": "mutate",
+        "expectedBefore": "011a019ebfe8db9a99a380bad0913980f0a5cf6c9e35f54a6af560345cd7b079"
+      }
+    },
+    {
+      "seq": 7,
+      "time": "2026-10-17T16:24:02.809Z",
+      "monotonicNs": "94754431810291",
+      "parentPid": 29181,
+      "round": "first",
+      "type": "writer:message",
+      "childPid": 29362,
+      "message": {
+        "type": "mutation-done",
+        "pid": 29362,
+        "before": "011a019ebfe8db9a99a380bad0913980f0a5cf6c9e35f54a6af560345cd7b079",
+        "after": "2d2e06f1b99f5f7f5adc6c6aec5eec6f241246a6954e0fa72bf1b6f8b14d47a5"
+      }
+    },
+    {
+      "seq": 8,
+      "time": "2026-10-17T16:24:02.815Z",
+      "monotonicNs": "94754437527125",
+      "parentPid": 29181,
+      "round": "first",
+      "type": "writer:closed",
+      "childPid": 29362,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "seq": 9,
+      "time": "2026-10-17T16:24:02.815Z",
+      "monotonicNs": "94754437974666",
+      "parentPid": 29181,
+      "round": "first",
+      "type": "validator:send",
+      "childPid": 29329,
+      "message": {
+        "type": "resume"
+      }
+    },
+    {
+      "seq": 10,
+      "time": "2026-10-17T16:24:02.816Z",
+      "monotonicNs": "94754438669708",
+      "parentPid": 29181,
+      "round": "first",
+      "type": "validator:message",
+      "childPid": 29329,
+      "message": {
+        "type": "assertion-passed",
+        "actual": "Record: a",
+        "expected": "Record: a",
+        "pid": 29329
+      }
+    },
+    {
+      "seq": 11,
+      "time": "2026-10-17T16:24:02.821Z",
+      "monotonicNs": "94754444402958",
+      "parentPid": 29181,
+      "round": "first",
+      "type": "validator:closed",
+      "childPid": 29329,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "seq": 12,
+      "time": "2026-10-17T16:24:02.822Z",
+      "monotonicNs": "94754444940458",
+      "parentPid": 29181,
+      "round": "first",
+      "type": "after-snapshot",
+      "hashes": {
+        "input.json": "2d2e06f1b99f5f7f5adc6c6aec5eec6f241246a6954e0fa72bf1b6f8b14d47a5",
+        "card.mjs": "3abd0114ef3f9ee1f60703941e5e1aa779b4c7fd86d30a39179ee4a17b1f89be",
+        "validate.mjs": "2629a6aec0de3b7cac0aa95203819406a43d05270881a07491d71126e0d4fe24",
+        "mutate.mjs": "07160e5baac03020a2962044f8ebbd705dbc6040d1a1ba1321713f99ef98123d",
+        "run.mjs": "c829ab8bf84901471666b221e9c40c67b263b280753db600dd5153c933e3944f"
+      }
+    },
+    {
+      "seq": 13,
+      "time": "2026-10-17T16:24:17.070Z",
+      "monotonicNs": "94768694051583",
+      "parentPid": 40522,
+      "round": "stable",
+      "type": "before-snapshot",
+      "hashes": {
+        "input.json": "2d2e06f1b99f5f7f5adc6c6aec5eec6f241246a6954e0fa72bf1b6f8b14d47a5",
+        "card.mjs": "3abd0114ef3f9ee1f60703941e5e1aa779b4c7fd86d30a39179ee4a17b1f89be",
+        "validate.mjs": "2629a6aec0de3b7cac0aa95203819406a43d05270881a07491d71126e0d4fe24",
+        "mutate.mjs": "07160e5baac03020a2962044f8ebbd705dbc6040d1a1ba1321713f99ef98123d",
+        "run.mjs": "c829ab8bf84901471666b221e9c40c67b263b280753db600dd5153c933e3944f"
+      }
+    },
+    {
+      "seq": 14,
+      "time": "2026-10-17T16:24:17.073Z",
+      "monotonicNs": "94768696327666",
+      "parentPid": 40522,
+      "round": "stable",
+      "type": "validator:spawned",
+      "childPid": 40571,
+      "executable": "/Users/anshunli/.nvm/versions/node/v24.21.0/bin/node",
+      "argv": [
+        "validate.mjs"
+      ],
+      "ipc": true
+    },
+    {
+      "seq": 15,
+      "time": "2026-10-17T16:24:17.119Z",
+      "monotonicNs": "94768742396500",
+      "parentPid": 40522,
+      "round": "stable",
+      "type": "validator:message",
+      "childPid": 40571,
+      "message": {
+        "type": "input-read",
+        "sha256": "2d2e06f1b99f5f7f5adc6c6aec5eec6f241246a6954e0fa72bf1b6f8b14d47a5",
+        "actual": "Record: b",
+        "expected": "Record: b",
+        "pid": 40571
+      }
+    },
+    {
+      "seq": 16,
+      "time": "2026-10-17T16:24:17.119Z",
+      "monotonicNs": "94768742482125",
+      "parentPid": 40522,
+      "round": "stable",
+      "type": "validator:send",
+      "childPid": 40571,
+      "message": {
+        "type": "resume"
+      }
+    },
+    {
+      "seq": 17,
+      "time": "2026-10-17T16:24:17.120Z",
+      "monotonicNs": "94768743300291",
+      "parentPid": 40522,
+      "round": "stable",
+      "type": "validator:message",
+      "childPid": 40571,
+      "message": {
+        "type": "assertion-passed",
+        "actual": "Record: b",
+        "expected": "Record: b",
+        "pid": 40571
+      }
+    },
+    {
+      "seq": 18,
+      "time": "2026-10-17T16:24:17.126Z",
+      "monotonicNs": "94768749243000",
+      "parentPid": 40522,
+      "round": "stable",
+      "type": "validator:closed",
+      "childPid": 40571,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "seq": 19,
+      "time": "2026-10-17T16:24:17.126Z",
+      "monotonicNs": "94768749751791",
+      "parentPid": 40522,
+      "round": "stable",
+      "type": "after-snapshot",
+      "hashes": {
+        "input.json": "2d2e06f1b99f5f7f5adc6c6aec5eec6f241246a6954e0fa72bf1b6f8b14d47a5",
+        "card.mjs": "3abd0114ef3f9ee1f60703941e5e1aa779b4c7fd86d30a39179ee4a17b1f89be",
+        "validate.mjs": "2629a6aec0de3b7cac0aa95203819406a43d05270881a07491d71126e0d4fe24",
+        "mutate.mjs": "07160e5baac03020a2962044f8ebbd705dbc6040d1a1ba1321713f99ef98123d",
+        "run.mjs": "c829ab8bf84901471666b221e9c40c67b263b280753db600dd5153c933e3944f"
+      }
+    }
+  ],
+  "rounds": [
+    {
+      "round": "first",
+      "launcherCommand": "node run.mjs first",
+      "validationCommand": "node validate.mjs",
+      "validationExecution": {
+        "executable": "/Users/anshunli/.nvm/versions/node/v24.21.0/bin/node",
+        "args": [
+          "validate.mjs"
+        ],
+        "cwd": "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/exercise/review/concurrent",
+        "ipc": true,
+        "envOverrides": {
+          "NODE_V8_COVERAGE": ""
+        }
+      },
+      "validatorPid": 29329,
+      "validatorExit": {
+        "code": 0,
+        "signal": null
+      },
+      "writerExit": {
+        "code": 0,
+        "signal": null
+      },
+      "before": {
+        "input.json": "011a019ebfe8db9a99a380bad0913980f0a5cf6c9e35f54a6af560345cd7b079",
+        "card.mjs": "3abd0114ef3f9ee1f60703941e5e1aa779b4c7fd86d30a39179ee4a17b1f89be",
+        "validate.mjs": "2629a6aec0de3b7cac0aa95203819406a43d05270881a07491d71126e0d4fe24",
+        "mutate.mjs": "07160e5baac03020a2962044f8ebbd705dbc6040d1a1ba1321713f99ef98123d",
+        "run.mjs": "c829ab8bf84901471666b221e9c40c67b263b280753db600dd5153c933e3944f"
+      },
+      "after": {
+        "input.json": "2d2e06f1b99f5f7f5adc6c6aec5eec6f241246a6954e0fa72bf1b6f8b14d47a5",
+        "card.mjs": "3abd0114ef3f9ee1f60703941e5e1aa779b4c7fd86d30a39179ee4a17b1f89be",
+        "validate.mjs": "2629a6aec0de3b7cac0aa95203819406a43d05270881a07491d71126e0d4fe24",
+        "mutate.mjs": "07160e5baac03020a2962044f8ebbd705dbc6040d1a1ba1321713f99ef98123d",
+        "run.mjs": "c829ab8bf84901471666b221e9c40c67b263b280753db600dd5153c933e3944f"
+      },
+      "changedInputs": [
+        "input.json"
+      ],
+      "totals": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "observed": {
+        "type": "input-read",
+        "sha256": "011a019ebfe8db9a99a380bad0913980f0a5cf6c9e35f54a6af560345cd7b079",
+        "actual": "Record: a",
+        "expected": "Record: a",
+        "pid": 29329
+      },
+      "passed": {
+        "type": "assertion-passed",
+        "actual": "Record: a",
+        "expected": "Record: a",
+        "pid": 29329
+      },
+      "decision": "HOLD: green test is not a stable-snapshot handoff; input changed during validation",
+      "log": "first-round.log",
+      "stderr": "",
+      "launcherExitCode": 0,
+      "writerCommand": "node mutate.mjs",
+      "writerEnvironmentOverrides": {
+        "NODE_V8_COVERAGE": ""
+      }
+    },
+    {
+      "round": "stable",
+      "launcherCommand": "node run.mjs stable",
+      "validationCommand": "node validate.mjs",
+      "validationExecution": {
+        "executable": "/Users/anshunli/.nvm/versions/node/v24.21.0/bin/node",
+        "args": [
+          "validate.mjs"
+        ],
+        "cwd": "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/exercise/review/concurrent",
+        "ipc": true,
+        "envOverrides": {
+          "NODE_V8_COVERAGE": ""
+        }
+      },
+      "validatorPid": 40571,
+      "validatorExit": {
+        "code": 0,
+        "signal": null
+      },
+      "writerExit": null,
+      "before": {
+        "input.json": "2d2e06f1b99f5f7f5adc6c6aec5eec6f241246a6954e0fa72bf1b6f8b14d47a5",
+        "card.mjs": "3abd0114ef3f9ee1f60703941e5e1aa779b4c7fd86d30a39179ee4a17b1f89be",
+        "validate.mjs": "2629a6aec0de3b7cac0aa95203819406a43d05270881a07491d71126e0d4fe24",
+        "mutate.mjs": "07160e5baac03020a2962044f8ebbd705dbc6040d1a1ba1321713f99ef98123d",
+        "run.mjs": "c829ab8bf84901471666b221e9c40c67b263b280753db600dd5153c933e3944f"
+      },
+      "after": {
+        "input.json": "2d2e06f1b99f5f7f5adc6c6aec5eec6f241246a6954e0fa72bf1b6f8b14d47a5",
+        "card.mjs": "3abd0114ef3f9ee1f60703941e5e1aa779b4c7fd86d30a39179ee4a17b1f89be",
+        "validate.mjs": "2629a6aec0de3b7cac0aa95203819406a43d05270881a07491d71126e0d4fe24",
+        "mutate.mjs": "07160e5baac03020a2962044f8ebbd705dbc6040d1a1ba1321713f99ef98123d",
+        "run.mjs": "c829ab8bf84901471666b221e9c40c67b263b280753db600dd5153c933e3944f"
+      },
+      "changedInputs": [],
+      "totals": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "observed": {
+        "type": "input-read",
+        "sha256": "2d2e06f1b99f5f7f5adc6c6aec5eec6f241246a6954e0fa72bf1b6f8b14d47a5",
+        "actual": "Record: b",
+        "expected": "Record: b",
+        "pid": 40571
+      },
+      "passed": {
+        "type": "assertion-passed",
+        "actual": "Record: b",
+        "expected": "Record: b",
+        "pid": 40571
+      },
+      "decision": "ACCEPT this isolated sample only: affected scope rechecked after writer exited, inputs stable",
+      "log": "stable-round.log",
+      "stderr": "",
+      "launcherExitCode": 0,
+      "writerCommand": null,
+      "writerEnvironmentOverrides": null
+    }
+  ],
+  "lastValidationOutput": {
+    "stdout": "✔ renderCard matches the input read by this run (2.348834ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 6.079542\n",
+    "stderr": ""
+  },
+  "protectedAfter": {
+    "card-test.tap": "7b0241c3f066183d242419004ab7945211c9a6fe47cd8856bb45e31ae3dfd66a",
+    "contract.json": "ba996b4e52687b41cab7304ca2607d7378bf070a2d2a548926148bd4d296a448",
+    "handoff.json": "e045506f383dda5112207b07da421ff29c01f1ab5412d47336d8d63c0ac926f1",
+    "host-records.json": "3a3538a50980d189f7e7b844205fff61a9b4e4363c19b2c4abe4b8640611c22a",
+    "notes.txt": "d0ff20e0adf7171b45c68297cd835f86b4818592a72e1cfd0205dc711f47b654",
+    "package.json": "218fcf1bd7a2c52f0db5d5388910d7ae2603cdd7be7e2d1e6aca56ba386396fc",
+    "review/available-integration.log": "7cb1b547c6dd2b7f53888311e74bd6a8381802c2a6397476edfeaa8d87198b4f",
+    "review/final-state.json": "ce81fcee2a3828a495c58c74612d8143ee3b4017762a3fce9715e5c2e35beeba",
+    "review/handoff-review.md": "eec14c9435b2d01058660a5d8b90b52282168776f5a9bb4e9849cafdf993e2cb",
+    "review/initial-state.json": "c373cf8a75d4ab68379c4a6e7e82ccaa28fccdb9d5d613700ab3da7d48404ae1",
+    "review/local-tests.log": "cefed908e8150ed28a32ff78e7a9222a3eefe92c4484ab2dc066bae70eff1ed4",
+    "review/member-notifications.md": "9aa93f4da6ead10d24ed1f2c02ef8fa2f48b31a08c9be0110816108a8af25a85",
+    "review/retrospective.md": "c294a1622b257c2df1d3e5aa2b3288674f1b68b9ff2dbd68db7992fa14a8a12e",
+    "review/syntax.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "review/verification.json": "839330d8e471b02ac4922163a7745ac47bac51611ae5205aa2e6121cfcdc0480",
+    "src/banner.mjs": "40e42685104a98ecb1656ef668aa1ceae05fca5682fd53d0b017f0f3868231bc",
+    "src/card.mjs": "38483d8d9c174992b557cfca281b0a6f1588960bf0c384d79d3866cb2d561bfc",
+    "src/list.mjs": "304275bc16988a97ccad940fbf3695b43c72e027bfb55c1a58cee6a0f4122720",
+    "src/store.mjs": "e44d738323ca040dc2194450960c0cf837f37d876947fa1e3073886c3dd6d691",
+    "tests/card.test.mjs": "06d7cd891845dee81d6a15c08537f836f4a5e3fa45de828265f920dcfe79f674",
+    "tests/integration.test.mjs": "dc886af45e1e6baceca615105a6c80b86535311bf58b7702f7088c7c42576e12",
+    "tests/list.test.mjs": "2ab002147120c70b2c03361fc4a98d0efbe489ea76bddc34bbba7f47d36f86fc",
+    "tests/store.test.mjs": "e0698dbee090c3ea4d64934a2ce1745c0a8ddea4385a5e5d449955905b1c230d",
+    ".git/index": "8dfc382e3c0b6a2f2b83871a68c8a8b52666ef02cd13bad991b34aa691098f51",
+    ".git/HEAD": "28d25bf82af4c0e2b72f50959b2beb859e3e60b9630a5e8c603dad4ddb2b6e80"
+  },
+  "protectedFilesUnchanged": true,
+  "status": "single scenario complete; original exercise HOLD unaffected",
+  "syntaxChecksNote": "See audit.json for four final node --check invocations, exit codes and final scope checks."
+}

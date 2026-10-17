@@ -1,0 +1,145 @@
+{
+  "version": "0.8.4",
+  "date": "2026-10-17",
+  "scope": "test-fixture coverage isolation and complete minimum-version coverage; production src unchanged in this follow-up",
+  "deliveryDirectory": "/Users/anshunli/单纯回话/codex-agent-teams",
+  "head": "6d263a8670c32e24005a2f893087324531ca91cf",
+  "indexTreeBefore": "edc7d40e7b51fcba293198a0c374b0c82d6474de",
+  "matrix": [
+    {
+      "os": "macos",
+      "node": "24.0.0",
+      "exitCode": 0,
+      "counts": {
+        "tests": 437,
+        "pass": 437,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "duration_ms": 171139.626875
+      },
+      "coveragePercent": {
+        "line": 97.4,
+        "branch": 90.01,
+        "functions": 95.06
+      },
+      "log": "macos-node24.0.0-coverage.txt",
+      "originalLog": "/tmp/teams-coverage-startup-mac240.tap",
+      "originalSHA256": "1e976f7355ea80fe99e868f4499d5e7122d095e721d92cab863c172bdf4d62c3"
+    },
+    {
+      "os": "macos",
+      "node": "24.21.0",
+      "exitCode": 0,
+      "counts": {
+        "tests": 437,
+        "pass": 437,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "duration_ms": 194428.823333
+      },
+      "coveragePercent": {
+        "line": 97.4,
+        "branch": 89.83,
+        "functions": 95.06
+      },
+      "log": "macos-node24.21.0-coverage.txt",
+      "originalLog": "/tmp/teams-coverage-startup-mac2421.tap",
+      "originalSHA256": "8054cee01a662adcfcaf8bd2838a0f4b5f6cdce979367b303a3f459c41b3200e"
+    },
+    {
+      "os": "ubuntu-24.04-arm64",
+      "node": "24.0.0",
+      "exitCode": 0,
+      "counts": {
+        "tests": 436,
+        "pass": 436,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "duration_ms": 75089.782438
+      },
+      "coveragePercent": {
+        "line": 97.4,
+        "branch": 89.83,
+        "functions": 95.06
+      },
+      "log": "ubuntu-24.04-arm64-node24.0.0-coverage.txt",
+      "originalLog": "/Users/anshunli/单纯回话/codex-agent-teams/dist/node240-linux-ef6zn6_b/startup-final-240.tap",
+      "originalSHA256": "849a65dd51a2e2d1f35420fcdea7dfe4fcd15a02c0a5f8e549833d3f5f12b85a"
+    },
+    {
+      "os": "ubuntu-24.04-arm64",
+      "node": "24.21.0",
+      "exitCode": 0,
+      "counts": {
+        "tests": 436,
+        "pass": 436,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "duration_ms": 57905.845008
+      },
+      "coveragePercent": {
+        "line": 97.4,
+        "branch": 89.87,
+        "functions": 95.06
+      },
+      "log": "ubuntu-24.04-arm64-node24.21.0-coverage.txt",
+      "originalLog": "/Users/anshunli/单纯回话/codex-agent-teams/dist/node240-linux-ef6zn6_b/startup-final-2421.tap",
+      "originalSHA256": "f1c3e8cc9e98b4c65a6d656b98b962814a03ea511f9bc3e05ba780d9e63bd0e0"
+    }
+  ],
+  "negativeControl": {
+    "node": "v24.0.0",
+    "platform": "linux",
+    "root": "/tmp/teams-coverage-write-race-cMvEyb",
+    "cases": [
+      {
+        "isolated": false,
+        "testPass": 1,
+        "testFail": 0,
+        "exitCode": 1,
+        "coverageReported": false
+      },
+      {
+        "isolated": true,
+        "testPass": 1,
+        "testFail": 0,
+        "exitCode": 0,
+        "coverageReported": true
+      }
+    ],
+    "inferenceStarted": false
+  },
+  "rootCauseQualification": "Intentional termination during V8 JSON writing was reproduced. Historical CI producer PID was not retained; do not claim exact attribution of that old file. Known pure fixture publication paths are now isolated before startup.",
+  "rejectedApproach": "In-process stopCoverage polluted stderr on Node24.0; discarded, exact-output regression retained.",
+  "fixtureRegressionTests": 9,
+  "countsDifference": "One Darwin-only verification test: macOS 437 vs Linux 436 is expected; no skips.",
+  "ciConfiguration": {
+    "functionalCombinations": 4,
+    "coverageCombinations": 4,
+    "minimumNodeCoverageRestored": true,
+    "updatedGitHubRunnerExecuted": false
+  },
+  "routing": {
+    "configurationChanged": false,
+    "observedEarlierStatus": 404,
+    "observedLaterStatus": 200,
+    "nativeMemberExecutedRealTask": true,
+    "permanentProviderFixClaimed": false,
+    "actualUnderlyingModelReceipt": "unknown",
+    "nativeMemberState": "shutdown; main integrated and verified final revision"
+  },
+  "linuxRuntimes": {
+    "24.0.0": "d40ec7ffe0b82b02dce94208c84351424099bd70fa3a42b65c46d95322305040",
+    "24.21.0": "6ad1325edbdb5649c379b75a237147a666c95d4f9ae8d340fef2d1575d289ad2"
+  },
+  "validationEnvironmentCorrection": "First VM attempt lacked Node in PATH, returned fixture exit127 and was explicitly terminated; 3 owned processes confirmed stopped. Excluded from product validation. Corrected runs exported the tested Node bin path.",
+  "formalInstallationUpdated": false,
+  "commitOrPush": false,
+  "modelBenchmarkRun": false,
+  "postflight": "postflight.json",
+  "sourceHashes": "validation-source-snapshot.json"
+}

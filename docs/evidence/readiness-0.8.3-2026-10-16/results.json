@@ -1,0 +1,915 @@
+{
+  "schemaVersion": 1,
+  "scope": "0.8.3 comprehensive readiness audit; test and report only; no product fixes",
+  "source": "/Users/anshunli/单纯回话/codex-agent-teams",
+  "head": "6d263a8670c32e24005a2f893087324531ca91cf",
+  "startedAt": "2026-10-16T14:25:39.778Z",
+  "checkedAt": "2026-10-16T14:36:40.514Z",
+  "timezone": "Asia/Shanghai",
+  "environment": {
+    "node": "v24.21.0",
+    "npm": "11.19.0",
+    "codex": "codex-cli 0.163.0-alpha.10.2",
+    "platform": "darwin",
+    "arch": "arm64"
+  },
+  "verdict": {
+    "unrestrictedProductionReady": false,
+    "nativeManualPilot": "supported in the tested macOS/CLI environment with trusted immutable assets and one updater at a time",
+    "releaseBlockers": [
+      "F1 concurrent updater rollback deletes another committed update",
+      "current-head CI matrix only 2/4 success; minimum-version jobs incomplete",
+      "local full coverage suite exit 1 in Unicode checkout"
+    ]
+  },
+  "fullSuite": {
+    "command": "npm run test:coverage",
+    "exitCode": 1,
+    "signal": null,
+    "durationMs": 188283,
+    "log": "/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-20261016-BSbVr2/full-coverage.tap",
+    "counts": {
+      "tests": 412,
+      "suites": 0,
+      "pass": 411,
+      "fail": 1,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "duration_ms": 187389.136209
+    },
+    "coverage": [
+      "ℹ  cli.js              |  77.58 |    17.95 |   85.71 | 21-52 63-66 69-70 156-158 187-188 197-198 200-204",
+      "ℹ  host-lifecycle.js   |  97.87 |    81.72 |   87.50 | 107-109",
+      "ℹ  managed-process.js  | 100.00 |    57.14 |   66.67 | ",
+      "ℹ  plugin-package.js   |  92.77 |    80.39 |  100.00 | 25-26 40-41 44-45",
+      "ℹ all files            |  97.47 |    89.83 |   95.01 | "
+    ],
+    "coverageTable": [
+      "ℹ file                 | line % | branch % | funcs % | uncovered lines",
+      "ℹ src                  |        |          |         | ",
+      "ℹ  actions.js          | 100.00 |    98.65 |  100.00 | ",
+      "ℹ  app-server.js       |  99.69 |    87.56 |   86.67 | 251",
+      "ℹ  cli-progress.js     | 100.00 |   100.00 |  100.00 | ",
+      "ℹ  cli.js              |  77.58 |    17.95 |   85.71 | 21-52 63-66 69-70 156-158 187-188 197-198 200-204",
+      "ℹ  config.js           | 100.00 |    86.36 |  100.00 | ",
+      "ℹ  contracts.js        |  97.01 |    88.89 |  100.00 | 125-126 131-132",
+      "ℹ  host-hook.js        |  93.44 |    75.00 |  100.00 | 56-59",
+      "ℹ  host-lifecycle.js   |  97.87 |    81.72 |   87.50 | 107-109",
+      "ℹ  managed-process.js  | 100.00 |    57.14 |   66.67 | ",
+      "ℹ  mcp.js              |  99.11 |    92.59 |   82.35 | 202-203",
+      "ℹ  models.js           | 100.00 |    93.44 |  100.00 | ",
+      "ℹ  observation.js      | 100.00 |    91.67 |   85.71 | ",
+      "ℹ  plugin-package.js   |  92.77 |    80.39 |  100.00 | 25-26 40-41 44-45",
+      "ℹ  plugin.js           |  93.75 |    84.21 |  100.00 | 44-45 61-62 66-67 71-72",
+      "ℹ  policy.js           | 100.00 |    97.96 |  100.00 | ",
+      "ℹ  preflight.js        | 100.00 |   100.00 |  100.00 | ",
+      "ℹ  process-group.js    | 100.00 |   100.00 |   83.33 | ",
+      "ℹ  process-guard.js    | 100.00 |    66.67 |  100.00 | ",
+      "ℹ  runtime.js          |  99.61 |    90.03 |   98.33 | 260-261",
+      "ℹ  status-panel.js     |  96.23 |    92.68 |  100.00 | 27-28",
+      "ℹ  status.js           | 100.00 |    95.12 |  100.00 | ",
+      "ℹ  store.js            | 100.00 |    96.40 |  100.00 | ",
+      "ℹ  verification.js     | 100.00 |    88.51 |   95.65 | ",
+      "ℹ  workspace-router.js | 100.00 |   100.00 |  100.00 | ",
+      "ℹ  workspace.js        |  99.23 |    89.14 |  100.00 | 231-232",
+      "ℹ all files            |  97.47 |    89.83 |   95.01 | "
+    ]
+  },
+  "nativeHost": {
+    "version": "0.8.3",
+    "mode": "native",
+    "cachedSkillDiscovered": true,
+    "sourceRemoved": true,
+    "externalMcpServers": 0,
+    "pluginHooks": 0,
+    "projectStateCreated": false,
+    "packageFiles": 4,
+    "packageBytes": 4211,
+    "inferenceStarted": false,
+    "userConfigChanged": false,
+    "appServerExited": true
+  },
+  "strictHost": {
+    "server": {
+      "userAgent": "Codex Desktop/0.163.0-alpha.10.2 (Mac OS 27.2.0; arm64) dumb (codex_agent_teams; 0.8.3)",
+      "codexHome": "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-plugin-smoke-ZMU65O/codex-home",
+      "platformFamily": "unix",
+      "platformOs": "macos"
+    },
+    "marketplace": "codex-agent-teams-local",
+    "installedInTemporaryHome": true,
+    "cachedPackageIndependent": true,
+    "cachedSkillDiscovered": true,
+    "inventoryWhileRuntimeActive": true,
+    "startupStatus": "ready",
+    "tools": [
+      "teams_cancel",
+      "teams_create",
+      "teams_integrate",
+      "teams_models",
+      "teams_review",
+      "teams_start",
+      "teams_status",
+      "teams_wait"
+    ],
+    "statusBeforeOwner": true,
+    "observedPluginVersion": "0.8.3",
+    "observedRuntimeVersion": "0.8.3",
+    "modelCatalogRead": true,
+    "outerApprovalPolicy": "on-request",
+    "formRequestObserved": true,
+    "rememberDefaultForwarded": true,
+    "textReceiptForwarded": true,
+    "confirmationAction": "cancel",
+    "declinedFormDoesNotAcquireOwner": true,
+    "captainDispatchSchemaAvailable": true,
+    "missingHostBindingBlocksStart": true,
+    "contractCreated": true,
+    "incompleteWriteContractRejected": true,
+    "taskCancelled": true,
+    "sameInstallationTwoProjects": true,
+    "perProjectState": true,
+    "wrongProjectRejected": true,
+    "ambiguousTargetRejected": true,
+    "cacheCwdRejected": true,
+    "inferenceStarted": false,
+    "userConfigChanged": false,
+    "pluginHookDefinitionsDiscovered": [
+      "preToolUse",
+      "sessionEnd",
+      "interrupt"
+    ],
+    "pluginHooksInGlobalInventory": 3,
+    "hostHookExecutionVerified": false,
+    "managedRuntimeExited": true
+  },
+  "consumer": {
+    "passed": true,
+    "checks": [
+      {
+        "name": "fresh HEAD build without node_modules, npm or Codex on PATH; spaces/Chinese paths",
+        "passed": true
+      },
+      {
+        "name": "compressed delivery/extraction byte identity",
+        "passed": true,
+        "files": 5,
+        "sha256": "77885e61757ff495067762c0bcfcb5f9d39ee87f723215e9e5e588a09854a6f9"
+      },
+      {
+        "name": "official CLI installs extracted asset with no Node/npm on PATH",
+        "passed": true,
+        "version": "0.8.3",
+        "cachedFiles": 4
+      },
+      {
+        "name": "real official CLI native to strict update, same version",
+        "passed": true,
+        "cachedFiles": 983
+      },
+      {
+        "name": "real official CLI strict to native update, same version removes strict resources",
+        "passed": true,
+        "cachedFiles": 4
+      },
+      {
+        "name": "repeat same-version native update",
+        "passed": true
+      },
+      {
+        "name": "negative control: corrupted candidate rejected before any CLI mutation; cache unchanged",
+        "passed": true
+      },
+      {
+        "name": "fresh HEAD npm ci locked dependency installation and npm ls",
+        "passed": true
+      },
+      {
+        "name": "native regression in fresh locked installation",
+        "passed": true,
+        "summary": [
+          "ℹ tests 11",
+          "ℹ pass 11",
+          "ℹ fail 0",
+          "ℹ cancelled 0",
+          "ℹ skipped 0"
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "file": "git",
+        "args": [
+          "archive",
+          "--format=tar",
+          "--output",
+          "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-20261016-BSbVr2/source-head.tar",
+          "HEAD"
+        ],
+        "status": 0,
+        "signal": null,
+        "durationMs": 30,
+        "stderr": ""
+      },
+      {
+        "file": "/usr/bin/tar",
+        "args": [
+          "-xf",
+          "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-20261016-BSbVr2/source-head.tar",
+          "-C",
+          "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-20261016-BSbVr2/clean checkout 空格"
+        ],
+        "status": 0,
+        "signal": null,
+        "durationMs": 29,
+        "stderr": ""
+      },
+      {
+        "file": "/Users/anshunli/.nvm/versions/node/v24.21.0/bin/node",
+        "args": [
+          "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-20261016-BSbVr2/clean checkout 空格/scripts/build.js",
+          "--out",
+          "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-20261016-BSbVr2/发行 native marketplace"
+        ],
+        "status": 0,
+        "signal": null,
+        "durationMs": 45,
+        "stderr": ""
+      },
+      {
+        "file": "/usr/bin/tar",
+        "args": [
+          "-czf",
+          "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-20261016-BSbVr2/codex-agent-teams-native-0.8.3.tar.gz",
+          "-C",
+          "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-20261016-BSbVr2",
+          "发行 native marketplace"
+        ],
+        "status": 0,
+        "signal": null,
+        "durationMs": 12,
+        "stderr": ""
+      },
+      {
+        "file": "/usr/bin/tar",
+        "args": [
+          "-xzf",
+          "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-20261016-BSbVr2/codex-agent-teams-native-0.8.3.tar.gz",
+          "-C",
+          "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-20261016-BSbVr2/解压 空格"
+        ],
+        "status": 0,
+        "signal": null,
+        "durationMs": 9,
+        "stderr": ""
+      },
+      {
+        "file": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex",
+        "args": [
+          "plugin",
+          "marketplace",
+          "add",
+          "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-20261016-BSbVr2/解压 空格/发行 native marketplace",
+          "--json"
+        ],
+        "status": 0,
+        "signal": null,
+        "durationMs": 17,
+        "stderr": ""
+      },
+      {
+        "file": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex",
+        "args": [
+          "plugin",
+          "add",
+          "codex-agent-teams@codex-agent-teams-local",
+          "--json"
+        ],
+        "status": 0,
+        "signal": null,
+        "durationMs": 19,
+        "stderr": ""
+      },
+      {
+        "file": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex",
+        "args": [
+          "plugin",
+          "marketplace",
+          "list",
+          "--json"
+        ],
+        "status": 0,
+        "signal": null,
+        "durationMs": 20,
+        "stderr": ""
+      },
+      {
+        "file": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex",
+        "args": [
+          "plugin",
+          "list",
+          "--marketplace",
+          "codex-agent-teams-local",
+          "--json"
+        ],
+        "status": 0,
+        "signal": null,
+        "durationMs": 16,
+        "stderr": ""
+      },
+      {
+        "file": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex",
+        "args": [
+          "plugin",
+          "marketplace",
+          "remove",
+          "codex-agent-teams-local",
+          "--json"
+        ],
+        "status": 0,
+        "signal": null,
+        "durationMs": 21,
+        "stderr": ""
+      },
+      {
+        "file": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex",
+        "args": [
+          "plugin",
+          "marketplace",
+          "add",
+          "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-20261016-BSbVr2/strict-update-marketplace",
+          "--json"
+        ],
+        "status": 0,
+        "signal": null,
+        "durationMs": 17,
+        "stderr": ""
+      },
+      {
+        "file": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex",
+        "args": [
+          "plugin",
+          "remove",
+          "codex-agent-teams@codex-agent-teams-local",
+          "--json"
+        ],
+        "status": 0,
+        "signal": null,
+        "durationMs": 19,
+        "stderr": ""
+      },
+      {
+        "file": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex",
+        "args": [
+          "plugin",
+          "add",
+          "codex-agent-teams@codex-agent-teams-local",
+          "--json"
+        ],
+        "status": 0,
+        "signal": null,
+        "durationMs": 180,
+        "stderr": ""
+      },
+      {
+        "file": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex",
+        "args": [
+          "plugin",
+          "marketplace",
+          "list",
+          "--json"
+        ],
+        "status": 0,
+        "signal": null,
+        "durationMs": 17,
+        "stderr": ""
+      },
+      {
+        "file": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex",
+        "args": [
+          "plugin",
+          "list",
+          "--marketplace",
+          "codex-agent-teams-local",
+          "--json"
+        ],
+        "status": 0,
+        "signal": null,
+        "durationMs": 16,
+        "stderr": ""
+      },
+      {
+        "file": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex",
+        "args": [
+          "plugin",
+          "marketplace",
+          "list",
+          "--json"
+        ],
+        "status": 0,
+        "signal": null,
+        "durationMs": 20,
+        "stderr": ""
+      },
+      {
+        "file": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex",
+        "args": [
+          "plugin",
+          "list",
+          "--marketplace",
+          "codex-agent-teams-local",
+          "--json"
+        ],
+        "status": 0,
+        "signal": null,
+        "durationMs": 18,
+        "stderr": ""
+      },
+      {
+        "file": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex",
+        "args": [
+          "plugin",
+          "marketplace",
+          "remove",
+          "codex-agent-teams-local",
+          "--json"
+        ],
+        "status": 0,
+        "signal": null,
+        "durationMs": 18,
+        "stderr": ""
+      },
+      {
+        "file": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex",
+        "args": [
+          "plugin",
+          "marketplace",
+          "add",
+          "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-20261016-BSbVr2/native-update-marketplace",
+          "--json"
+        ],
+        "status": 0,
+        "signal": null,
+        "durationMs": 21,
+        "stderr": ""
+      },
+      {
+        "file": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex",
+        "args": [
+          "plugin",
+          "remove",
+          "codex-agent-teams@codex-agent-teams-local",
+          "--json"
+        ],
+        "status": 0,
+        "signal": null,
+        "durationMs": 74,
+        "stderr": ""
+      },
+      {
+        "file": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex",
+        "args": [
+          "plugin",
+          "add",
+          "codex-agent-teams@codex-agent-teams-local",
+          "--json"
+        ],
+        "status": 0,
+        "signal": null,
+        "durationMs": 22,
+        "stderr": ""
+      },
+      {
+        "file": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex",
+        "args": [
+          "plugin",
+          "marketplace",
+          "list",
+          "--json"
+        ],
+        "status": 0,
+        "signal": null,
+        "durationMs": 28,
+        "stderr": ""
+      },
+      {
+        "file": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex",
+        "args": [
+          "plugin",
+          "marketplace",
+          "list",
+          "--json"
+        ],
+        "status": 0,
+        "signal": null,
+        "durationMs": 30,
+        "stderr": ""
+      },
+      {
+        "file": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex",
+        "args": [
+          "plugin",
+          "list",
+          "--marketplace",
+          "codex-agent-teams-local",
+          "--json"
+        ],
+        "status": 0,
+        "signal": null,
+        "durationMs": 26,
+        "stderr": ""
+      },
+      {
+        "file": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex",
+        "args": [
+          "plugin",
+          "marketplace",
+          "remove",
+          "codex-agent-teams-local",
+          "--json"
+        ],
+        "status": 0,
+        "signal": null,
+        "durationMs": 24,
+        "stderr": ""
+      },
+      {
+        "file": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex",
+        "args": [
+          "plugin",
+          "marketplace",
+          "add",
+          "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-20261016-BSbVr2/native-update-marketplace",
+          "--json"
+        ],
+        "status": 0,
+        "signal": null,
+        "durationMs": 24,
+        "stderr": ""
+      },
+      {
+        "file": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex",
+        "args": [
+          "plugin",
+          "remove",
+          "codex-agent-teams@codex-agent-teams-local",
+          "--json"
+        ],
+        "status": 0,
+        "signal": null,
+        "durationMs": 33,
+        "stderr": ""
+      },
+      {
+        "file": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex",
+        "args": [
+          "plugin",
+          "add",
+          "codex-agent-teams@codex-agent-teams-local",
+          "--json"
+        ],
+        "status": 0,
+        "signal": null,
+        "durationMs": 25,
+        "stderr": ""
+      },
+      {
+        "file": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex",
+        "args": [
+          "plugin",
+          "marketplace",
+          "list",
+          "--json"
+        ],
+        "status": 0,
+        "signal": null,
+        "durationMs": 21,
+        "stderr": ""
+      },
+      {
+        "file": "npm",
+        "args": [
+          "ci",
+          "--ignore-scripts",
+          "--no-audit",
+          "--no-fund"
+        ],
+        "status": 0,
+        "signal": null,
+        "durationMs": 470,
+        "stderr": "npm warn Unknown user config \"SASS_BINARY_SITE\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\nnpm warn Unknown user config \"PHANTOMJS_CDNURL\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\nnpm warn Unknown user config \"ELECTRON_MIRROR\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\nnpm warn Unknown user config \"NVM_NODEJS_ORG_MIRROR\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\nnpm warn Unknown user config \"CHROMEDRIVER_CDNURL\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\nnpm warn Unknown user config \"OPERADRIVER\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\nnpm warn Unknown user config \"ELECTRON_BUILDER_BINARIES_MIRROR\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\nnpm warn Unknown user config \"PYTHON_MIRROR\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\nnpm warn Unknown user config \"phantomjs_cdnurl\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\nnpm warn Unknown user config \"chromedriver_cdnurl\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\nnpm warn Unknown user config \"sass_binary_site\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\nnpm warn Unknown user config \"//registry.npmmirror.com\" (https://registry.npmmirror.com). This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\n"
+      },
+      {
+        "file": "npm",
+        "args": [
+          "ls",
+          "--all",
+          "--json"
+        ],
+        "status": 0,
+        "signal": null,
+        "durationMs": 202,
+        "stderr": "npm warn Unknown user config \"SASS_BINARY_SITE\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\nnpm warn Unknown user config \"PHANTOMJS_CDNURL\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\nnpm warn Unknown user config \"ELECTRON_MIRROR\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\nnpm warn Unknown user config \"NVM_NODEJS_ORG_MIRROR\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\nnpm warn Unknown user config \"CHROMEDRIVER_CDNURL\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\nnpm warn Unknown user config \"OPERADRIVER\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\nnpm warn Unknown user config \"ELECTRON_BUILDER_BINARIES_MIRROR\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\nnpm warn Unknown user config \"PYTHON_MIRROR\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\nnpm warn Unknown user config \"phantomjs_cdnurl\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\nnpm warn Unknown user config \"chromedriver_cdnurl\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\nnpm warn Unknown user config \"sass_binary_site\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\nnpm warn Unknown user config \"//registry.npmmirror.com\" (https://registry.npmmirror.com). This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\n"
+      },
+      {
+        "file": "/Users/anshunli/.nvm/versions/node/v24.21.0/bin/node",
+        "args": [
+          "--test",
+          "tests/native-plugin.test.js"
+        ],
+        "status": 0,
+        "signal": null,
+        "durationMs": 279,
+        "stderr": ""
+      }
+    ],
+    "consumerHome": "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-20261016-BSbVr2/consumer-codex-home",
+    "archive": "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-20261016-BSbVr2/codex-agent-teams-native-0.8.3.tar.gz",
+    "archiveSHA256": "77885e61757ff495067762c0bcfcb5f9d39ee87f723215e9e5e588a09854a6f9",
+    "inferenceStarted": false
+  },
+  "strictNewProbes": {
+    "command": [
+      "/Users/anshunli/.nvm/versions/node/v24.21.0/bin/node",
+      "--test",
+      "--test-concurrency=1",
+      "/tmp/codex-strict-audit-rGnFTP/strict-probes.test.mjs",
+      "/tmp/codex-strict-audit-rGnFTP/eperm-probes.test.mjs"
+    ],
+    "exitCode": 0,
+    "signal": null,
+    "durationMs": 16083,
+    "counts": {
+      "tests": 15,
+      "pass": 15,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 16041.781417
+    },
+    "log": "/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-20261016-BSbVr2/strict-probes-lead.tap"
+  },
+  "ci": {
+    "command": "gh run list --commit 6d263a8670c32e24005a2f893087324531ca91cf --limit 20 --json databaseId,workflowName,status,conclusion,headSha,createdAt",
+    "exitCode": 0,
+    "runs": [
+      {
+        "conclusion": "failure",
+        "createdAt": "2026-10-16T07:37:04Z",
+        "databaseId": 38868353331,
+        "headSha": "6d263a8670c32e24005a2f893087324531ca91cf",
+        "status": "completed",
+        "workflowName": "Offline verification"
+      }
+    ],
+    "error": null
+  },
+  "independentUpdaterRechecks": {
+    "leadRechecked": true,
+    "results": [
+      {
+        "name": "official-update-races",
+        "script": "/tmp/codex-native-audit-JsNqIkJM/official-update-races.mjs",
+        "exitCode": 0,
+        "durationMs": 792,
+        "evidence": "/tmp/codex-native-audit-JsNqIkJM/official-races-F3JdrU/results.json",
+        "data": [
+          {
+            "scenario": "concurrent-updates",
+            "root": "/tmp/codex-native-audit-JsNqIkJM/official-races-F3JdrU/concurrent-updates",
+            "successfulB": {
+              "installedPath": "/private/tmp/codex-native-audit-JsNqIkJM/official-races-F3JdrU/concurrent-updates/home/plugins/cache/codex-agent-teams-local/codex-agent-teams/0.8.4",
+              "version": "0.8.4",
+              "sourceDigest": "44ae7b36a7c5879285c20c0e0e5b2f3df5ad4b0c49815f47276d4ca64815314e",
+              "marketplaceRoot": "/private/tmp/codex-native-audit-JsNqIkJM/official-races-F3JdrU/concurrent-updates/other"
+            },
+            "errorA": "实际 marketplace 来源不符\n+ actual - expected\n\n+ '/private/tmp/codex-native-audit-JsNqIkJM/official-races-F3JdrU/concurrent-updates/other'\n- '/private/tmp/codex-native-audit-JsNqIkJM/official-races-F3JdrU/concurrent-updates/next'\n\n原 marketplace 与插件安装状态已恢复（已核对原缓存关键文件；运行依赖未逐文件核对）。\n候选包保留：/private/tmp/codex-native-audit-JsNqIkJM/official-races-F3JdrU/concurrent-updates/next",
+            "final": [
+              {
+                "pluginId": "codex-agent-teams@codex-agent-teams-local",
+                "name": "codex-agent-teams",
+                "marketplaceName": "codex-agent-teams-local",
+                "version": "0.8.2",
+                "installed": true,
+                "enabled": true,
+                "source": {
+                  "source": "local",
+                  "path": "/private/tmp/codex-native-audit-JsNqIkJM/official-races-F3JdrU/concurrent-updates/old/plugins/codex-agent-teams"
+                },
+                "marketplaceSource": {
+                  "sourceType": "local",
+                  "source": "/private/tmp/codex-native-audit-JsNqIkJM/official-races-F3JdrU/concurrent-updates/old"
+                },
+                "installPolicy": "AVAILABLE",
+                "authPolicy": "ON_USE"
+              }
+            ],
+            "bCacheDeleted": true
+          },
+          {
+            "scenario": "rollback-source-drift",
+            "root": "/tmp/codex-native-audit-JsNqIkJM/official-races-F3JdrU/rollback-source-drift",
+            "errorA": "controlled failed install after actual old-cache removal\n恢复未完成：旧缓存内容未恢复\n+ actual - expected\n\n+ '54d802c51504c878d3c0f1e4d724db2dd6684929aeac1617882c6529fe9dbc8f'\n- 'b3de43c34ae1a2d9f5afe96132274cbfec2e31a6d506e80c51b9f77d176b0148'\n。请手动检查插件安装。\n候选包保留：/private/tmp/codex-native-audit-JsNqIkJM/official-races-F3JdrU/rollback-source-drift/next",
+            "actualOldBytesLost": true,
+            "restoredSourceDriftInstalled": true
+          }
+        ]
+      },
+      {
+        "name": "official-anomalies",
+        "script": "/tmp/codex-native-audit-JsNqIkJM/official-anomalies.mjs",
+        "exitCode": 0,
+        "durationMs": 263,
+        "evidence": "/tmp/codex-native-audit-JsNqIkJM/official-anomalies-ZgeOgW/results.json",
+        "data": [
+          {
+            "anomaly": "manifest-version-mismatch",
+            "result": {
+              "installedPath": "/private/tmp/codex-native-audit-JsNqIkJM/official-anomalies-ZgeOgW/manifest-version-mismatch/home/plugins/cache/codex-agent-teams-local/codex-agent-teams/99.0.0",
+              "version": "0.8.3",
+              "sourceDigest": "3fc5e3e1ba457034e70f95489092a112fdbeb36128f997bb24d09185ac86b91e",
+              "marketplaceRoot": "/private/tmp/codex-native-audit-JsNqIkJM/official-anomalies-ZgeOgW/manifest-version-mismatch/candidate"
+            },
+            "installed": [
+              {
+                "pluginId": "codex-agent-teams@codex-agent-teams-local",
+                "name": "codex-agent-teams",
+                "marketplaceName": "codex-agent-teams-local",
+                "version": "99.0.0",
+                "installed": true,
+                "enabled": true,
+                "source": {
+                  "source": "local",
+                  "path": "/private/tmp/codex-native-audit-JsNqIkJM/official-anomalies-ZgeOgW/manifest-version-mismatch/candidate/plugins/codex-agent-teams"
+                },
+                "marketplaceSource": {
+                  "sourceType": "local",
+                  "source": "/private/tmp/codex-native-audit-JsNqIkJM/official-anomalies-ZgeOgW/manifest-version-mismatch/candidate"
+                },
+                "installPolicy": "AVAILABLE",
+                "authPolicy": "ON_USE"
+              }
+            ]
+          },
+          {
+            "anomaly": "unknown-mode",
+            "result": {
+              "installedPath": "/private/tmp/codex-native-audit-JsNqIkJM/official-anomalies-ZgeOgW/unknown-mode/home/plugins/cache/codex-agent-teams-local/codex-agent-teams/0.8.3",
+              "version": "0.8.3",
+              "sourceDigest": "3fc5e3e1ba457034e70f95489092a112fdbeb36128f997bb24d09185ac86b91e",
+              "marketplaceRoot": "/private/tmp/codex-native-audit-JsNqIkJM/official-anomalies-ZgeOgW/unknown-mode/candidate"
+            },
+            "installed": [
+              {
+                "pluginId": "codex-agent-teams@codex-agent-teams-local",
+                "name": "codex-agent-teams",
+                "marketplaceName": "codex-agent-teams-local",
+                "version": "0.8.3",
+                "installed": true,
+                "enabled": true,
+                "source": {
+                  "source": "local",
+                  "path": "/private/tmp/codex-native-audit-JsNqIkJM/official-anomalies-ZgeOgW/unknown-mode/candidate/plugins/codex-agent-teams"
+                },
+                "marketplaceSource": {
+                  "sourceType": "local",
+                  "source": "/private/tmp/codex-native-audit-JsNqIkJM/official-anomalies-ZgeOgW/unknown-mode/candidate"
+                },
+                "installPolicy": "AVAILABLE",
+                "authPolicy": "ON_USE"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "syntax": {
+    "checked": 61,
+    "failures": []
+  },
+  "dependencyAudit": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "dependencies": {
+      "prod": 4,
+      "dev": 11,
+      "optional": 0,
+      "peer": 0,
+      "peerOptional": 0,
+      "total": 14
+    }
+  },
+  "findings": [
+    {
+      "id": "F1",
+      "priority": "P1",
+      "file": "scripts/update.js",
+      "line": 183,
+      "description": "Concurrent updater rollback deletes another updater successful installation",
+      "confirmedBy": "two lead replays including official CLI and actual second Node process; controlled scheduling"
+    },
+    {
+      "id": "F2",
+      "priority": "P2",
+      "file": "scripts/update.js",
+      "line": 123,
+      "description": "Prepared candidate manifest version can disagree with updater success receipt",
+      "precondition": "candidate modified after build; clean builder already checks consistency"
+    },
+    {
+      "id": "F3",
+      "priority": "P2",
+      "file": "scripts/update.js",
+      "line": 49,
+      "description": "Unknown build.mode falls into strict branch and bypasses native inventory",
+      "precondition": "candidate modified after build; no evidence of automatic extra-file execution"
+    },
+    {
+      "id": "F4",
+      "priority": "P2",
+      "file": "tests/config.test.js",
+      "line": 39,
+      "description": "URL.pathname used as filesystem path fails in Unicode/space checkout; product CLI status passed corrected path probes"
+    },
+    {
+      "id": "F5",
+      "priority": "P2",
+      "file": "tests/attempt.test.js",
+      "line": 300,
+      "description": "Test cleanup uses direct group kill and bypasses macOS EPERM production fallback; remote CI failed here"
+    }
+  ],
+  "knownLimits": [
+    {
+      "id": "B1",
+      "description": "Old source drift after deletion can prevent original-byte rollback; failure is correctly reported; controlled official CLI reproduction confirmed known TOCTOU limitation"
+    },
+    {
+      "id": "B2",
+      "description": "Ubuntu Node24.0.0 coverage JSON parse failed despite 411 passes; root cause unconfirmed"
+    }
+  ],
+  "unverified": [
+    "real desktop stop/interrupt/session-end hook execution",
+    "real model writer/reviewer permissions and end-to-end strict task through production backend",
+    "actual selected model/effort receipts and small-model routing",
+    "long-running load, random concurrency incidence, power-loss recovery",
+    "Windows and other untested host/CLI versions",
+    "comparable speed/token/cost benchmark"
+  ],
+  "nativeSubagents": {
+    "count": 2,
+    "forkContext": false,
+    "requestedReasoning": "high",
+    "modelOverride": false,
+    "exactActualModelReceipt": "not exposed",
+    "work": "independent native/update and strict audits",
+    "reviewedByLead": true,
+    "closedAfterCompletion": true
+  },
+  "postflight": {
+    "checkedAt": "2026-10-16T14:36:40.514Z",
+    "head": "6d263a8670c32e24005a2f893087324531ca91cf",
+    "stagedChanges": "",
+    "runtimeCodeDiff": "",
+    "formalConfigSHA256": "32d342d461078e53fcf9f09d993580a445baf83dd02975e9fb163a7493be7f96",
+    "installedInventory": [
+      {
+        "path": ".codex-plugin/plugin.json",
+        "type": "file",
+        "bytes": 178,
+        "sha256": "2deb776bf3bf1da71694e2d51005ab5bb73283a040cf6dc1e3f71f3321f091a7"
+      },
+      {
+        "path": "build-info.json",
+        "type": "file",
+        "bytes": 174,
+        "sha256": "e9cc6479c12d7a40940034b4289401cdd0697f6f992e6c6488fcee375c343c32"
+      },
+      {
+        "path": "package.json",
+        "type": "file",
+        "bytes": 166,
+        "sha256": "f4e79b4f7e2d988e59a1dfa80afb6aec1a3194468f6fffe749c08662995738ec"
+      },
+      {
+        "path": "skills/team/SKILL.md",
+        "type": "file",
+        "bytes": 3693,
+        "sha256": "d5b5790832d5359929e78327b1bff61e3d70ad4142b2449020f30ff376c03b33"
+      }
+    ],
+    "gitWorktrees": "worktree /Users/anshunli/单纯回话/codex-agent-teams\nHEAD 6d263a8670c32e24005a2f893087324531ca91cf\nbranch refs/heads/main",
+    "headUnchanged": true,
+    "formalConfigUnchanged": true,
+    "installedCacheUnchanged": true
+  }
+}

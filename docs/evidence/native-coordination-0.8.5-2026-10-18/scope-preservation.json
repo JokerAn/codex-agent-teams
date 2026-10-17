@@ -1,0 +1,180 @@
+{
+  "deliveryRoot": "/Users/anshunli/单纯回话/codex-agent-teams",
+  "headBefore": "6d263a8670c32e24005a2f893087324531ca91cf",
+  "headAfter": "6d263a8670c32e24005a2f893087324531ca91cf",
+  "stagedDiffSha256Before": "9be99b59130576ebbd4c9336d93969c06f5370803804d866d138a51cd36ed6ae",
+  "stagedDiffSha256After": "9be99b59130576ebbd4c9336d93969c06f5370803804d866d138a51cd36ed6ae",
+  "stagedPaths": [
+    "docs/evidence/readiness-0.8.3-2026-10-16/artifact-hashes.json",
+    "docs/evidence/readiness-0.8.3-2026-10-16/ci-failure-excerpts.txt",
+    "docs/evidence/readiness-0.8.3-2026-10-16/clean-native-test.txt",
+    "docs/evidence/readiness-0.8.3-2026-10-16/config-ascii-control.txt",
+    "docs/evidence/readiness-0.8.3-2026-10-16/config-path-reproduction.json",
+    "docs/evidence/readiness-0.8.3-2026-10-16/config-unicode-original.txt",
+    "docs/evidence/readiness-0.8.3-2026-10-16/consumer-result.json",
+    "docs/evidence/readiness-0.8.3-2026-10-16/current-head-ci-details.json",
+    "docs/evidence/readiness-0.8.3-2026-10-16/current-head-ci.json",
+    "docs/evidence/readiness-0.8.3-2026-10-16/eperm-probes.original.test.mjs.txt",
+    "docs/evidence/readiness-0.8.3-2026-10-16/full-coverage-result.json",
+    "docs/evidence/readiness-0.8.3-2026-10-16/full-coverage-summary.json",
+    "docs/evidence/readiness-0.8.3-2026-10-16/full-coverage.txt",
+    "docs/evidence/readiness-0.8.3-2026-10-16/host-smoke-results.json",
+    "docs/evidence/readiness-0.8.3-2026-10-16/independent-update-rechecks.json",
+    "docs/evidence/readiness-0.8.3-2026-10-16/native-audit-member.md",
+    "docs/evidence/readiness-0.8.3-2026-10-16/native-host-smoke.txt",
+    "docs/evidence/readiness-0.8.3-2026-10-16/npm-audit.json",
+    "docs/evidence/readiness-0.8.3-2026-10-16/npm-ls.json",
+    "docs/evidence/readiness-0.8.3-2026-10-16/official-anomalies.original.mjs.txt",
+    "docs/evidence/readiness-0.8.3-2026-10-16/official-update-races.original.mjs.txt",
+    "docs/evidence/readiness-0.8.3-2026-10-16/postflight.json",
+    "docs/evidence/readiness-0.8.3-2026-10-16/preflight.json",
+    "docs/evidence/readiness-0.8.3-2026-10-16/reproduce-package-anomalies.mjs",
+    "docs/evidence/readiness-0.8.3-2026-10-16/reproduce-update-races.mjs",
+    "docs/evidence/readiness-0.8.3-2026-10-16/results.json",
+    "docs/evidence/readiness-0.8.3-2026-10-16/strict-audit-member.md",
+    "docs/evidence/readiness-0.8.3-2026-10-16/strict-eperm-member.tap",
+    "docs/evidence/readiness-0.8.3-2026-10-16/strict-focused-member.tap",
+    "docs/evidence/readiness-0.8.3-2026-10-16/strict-host-smoke.txt",
+    "docs/evidence/readiness-0.8.3-2026-10-16/strict-probes-lead-result.json",
+    "docs/evidence/readiness-0.8.3-2026-10-16/strict-probes-lead.tap",
+    "docs/evidence/readiness-0.8.3-2026-10-16/strict-probes-member.tap",
+    "docs/evidence/readiness-0.8.3-2026-10-16/strict-probes.original.test.mjs.txt",
+    "docs/evidence/readiness-0.8.3-2026-10-16/syntax.json"
+  ],
+  "stagedFileCount": 35,
+  "changedExistingFiles": {
+    ".codex-plugin/plugin.json": {
+      "before": {
+        "type": "file",
+        "sha256": "7935fdb2b52574df9742f51b3056991d16bc72b298e3ef53756701eca0a618a7",
+        "mode": 420
+      },
+      "after": {
+        "type": "file",
+        "sha256": "aaa0d9fe729dd08ef872b4b0a26be40ae2b60e24ab85c03932ac180af68c0cc6",
+        "mode": 420
+      }
+    },
+    "README.md": {
+      "before": {
+        "type": "file",
+        "sha256": "770c9b9d3f0b632655b17d4584a049ebcbd866523754546b74c34edaa0309082",
+        "mode": 420
+      },
+      "after": {
+        "type": "file",
+        "sha256": "424da643786ed413900dd2bc0c86ea66ba2d9b2803a4dbba917f2c021cb15d62",
+        "mode": 420
+      }
+    },
+    "docs/CURRENT.md": {
+      "before": {
+        "type": "file",
+        "sha256": "2ffe0db83202acb70b3891ee07566529c9c296f252f5684b576a724f1483ba6e",
+        "mode": 420
+      },
+      "after": {
+        "type": "file",
+        "sha256": "f6f76e9904910567249addab6fd41e03e6e2c1a2e7e6fd0937ecb3e08df57feb",
+        "mode": 420
+      }
+    },
+    "docs/STATUS.md": {
+      "before": {
+        "type": "file",
+        "sha256": "d1f65029f1c84e904e92e70a0054e79aeda79afc25e5a1317fd53d9785c047e9",
+        "mode": 420
+      },
+      "after": {
+        "type": "file",
+        "sha256": "9411eace2a98cbd987dc44bf9613c81fda97907d9010c734fa778dab619898e5",
+        "mode": 420
+      }
+    },
+    "docs/TEAM-SCENARIOS.md": {
+      "before": {
+        "type": "file",
+        "sha256": "a098c7ccd0e3f55b4d53e06e6e6e897bb4783b004afa9d0dc5936f6c0cf11edb",
+        "mode": 420
+      },
+      "after": {
+        "type": "file",
+        "sha256": "861b53a0e7f954b9521dc1b50055a092c142dbfc8c33bef82df2f7d303654e42",
+        "mode": 420
+      }
+    },
+    "package-lock.json": {
+      "before": {
+        "type": "file",
+        "sha256": "d5d56f3d8e6db9ce25a1248406b606a24caaa8408b55204e7a5d120c8235690e",
+        "mode": 420
+      },
+      "after": {
+        "type": "file",
+        "sha256": "a0c19204fa344b3c0e8670ccc4aca34bf04d1645de240438d916a48cd049ae97",
+        "mode": 420
+      }
+    },
+    "package.json": {
+      "before": {
+        "type": "file",
+        "sha256": "78b9584cdaf3e3c720a8d3753ccd171a9d3e6371c741096cdb6143fd786ce810",
+        "mode": 420
+      },
+      "after": {
+        "type": "file",
+        "sha256": "4b625b91568a589e7612cb448175880d575c096377a2b8af2c1d2e2b87764e1d",
+        "mode": 420
+      }
+    },
+    "plugin.json": {
+      "before": {
+        "type": "file",
+        "sha256": "1dd6c8da43fa6950565e6a6ba8d3ec47f46bc2fbc5f841cf05a7a47e985f3a88",
+        "mode": 420
+      },
+      "after": {
+        "type": "file",
+        "sha256": "f7b592ebff1e6cfbb4e943ca544e0ab73930d2f1b1f1ec22881e48db043b22e4",
+        "mode": 420
+      }
+    },
+    "skills/team/SKILL.md": {
+      "before": {
+        "type": "file",
+        "sha256": "d5b5790832d5359929e78327b1bff61e3d70ad4142b2449020f30ff376c03b33",
+        "mode": 420
+      },
+      "after": {
+        "type": "file",
+        "sha256": "cccee7a9e766b14ba6118ce3c581ec0ce84c71d6cbd39d2ac295245297248952",
+        "mode": 420
+      }
+    },
+    "tests/attempt.test.js": {
+      "before": {
+        "type": "file",
+        "sha256": "e878bd2a43451d3733075a16c938ec514b14bdad6582e0c9930079abe9cb225d",
+        "mode": 420
+      },
+      "after": {
+        "type": "file",
+        "sha256": "5901295dbe8bad0ce872f57e410fecfad2aebdd60322b8643ab8959df1db5856",
+        "mode": 420
+      }
+    }
+  },
+  "protectedExistingFileCount": 215,
+  "protectedExistingChanges": [],
+  "unexpectedNewPaths": [],
+  "metadataVersionOnly": {
+    "package.json": true,
+    "package-lock.json": true,
+    "plugin.json": true,
+    ".codex-plugin/plugin.json": true
+  },
+  "productionSourceUnchanged": true,
+  "taskChangesStaged": false,
+  "otherWorktreeSyncPending": false,
+  "limit": "Ignored release assets are separately covered by artifact-hashes.json; baseline protects initial tracked/nonignored untracked files."
+}

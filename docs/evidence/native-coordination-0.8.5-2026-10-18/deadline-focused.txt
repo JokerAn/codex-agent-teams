@@ -1,0 +1,11 @@
+✔ the task deadline also covers its bound command and failed receipts cannot unlock a task (2600.408375ms)
+✔ crash during a bound command preserves the atomic binding and refuses live orphan recovery (2386.934292ms)
+✔ a synchronous preparation that exhausts the deadline never launches a member (2682.559ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7754.105583

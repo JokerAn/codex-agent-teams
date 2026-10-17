@@ -1,0 +1,10 @@
+✔ global config needs no project, CLI selects its cwd or override, and old fixed configs stay fixed (4.557834ms)
+✔ the same global config observes either CLI cwd without creating a workspace owner (285.749958ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 471.024042

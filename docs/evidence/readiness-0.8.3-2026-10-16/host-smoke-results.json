@@ -1,0 +1,18 @@
+[
+  {
+    "name": "native",
+    "command": "node scripts/smoke-native.js",
+    "exitCode": 0,
+    "signal": null,
+    "durationMs": 794,
+    "log": "/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-20261016-BSbVr2/native-host-smoke.log"
+  },
+  {
+    "name": "strict",
+    "command": "node scripts/smoke-plugin.js",
+    "exitCode": 0,
+    "signal": null,
+    "durationMs": 6350,
+    "log": "/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-20261016-BSbVr2/strict-host-smoke.log"
+  }
+]

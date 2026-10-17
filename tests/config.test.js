@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, realpathSync } from 'node:fs';
+import { cpSync, mkdtempSync, mkdirSync, symlinkSync, writeFileSync, rmSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { loadConfig, configForWorkspace } from '../src/config.js';
 
@@ -36,7 +37,7 @@ test('the same global config observes either CLI cwd without creating a workspac
   mkdirSync(a); mkdirSync(b);
   const file = join(root, 'config.json');
   writeFileSync(file, JSON.stringify({ profiles: { expert: { model: 'not-used' } } }));
-  const cli = new URL('../src/cli.js', import.meta.url).pathname;
+  const cli = fileURLToPath(new URL('../src/cli.js', import.meta.url));
   for (const cwd of [a, b]) {
     const value = JSON.parse(execFileSync(process.execPath, [cli, 'status', '--config', file, '--overview'], { cwd, encoding: 'utf8', stdio: 'pipe' }));
     assert.equal(value.target.root, cwd);
@@ -45,4 +46,22 @@ test('the same global config observes either CLI cwd without creating a workspac
   }
   const value = JSON.parse(execFileSync(process.execPath, [cli, 'status', '--config', file, '--overview', '--workspace', b], { cwd: a, encoding: 'utf8', stdio: 'pipe' }));
   assert.equal(value.target.root, b);
+});
+
+
+test('CLI status works from a copied Unicode and space checkout without creating project state', t => {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'teams-编码 空格-')));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const checkout = join(root, '源码 空格'), workspace = join(root, '项目 空格');
+  mkdirSync(checkout); mkdirSync(workspace);
+  cpSync(fileURLToPath(new URL('../src', import.meta.url)), join(checkout, 'src'), { recursive: true });
+  cpSync(fileURLToPath(new URL('../package.json', import.meta.url)), join(checkout, 'package.json'));
+  symlinkSync(fileURLToPath(new URL('../node_modules', import.meta.url)), join(checkout, 'node_modules'), 'dir');
+  const config = join(root, 'config.json');
+  writeFileSync(config, JSON.stringify({ profiles: { expert: { model: 'not-used' } } }));
+  const cli = fileURLToPath(pathToFileURL(join(checkout, 'src/cli.js')));
+  const value = JSON.parse(execFileSync(process.execPath, [cli, 'status', '--config', config, '--overview'], { cwd: workspace, encoding: 'utf8', stdio: 'pipe' }));
+  assert.equal(value.target.root, workspace);
+  assert.equal(value.stateExists, false);
+  assert.equal(value.runtime, null);
 });

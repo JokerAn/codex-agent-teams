@@ -1,0 +1,45 @@
+{
+  "run": "/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-084-official-GmEpMj",
+  "environment": {
+    "node": "v24.21.0",
+    "cli": "codex-cli 0.163.0-alpha.10.2",
+    "binary": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex"
+  },
+  "results": [
+    {
+      "name": "manifest-version",
+      "rejectedBeforeMutation": true
+    },
+    {
+      "name": "unknown-mode",
+      "rejectedBeforeMutation": true
+    },
+    {
+      "name": "digest-drift",
+      "rejectedBeforeMutation": true
+    },
+    {
+      "name": "concurrent-updaters",
+      "secondProcessRefused": true,
+      "finalVersion": "0.8.4"
+    },
+    {
+      "name": "external-cli-conflict",
+      "foreignVersionPreserved": "99.0.1"
+    },
+    {
+      "name": "late-recovery-source-drift",
+      "originalBytesRestored": true,
+      "backupRetained": true
+    },
+    {
+      "name": "archive-consumer",
+      "version": "0.8.4",
+      "archive": "/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-084-official-GmEpMj/archive-consumer/codex-agent-teams-native-0.8.4.tar.gz",
+      "archiveSHA256": "fce27a52a07a7a8543bc9bebad91841dbd92440e02b96f0554e8ea47ea0fd4b5",
+      "installedBytesMatch": true
+    }
+  ],
+  "inferenceStarted": false,
+  "formalConfigUnchanged": true
+}

@@ -1,0 +1,12 @@
+EVIDENCE eperm-recovery {"path":"/private/tmp/codex-strict-audit-rGnFTP/eperm-state-5tdD5v/state.sqlite","calls":[{"target":-123456789,"signal":0,"error":"EPERM"},{"target":-123456789,"signal":0,"error":"EPERM"}],"refusedWhilePermissionUnknown":true,"noStateMutation":true,"recoveredOnlyAfterESRCH":true}
+✔ EPERM on signal zero is treated as live; recovery refuses and preserves verification until ESRCH is established (6.8315ms)
+EVIDENCE eperm-backend-cleanup {"node":"v24.21.0","platform":"darwin","pid":66933,"reproducedDirectCleanup":true,"calls":[{"target":-66933,"signal":"SIGKILL","kind":"group-denied"},{"target":-66933,"signal":"SIGTERM","kind":"group-denied"},{"target":66934,"signal":"SIGTERM","kind":"verified-individual-signal"},{"target":66933,"signal":"SIGTERM","kind":"verified-individual-signal"}],"actualGroupExitConfirmed":true,"memberLaunch":"exited"}
+✔ macOS production backend cleanup uses verified per-process fallback when the CI-style direct group kill gets EPERM (117.776792ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 518.19475

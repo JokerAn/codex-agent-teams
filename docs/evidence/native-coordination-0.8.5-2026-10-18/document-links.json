@@ -1,0 +1,12 @@
+{
+  "checkedFiles": [
+    "README.md",
+    "docs/CURRENT.md",
+    "docs/STATUS.md",
+    "docs/TEAM-SCENARIOS.md",
+    "docs/NATIVE-COORDINATION-0.8.5-2026-10-18.md"
+  ],
+  "newLocalReferencesValid": true,
+  "historicalStatusUnresolvedReferenceCount": 0,
+  "scope": "Current docs and new STATUS section; historical STATUS links preserved."
+}

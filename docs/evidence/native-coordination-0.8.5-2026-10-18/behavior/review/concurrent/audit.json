@@ -1,0 +1,151 @@
+{
+  "observedAt": "2026-10-17T16:26:33.843Z",
+  "runtime": "v24.21.0",
+  "cwd": "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/exercise/review/concurrent",
+  "syntaxChecks": [
+    {
+      "command": "node --check card.mjs",
+      "executable": "/Users/anshunli/.nvm/versions/node/v24.21.0/bin/node",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "node --check validate.mjs",
+      "executable": "/Users/anshunli/.nvm/versions/node/v24.21.0/bin/node",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "node --check mutate.mjs",
+      "executable": "/Users/anshunli/.nvm/versions/node/v24.21.0/bin/node",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "node --check run.mjs",
+      "executable": "/Users/anshunli/.nvm/versions/node/v24.21.0/bin/node",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "protectedFilesUnchanged": true,
+  "protectedHashes": {
+    "card-test.tap": "7b0241c3f066183d242419004ab7945211c9a6fe47cd8856bb45e31ae3dfd66a",
+    "contract.json": "ba996b4e52687b41cab7304ca2607d7378bf070a2d2a548926148bd4d296a448",
+    "handoff.json": "e045506f383dda5112207b07da421ff29c01f1ab5412d47336d8d63c0ac926f1",
+    "host-records.json": "3a3538a50980d189f7e7b844205fff61a9b4e4363c19b2c4abe4b8640611c22a",
+    "notes.txt": "d0ff20e0adf7171b45c68297cd835f86b4818592a72e1cfd0205dc711f47b654",
+    "package.json": "218fcf1bd7a2c52f0db5d5388910d7ae2603cdd7be7e2d1e6aca56ba386396fc",
+    "review/available-integration.log": "7cb1b547c6dd2b7f53888311e74bd6a8381802c2a6397476edfeaa8d87198b4f",
+    "review/final-state.json": "ce81fcee2a3828a495c58c74612d8143ee3b4017762a3fce9715e5c2e35beeba",
+    "review/handoff-review.md": "eec14c9435b2d01058660a5d8b90b52282168776f5a9bb4e9849cafdf993e2cb",
+    "review/initial-state.json": "c373cf8a75d4ab68379c4a6e7e82ccaa28fccdb9d5d613700ab3da7d48404ae1",
+    "review/local-tests.log": "cefed908e8150ed28a32ff78e7a9222a3eefe92c4484ab2dc066bae70eff1ed4",
+    "review/member-notifications.md": "9aa93f4da6ead10d24ed1f2c02ef8fa2f48b31a08c9be0110816108a8af25a85",
+    "review/retrospective.md": "c294a1622b257c2df1d3e5aa2b3288674f1b68b9ff2dbd68db7992fa14a8a12e",
+    "review/syntax.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "review/verification.json": "839330d8e471b02ac4922163a7745ac47bac51611ae5205aa2e6121cfcdc0480",
+    "src/banner.mjs": "40e42685104a98ecb1656ef668aa1ceae05fca5682fd53d0b017f0f3868231bc",
+    "src/card.mjs": "38483d8d9c174992b557cfca281b0a6f1588960bf0c384d79d3866cb2d561bfc",
+    "src/list.mjs": "304275bc16988a97ccad940fbf3695b43c72e027bfb55c1a58cee6a0f4122720",
+    "src/store.mjs": "e44d738323ca040dc2194450960c0cf837f37d876947fa1e3073886c3dd6d691",
+    "tests/card.test.mjs": "06d7cd891845dee81d6a15c08537f836f4a5e3fa45de828265f920dcfe79f674",
+    "tests/integration.test.mjs": "dc886af45e1e6baceca615105a6c80b86535311bf58b7702f7088c7c42576e12",
+    "tests/list.test.mjs": "2ab002147120c70b2c03361fc4a98d0efbe489ea76bddc34bbba7f47d36f86fc",
+    "tests/store.test.mjs": "e0698dbee090c3ea4d64934a2ce1745c0a8ddea4385a5e5d449955905b1c230d",
+    ".git/index": "8dfc382e3c0b6a2f2b83871a68c8a8b52666ef02cd13bad991b34aa691098f51",
+    ".git/HEAD": "28d25bf82af4c0e2b72f50959b2beb859e3e60b9630a5e8c603dad4ddb2b6e80"
+  },
+  "verifiedHandshakeOrder": [
+    {
+      "seq": 2,
+      "type": "validator:spawned",
+      "monotonicNs": "94754339131083"
+    },
+    {
+      "seq": 3,
+      "type": "validator:message",
+      "messageType": "input-read",
+      "monotonicNs": "94754387774125"
+    },
+    {
+      "seq": 6,
+      "type": "writer:send",
+      "messageType": "mutate",
+      "monotonicNs": "94754430813041"
+    },
+    {
+      "seq": 7,
+      "type": "writer:message",
+      "messageType": "mutation-done",
+      "monotonicNs": "94754431810291"
+    },
+    {
+      "seq": 8,
+      "type": "writer:closed",
+      "monotonicNs": "94754437527125"
+    },
+    {
+      "seq": 9,
+      "type": "validator:send",
+      "messageType": "resume",
+      "monotonicNs": "94754437974666"
+    },
+    {
+      "seq": 10,
+      "type": "validator:message",
+      "messageType": "assertion-passed",
+      "monotonicNs": "94754438669708"
+    },
+    {
+      "seq": 11,
+      "type": "validator:closed",
+      "monotonicNs": "94754444402958"
+    },
+    {
+      "seq": 12,
+      "type": "after-snapshot",
+      "monotonicNs": "94754444940458"
+    }
+  ],
+  "inputsStillMatchStableRun": true,
+  "stableRoundNoWriter": true,
+  "finalNewOrModifiedPaths": [
+    "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/exercise/review/concurrent/card.mjs",
+    "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/exercise/review/concurrent/evidence.json",
+    "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/exercise/review/concurrent/first-round.log",
+    "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/exercise/review/concurrent/input.json",
+    "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/exercise/review/concurrent/mutate.mjs",
+    "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/exercise/review/concurrent/report.md",
+    "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/exercise/review/concurrent/run.mjs",
+    "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/exercise/review/concurrent/setup-attempt.json",
+    "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/exercise/review/concurrent/setup-ipc-attempt.json",
+    "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/exercise/review/concurrent/stable-round.log",
+    "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/exercise/review/concurrent/validate.mjs",
+    "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/exercise/review/concurrent/audit.json"
+  ],
+  "transientWrittenPath": {
+    "path": "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/exercise/review/concurrent/failed-run.json",
+    "disposition": "renamed within same directory to setup-ipc-attempt.json"
+  },
+  "fileHashes": {
+    "card.mjs": "3abd0114ef3f9ee1f60703941e5e1aa779b4c7fd86d30a39179ee4a17b1f89be",
+    "evidence.json": "e140edb76e6914d6141acbc79fa3caaded4b4cd4661ba5efb0916cb55d9fd7a2",
+    "first-round.log": "9f3676e94865b3a6432e5d3b1501b544c682bf45295057093de7bd49f0a5c3cd",
+    "input.json": "2d2e06f1b99f5f7f5adc6c6aec5eec6f241246a6954e0fa72bf1b6f8b14d47a5",
+    "mutate.mjs": "07160e5baac03020a2962044f8ebbd705dbc6040d1a1ba1321713f99ef98123d",
+    "report.md": "597337963cd6dbdc318723e320514ad7878a33166a5bfa6300f51f5fff17aac9",
+    "run.mjs": "c829ab8bf84901471666b221e9c40c67b263b280753db600dd5153c933e3944f",
+    "setup-attempt.json": "a9cc0e3e45b2a7b405e6aa3476c27c433e95d353a6f0042be2a5d0f4c6f18953",
+    "setup-ipc-attempt.json": "4120c792839b897e4079af52a70f28cff15fdc09938c00ac2341a91a6f4e3dfb",
+    "stable-round.log": "66e9281dbbc4eabb81f9d200303b94500de1eff6f5cd11e9fb7f68c4ce0493ac",
+    "validate.mjs": "2629a6aec0de3b7cac0aa95203819406a43d05270881a07491d71126e0d4fe24"
+  },
+  "selfHash": "not included",
+  "originalExerciseDecision": "HOLD unchanged",
+  "scope": "Only this one standalone concurrency scenario; no project regression run"
+}

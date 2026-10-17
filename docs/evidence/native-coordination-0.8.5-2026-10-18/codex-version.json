@@ -1,0 +1,29 @@
+{
+  "command": [
+    "codex",
+    "--version"
+  ],
+  "cwd": "/Users/anshunli/单纯回话/codex-agent-teams",
+  "startedAt": "2026-10-17T16:17:29.781353+00:00",
+  "finishedAt": "2026-10-17T16:17:29.823189+00:00",
+  "wallSeconds": 0.042,
+  "exitCode": 0,
+  "scope": "codex-version",
+  "counts": null,
+  "runtime": {
+    "node": "v24.21.0",
+    "nodePath": "/Users/anshunli/.nvm/versions/node/v24.21.0/bin/node",
+    "platform": "darwin",
+    "machine": "arm64"
+  },
+  "dependencyReadiness": "existing node_modules, lockfile and installed lock fingerprinted; no install during this run",
+  "inputs": {
+    "beforeSha256": "e4ed5a5638eef091a1950aca324a2ee5ede4696de24180d66476ab448070f35d",
+    "afterSha256": "e4ed5a5638eef091a1950aca324a2ee5ede4696de24180d66476ab448070f35d",
+    "sameAtEndpoints": true,
+    "changedFiles": [],
+    "fileCount": 74,
+    "limit": "Endpoint fingerprints do not exclude a transient edit followed by restoration."
+  },
+  "log": "codex-version.txt"
+}

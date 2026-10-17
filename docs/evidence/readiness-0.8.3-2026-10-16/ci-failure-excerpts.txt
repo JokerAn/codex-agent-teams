@@ -1,0 +1,42 @@
+macos-14 / Node 24.0.0
+macos-14 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:38.7415850Z ✖ failing tests:
+macos-14 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:38.7415950Z 
+macos-14 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:38.7416090Z test at tests/attempt.test.js:286:1
+macos-14 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:38.7416670Z ✖ crash during a bound command preserves the atomic binding and refuses live orphan recovery (956.4335ms)
+macos-14 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:38.7417230Z   Error: kill EPERM
+macos-14 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:38.7417500Z       at process.kill (node:internal/process/per_thread:277:13)
+macos-14 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:38.7418120Z       at TestContext.<anonymous> (file:///Users/runner/work/codex-agent-teams/codex-agent-teams/tests/attempt.test.js:300:50)
+macos-14 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:38.7418770Z       at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+macos-14 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:38.7419230Z       at async Test.run (node:internal/test_runner/test:1069:7)
+macos-14 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:38.7419670Z       at async Test.processPendingSubtests (node:internal/test_runner/test:752:7) {
+macos-14 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:38.7420000Z     errno: -1,
+macos-14 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:38.7420160Z     code: 'EPERM',
+macos-14 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:38.7420320Z     syscall: 'kill'
+macos-14 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:38.7420470Z   }
+macos-14 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:38.7505230Z ##[error]Process completed with exit code 1.
+macos-14 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:38.7610760Z Post job cleanup.
+macos-14 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:38.8312400Z [command]/opt/homebrew/bin/git version
+macos-14 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:38.7397740Z ℹ tests 412
+macos-14 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:38.7398120Z ℹ pass 411
+macos-14 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:38.7398280Z ℹ fail 1
+macos-14 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:38.7398440Z ℹ cancelled 0
+macos-14 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:38.7398600Z ℹ skipped 0
+macos-14 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:38.7398930Z ℹ duration_ms 76203.45425
+ubuntu-24.04 / Node 24.0.0
+ubuntu-24.04 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:24.6769230Z ℹ Warning: Could not report code coverage. SyntaxError: Unexpected end of JSON input
+ubuntu-24.04 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:24.6769903Z ℹ tests 411
+ubuntu-24.04 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:24.6770318Z ℹ suites 0
+ubuntu-24.04 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:24.6770928Z ℹ pass 411
+ubuntu-24.04 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:24.6771303Z ℹ fail 0
+ubuntu-24.04 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:24.6771729Z ℹ cancelled 0
+ubuntu-24.04 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:24.6772121Z ℹ skipped 0
+ubuntu-24.04 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:24.6772563Z ℹ todo 0
+ubuntu-24.04 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:24.6773018Z ℹ duration_ms 63485.053423
+ubuntu-24.04 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:24.6897778Z ##[error]Process completed with exit code 1.
+ubuntu-24.04 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:24.7053908Z Post job cleanup.
+ubuntu-24.04 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:24.6769903Z ℹ tests 411
+ubuntu-24.04 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:24.6770928Z ℹ pass 411
+ubuntu-24.04 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:24.6771303Z ℹ fail 0
+ubuntu-24.04 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:24.6771729Z ℹ cancelled 0
+ubuntu-24.04 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:24.6772121Z ℹ skipped 0
+ubuntu-24.04 / Node 24.0.0	UNKNOWN STEP	2026-10-16T07:38:24.6773018Z ℹ duration_ms 63485.053423

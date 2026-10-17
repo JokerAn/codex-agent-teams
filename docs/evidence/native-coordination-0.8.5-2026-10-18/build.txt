@@ -1,0 +1,20 @@
+
+> codex-agent-teams-local@0.8.5 build
+> node scripts/build.js --out ./dist/releases/0.8.5/codex-agent-teams-native-0.8.5
+
+原生协作 skill 包已生成：/Users/anshunli/单纯回话/codex-agent-teams/dist/releases/0.8.5/codex-agent-teams-native-0.8.5
+不安装依赖、不读取模型配置、不启动MCP或App Server；未修改正式安装。
+
+STDERR
+npm warn Unknown user config "SASS_BINARY_SITE". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "PHANTOMJS_CDNURL". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "ELECTRON_MIRROR". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "NVM_NODEJS_ORG_MIRROR". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "CHROMEDRIVER_CDNURL". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "OPERADRIVER". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "ELECTRON_BUILDER_BINARIES_MIRROR". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "PYTHON_MIRROR". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "phantomjs_cdnurl". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "chromedriver_cdnurl". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "sass_binary_site". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "//registry.npmmirror.com" (https://registry.npmmirror.com). This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.

@@ -1,3 +1,4 @@
+import { fixtureEnv, fixtureNode } from './fixtures/coverage.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawn, spawnSync } from 'node:child_process';
@@ -10,7 +11,7 @@ import { runVerification, verificationSchema } from '../src/verification.js';
 import { processAlive, TaskStore } from '../src/store.js';
 import { TaskRuntime } from '../src/runtime.js';
 
-const command = (code, options = {}) => ({ command: process.execPath, args: ['-e', code], timeoutMs: 2000, ...options });
+const command = (code, options = {}) => ({ ...fixtureNode(['-e', code]), timeoutMs: 2000, ...options });
 function logsFixture(t, cleanup = true) {
   const root = realpathSync(mkdtempSync(join(tmpdir(), 'teams-verify-')));
   if (cleanup) t.after(() => rmSync(root, { recursive: true, force: true }));
@@ -59,7 +60,11 @@ test('nonzero exit and missing executable are recorded as failures rather than s
 
 test('timeout escalates to SIGKILL for a child that ignores SIGTERM', async t => {
   const f = logsFixture(t);
-  const result = await runVerification(command("process.on('SIGTERM',()=>{});setInterval(()=>{},1000)", { timeoutMs: 200 }), f);
+  const ready = join(f.root, 'handler-ready'), term = join(f.root, 'term-observed');
+  const code = `const fs=require('node:fs');process.on('SIGTERM',()=>fs.writeFileSync(${JSON.stringify(term)},'observed'));fs.writeFileSync(${JSON.stringify(ready)},'ready');setInterval(()=>{},1000);`;
+  const result = await runVerification(command(code, { timeoutMs: 1000 }), f);
+  assert.equal(existsSync(ready), true, 'the intended signal handler must actually start');
+  assert.equal(existsSync(term), true, 'TERM must reach the fixture before escalation');
   assert.equal(result.status, 'timed_out'); assert.equal(result.signal, 'SIGKILL');
   assert.equal(result.cleanupConfirmed, true); assert.equal(processAlive(result.childPid, true), false);
 });
@@ -202,7 +207,7 @@ test('log root symlink and replaced worktree identity are refused before command
 
 test('recovery refuses a live orphan group; once exited it records interruption and never reruns the command', async t => {
   const f = runtimeFixture(t), prepared = f.runtime.prepareWorkspace();
-  const orphan = spawn(process.execPath, ['-e', 'setInterval(()=>{},1000)'], { detached: true, stdio: 'ignore' });
+  const orphan = spawn(process.execPath, ['-e', 'setInterval(()=>{},1000)'], { env: fixtureEnv(), detached: true, stdio: 'ignore' });
   t.after(() => { if (processAlive(orphan.pid)) orphan.kill('SIGKILL'); });
   const receipt = { id: 'injected', status: 'running', childPid: orphan.pid, cleanupConfirmed: false };
   const record = f.runtime.workspaceStatus(prepared.id); record.verifications = [receipt];

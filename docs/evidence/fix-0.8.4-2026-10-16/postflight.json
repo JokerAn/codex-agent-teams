@@ -1,0 +1,24 @@
+{
+  "head": "6d263a8670c32e24005a2f893087324531ca91cf",
+  "headUnchanged": true,
+  "indexTree": "edc7d40e7b51fcba293198a0c374b0c82d6474de",
+  "indexUnchanged": true,
+  "existingStagedFiles": 35,
+  "sourceChecks": {
+    "nodeCheckFiles": 9,
+    "unstagedDiffCheck": "passed",
+    "ciYAMLSyntaxAndMatrix": "passed",
+    "metadataVersion": "0.8.4",
+    "latestDocumentLinks": "passed"
+  },
+  "formalConfigHistoricalComparison": {
+    "matchesPriorReadiness": false,
+    "scope": "Prior readiness is not the start of this repair turn. No attribution or restoration attempted. Official integration probe separately verifies equal config hashes before and after its temporary-home operations."
+  },
+  "formalInstalledCacheUnchangedFromReadiness": true,
+  "allThisTurnChangesUnstaged": true,
+  "deliveryDirectory": "/Users/anshunli/单纯回话/codex-agent-teams",
+  "otherWorktreesToSynchronize": false,
+  "commitPushOrFormalInstall": false,
+  "existingStagedWhitespace": "pre-existing raw readiness logs preserved; cached diff check was already nonzero before fixes"
+}

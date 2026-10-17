@@ -1,3 +1,4 @@
+import { writeFixtureExecutable } from './fixtures/coverage.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, rmSync, readFileSync, realpathSync, existsSync, writeFileSync } from 'node:fs';
@@ -147,7 +148,7 @@ test('Interrupt during live model discovery refuses late start before any attemp
 test('production stdio MCP requires command-hook ticket and confirms owned backend exit on Interrupt', { timeout: 30000 }, async t => {
   const root = mkdtempSync(join(tmpdir(), 'teams-hook-stdio-'));
   const binary = join(root, 'fake-codex'), configPath = join(root, 'config.json');
-  writeFileSync(binary, `#!/usr/bin/env node\nprocess.argv[2]='hang';await import(${JSON.stringify(new URL('./fixtures/fake-app-server.js', import.meta.url).href)});\n`, { mode: 0o755 });
+  writeFixtureExecutable(binary, `#!/usr/bin/env node\nprocess.argv[2]='hang';await import(${JSON.stringify(new URL('./fixtures/fake-app-server.js', import.meta.url).href)});\n`, { mode: 0o755 });
   writeFileSync(configPath, JSON.stringify({ codexBin: binary, profiles: { expert: { model: 'test-model', effort: 'high' } } }));
   const client = new Client({ name: 'hook-lifecycle-tests', version: '1' });
   t.after(async () => { await client.close(); rmSync(root, { recursive: true, force: true }); });

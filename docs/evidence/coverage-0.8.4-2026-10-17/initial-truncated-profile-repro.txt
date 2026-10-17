@@ -1,0 +1,12 @@
+{"killed":true,"files":1,"invalid":[{"file":"coverage-68406-1792166671892-0.json","bytes":1871872,"error":"Expected ',' or '}' after property value in JSON at position 1871872 (line 1 column 1871873)"}],"stderr":""}
+✔ a killed producer can leave incomplete coverage JSON (904.904756ms)
+ℹ Warning: Could not report code coverage. SyntaxError: Expected ',' or '}' after property value in JSON at position 1871872 (line 1 column 1871873)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1056.172525
+time="2026-10-17T00:04:32+08:00" level=fatal msg="exit status 1"

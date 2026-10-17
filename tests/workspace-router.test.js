@@ -1,3 +1,4 @@
+import { writeFixtureExecutable } from './fixtures/coverage.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
@@ -120,7 +121,7 @@ test('discovery probes selected project without creating state and guards identi
 
 test('default discovery uses configured Codex in the selected workspace without inference', async t => {
   const f = fixture(t), binary = join(f.root, 'fake codex');
-  writeFileSync(binary, `#!/usr/bin/env node\nprocess.argv[2]='normal';await import(${JSON.stringify(new URL('./fixtures/fake-app-server.js', import.meta.url).href)});\n`, { mode: 0o755 });
+  writeFixtureExecutable(binary, `#!/usr/bin/env node\nprocess.argv[2]='normal';await import(${JSON.stringify(new URL('./fixtures/fake-app-server.js', import.meta.url).href)});\n`, { mode: 0o755 });
   const router = new WorkspaceRouter({ ...config, workspace: undefined, codexBin: binary });
   t.after(() => router.close());
   const catalog = await router.resolve({ workspace: f.projects[0] }).discoverModels();

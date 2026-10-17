@@ -1,3 +1,4 @@
+import { fixtureAppServer, fixtureEnv, fixtureNode, writeFixtureExecutable } from './fixtures/coverage.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawn, spawnSync } from 'node:child_process';
@@ -13,10 +14,11 @@ import { CodexBackend } from '../src/app-server.js';
 import { taskPrompt } from '../src/policy.js';
 import { GitWorkspace } from '../src/workspace.js';
 import { tick } from './helpers.js';
+import { signalGroup } from '../src/process-group.js';
 
 const acceptance = ['Cite proof.txt content'];
 const report = value => ({ summary: 'Read baseline proof', criteria: [{ criterion: acceptance[0], satisfied: true, evidence: `proof.txt:1 ${value}` }], findings: [], blockers: [] });
-const contract = spec => ({ objective: 'Read the captured proof baseline', acceptance, executionPlan: { verification: { command: process.execPath, args: ['-e', spec ?? "if(require('node:fs').readFileSync('proof.txt','utf8')!=='baseline')process.exit(7);console.log('verified')"], timeoutMs: 3000 } } });
+const contract = spec => ({ objective: 'Read the captured proof baseline', acceptance, executionPlan: { verification: { ...fixtureNode(['-e', spec ?? "if(require('node:fs').readFileSync('proof.txt','utf8')!=='baseline')process.exit(7);console.log('verified')"]), timeoutMs: 3000 } } });
 async function until(predicate) {
   const deadline = Date.now() + 5000;
   while (!predicate()) { if (Date.now() > deadline) throw new Error('Test condition timed out'); await delay(10); }
@@ -184,9 +186,26 @@ test('cancelling a task during its command keeps it active until the bound proce
 });
 
 test('the task deadline also covers its bound command and failed receipts cannot unlock a task', async t => {
-  const f = setup(t, undefined, { taskTimeoutMs: 3000 });
-  const input = contract('setInterval(()=>{},1000)'); input.executionPlan.verification.timeoutMs = 10000;
-  const task = await runTask(f, input);
+  // Preparation can consume several seconds under full-suite load. Control the task's
+  // deadline callback so this case always exercises an already running bound command.
+  const f = setup(t, undefined, { taskTimeoutMs: 60000 });
+  const schedule = globalThis.setTimeout;
+  let expireTask;
+  t.mock.method(globalThis, 'setTimeout', (callback, timeoutMs, ...args) => {
+    if (timeoutMs === f.config.taskTimeoutMs) expireTask = callback;
+    return schedule(callback, timeoutMs, ...args);
+  });
+  const input = contract('setInterval(()=>{},1000)'); input.executionPlan.verification.timeoutMs = 120000;
+  const started = f.runtime.create(input); f.runtime.start(started.id);
+  await until(() => {
+    const attempt = f.runtime.status(started.id).attempts[0];
+    if (!attempt.verificationId) return false;
+    const check = f.runtime.workspaceStatus(attempt.workspaceId).verifications?.[0];
+    return check?.childPid && processAlive(check.childPid, true);
+  });
+  assert.equal(typeof expireTask, 'function');
+  expireTask();
+  const task = await f.runtime.wait(started.id, 10000);
   assert.equal(task.status, 'timed_out'); assert.match(task.error, /Task deadline exceeded/);
   assert.equal(task.failure.code, 'task_deadline_exceeded');
   // The deadline text must not claim anything about residual processes: it is written before the exit
@@ -194,7 +213,9 @@ test('the task deadline also covers its bound command and failed receipts cannot
   assert.ok(!/无残留|未检测到需确认的残留进程/.test(task.failure.nextAction));
   assert.match(task.failure.nextAction, /确认成员进程已退出/);
   const workspace = f.runtime.workspaceStatus(task.attempts[0].workspaceId);
+  assert.equal(workspace.verifications[0].id, task.attempts[0].verificationId);
   assert.equal(workspace.verifications[0].status, 'cancelled'); assert.equal(workspace.verifications[0].cleanupConfirmed, true);
+  assert.equal(processAlive(workspace.verifications[0].childPid, true), false);
   f.runtime.removeWorkspace(workspace.id);
 });
 
@@ -218,13 +239,13 @@ test('verified-worktree tasks are exclusive; ordinary read-only tasks retain the
 
 test('controlled App Server protocol fixture and CLI complete a bound attempt without calling a model', async t => {
   const fixture = fileURLToPath(new URL('./fixtures/fake-app-server.js', import.meta.url));
-  const f = setup(t, new CodexBackend({ binary: process.execPath, args: [fixture], requestTimeoutMs: 1000 }));
+  const f = setup(t, new CodexBackend({ ...fixtureAppServer([fixture]), requestTimeoutMs: 1000 }));
   const task = await runTask(f);
   assert.equal(task.status, 'awaiting_review'); assert.equal(processAlive(task.attempts[0].childPid, true), false);
   pass(f.runtime, task); f.runtime.removeWorkspace(task.attempts[0].workspaceId);
   await f.runtime.close();
   const binary = join(f.root, 'fake codex');
-  writeFileSync(binary, `#!/usr/bin/env node\nprocess.argv[2]='normal';await import(${JSON.stringify(new URL('./fixtures/fake-app-server.js', import.meta.url).href)});\n`, { mode: 0o755 });
+  writeFixtureExecutable(binary, `#!/usr/bin/env node\nprocess.argv[2]='normal';await import(${JSON.stringify(new URL('./fixtures/fake-app-server.js', import.meta.url).href)});\n`, { mode: 0o755 });
   const config = join(f.root, 'config.json'), file = join(f.root, 'task.json');
   writeFileSync(config, JSON.stringify({ ...f.config, codexBin: binary })); writeFileSync(file, JSON.stringify(contract()));
   const args = [resolve('src/cli.js'), 'run', '--config', config, '--task', file, '--workspace', f.repo];
@@ -268,7 +289,7 @@ test('workspace binding transaction rolls back the task pointer when SQLite refu
 });
 
 test('a live member group blocks verification, retry and workspace deletion even after a backend report', async t => {
-  const child = spawn(process.execPath, ['-e', 'setInterval(()=>{},1000)'], { detached: true, stdio: 'ignore' });
+  const child = spawn(process.execPath, ['-e', 'setInterval(()=>{},1000)'], { env: fixtureEnv(), detached: true, stdio: 'ignore' });
   const f = setup(t, { run: async ({ onProgress }) => { onProgress({ childPid: child.pid }); return { result: report('baseline') }; } });
   try {
     const task = await runTask(f);
@@ -296,8 +317,10 @@ setInterval(()=>{const a=runtime.status(${JSON.stringify(task.id)}).attempts[0];
   const crashed = spawnSync(process.execPath, ['--input-type=module', '-e', script], { encoding: 'utf8', timeout: 10000 });
   assert.equal(crashed.status, 7, crashed.stderr);
   const pid = Number(readFileSync(marker, 'utf8'));
-  try { assert.throws(() => new TaskStore(join(f.repo, '.codex-teams/state.sqlite')), /live process group/); }
-  finally { if (processAlive(pid, true)) process.kill(-pid, 'SIGKILL'); }
+  // A cleanup hook reports its own error without replacing the recovery assertion.
+  t.after(async () => { if (processAlive(pid, true)) signalGroup(pid, 'SIGKILL'); await until(() => !processAlive(pid, true)); });
+  assert.throws(() => new TaskStore(join(f.repo, '.codex-teams/state.sqlite')), /live process group/);
+  if (processAlive(pid, true)) signalGroup(pid, 'SIGKILL');
   await until(() => !processAlive(pid, true));
   await f.reopen();
   const interrupted = f.runtime.status(task.id), attempt = interrupted.attempts[0], workspace = f.runtime.workspaceStatus(attempt.workspaceId);

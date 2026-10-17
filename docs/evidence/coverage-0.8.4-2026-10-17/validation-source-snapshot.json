@@ -1,0 +1,32 @@
+{
+  "head": "6d263a8670c32e24005a2f893087324531ca91cf",
+  "indexTree": "edc7d40e7b51fcba293198a0c374b0c82d6474de",
+  "files": {
+    ".codex-plugin/plugin.json": "7935fdb2b52574df9742f51b3056991d16bc72b298e3ef53756701eca0a618a7",
+    ".github/workflows/ci.yml": "1e7e18db01af71907680a75a468621cf67ebc1a2fa5f2afbd745da711dfbb781",
+    "package-lock.json": "d5d56f3d8e6db9ce25a1248406b606a24caaa8408b55204e7a5d120c8235690e",
+    "package.json": "78b9584cdaf3e3c720a8d3753ccd171a9d3e6371c741096cdb6143fd786ce810",
+    "plugin.json": "1dd6c8da43fa6950565e6a6ba8d3ec47f46bc2fbc5f841cf05a7a47e985f3a88",
+    "scripts/coverage-diagnostics.js": "8a0970ed2ccf3a00602ac3d56ffac4a89e28feecbe66dbe4f6d43094562fbab0",
+    "scripts/update-lock.js": "09076ed03f5f851e04bf922e09677ac22e5ccdfb7aa5b13ca9b6a016ed3e3c62",
+    "scripts/update.js": "d4cebc7f575442a11ccacb80d68247f204e7edd4786784c91074754e6b224791",
+    "src/plugin-package.js": "8b19f1f1a6538024b49869f750ebe425502bef722e7cbcebe3f7d54326fed342",
+    "tests/attempt.test.js": "e878bd2a43451d3733075a16c938ec514b14bdad6582e0c9930079abe9cb225d",
+    "tests/backend.test.js": "7bad9bacd3b75fc12f6df3073fba9e7ffbcce0b0b72dde8be266676b90e25beb",
+    "tests/cli-progress.test.js": "7925212679e4bb163c57b095879f2543e14078c00e096bfecac0f401462ac73c",
+    "tests/config.test.js": "8ec9549b0025633bd544072c0d78b773b886a07b607e918f99b824af9c9008d6",
+    "tests/coverage.test.js": "391c978297acf5b2cbcf648a4f54fe511a1393799c856ef4fedc3d73961c9f97",
+    "tests/fixtures/coverage.js": "3526488bfa5a76ad6cddf2f915cdd6d32b258fb8c31d1793969c6bd623be04c1",
+    "tests/host-lifecycle.test.js": "fd46b0fdced93da07855b5165d2ce765ff467038cb94e3bb1d698960812725c9",
+    "tests/managed-process.test.js": "537ec799874c3e38b2470622ea80e1c7e33614624767bfb08b1e8bf6c2ade6cc",
+    "tests/mcp-global-write.test.js": "3a720be94bcffe246323a133e5f4f99a8448533722c9d6dc2f8b3fc4795ccb65",
+    "tests/models.test.js": "3f6a8251b54b789c088070701ae1319cf677e19782f0118b44f8a8e5b9ef0fa4",
+    "tests/plugin.test.js": "a3df6a0eb860abbf3f53c7eea3a4178e8a7c8641fa56c1c63a2b3ec7a1496ee0",
+    "tests/status.test.js": "242e93b1c58415c8254040f988ca0e0c18fdf7d4b7c5b080a80a5d80fc1fbc5b",
+    "tests/update-lock.test.js": "10a745fde31df356252f1795551034bc62c455699c2e26452204e5c6894a52e2",
+    "tests/update.test.js": "37dfb78677a6913f68d227c2bcc74aaa418a4838b3bba8354347f70f46c52b15",
+    "tests/verification.test.js": "d0416370b4586874074da988018eb4c6e5b57a13d2af54ea1bcefbc90a5c9183",
+    "tests/workspace-router.test.js": "ea2d6f8ce43c60851758bdaa9902c2e877f1c6d8164a26c246f7c98f32276c39",
+    "tests/write.test.js": "53274595ab3aa79c9adaf8cb093c3092f2ceb6d7b3c0987ae010d32f5394381b"
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "observedAt": "2026-10-17T16:13:30.105Z",
+  "cwd": "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/exercise",
+  "realpath": "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/exercise",
+  "runtime": "v24.21.0",
+  "node": "/Users/anshunli/.nvm/versions/node/v24.21.0/bin/node",
+  "hashes": {
+    "card-test.tap": "7b0241c3f066183d242419004ab7945211c9a6fe47cd8856bb45e31ae3dfd66a",
+    "contract.json": "ba996b4e52687b41cab7304ca2607d7378bf070a2d2a548926148bd4d296a448",
+    "handoff.json": "e045506f383dda5112207b07da421ff29c01f1ab5412d47336d8d63c0ac926f1",
+    "host-records.json": "3a3538a50980d189f7e7b844205fff61a9b4e4363c19b2c4abe4b8640611c22a",
+    "notes.txt": "d0ff20e0adf7171b45c68297cd835f86b4818592a72e1cfd0205dc711f47b654",
+    "package.json": "218fcf1bd7a2c52f0db5d5388910d7ae2603cdd7be7e2d1e6aca56ba386396fc",
+    "src/banner.mjs": "40e42685104a98ecb1656ef668aa1ceae05fca5682fd53d0b017f0f3868231bc",
+    "src/card.mjs": "38483d8d9c174992b557cfca281b0a6f1588960bf0c384d79d3866cb2d561bfc",
+    "src/list.mjs": "304275bc16988a97ccad940fbf3695b43c72e027bfb55c1a58cee6a0f4122720",
+    "src/store.mjs": "e44d738323ca040dc2194450960c0cf837f37d876947fa1e3073886c3dd6d691",
+    "tests/card.test.mjs": "06d7cd891845dee81d6a15c08537f836f4a5e3fa45de828265f920dcfe79f674",
+    "tests/integration.test.mjs": "d0b7c7efecdeafcc6b8624b183abdfc33916b393e14ff7d846c083708c42c3d6",
+    "tests/list.test.mjs": "2ab002147120c70b2c03361fc4a98d0efbe489ea76bddc34bbba7f47d36f86fc",
+    "tests/store.test.mjs": "e0698dbee090c3ea4d64934a2ce1745c0a8ddea4385a5e5d449955905b1c230d"
+  },
+  "indexHash": "8dfc382e3c0b6a2f2b83871a68c8a8b52666ef02cd13bad991b34aa691098f51",
+  "git": {
+    "head": {
+      "command": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exitCode": 0,
+      "stdout": "5e35a97df9e9663fc17986b2ad1cda20225d648a\n",
+      "stderr": ""
+    },
+    "worktrees": {
+      "command": [
+        "git",
+        "worktree",
+        "list"
+      ],
+      "exitCode": 0,
+      "stdout": "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/exercise 5e35a97 [main]\n",
+      "stderr": ""
+    },
+    "status": {
+      "command": [
+        "git",
+        "status",
+        "--short"
+      ],
+      "exitCode": 0,
+      "stdout": " M notes.txt\n M src/banner.mjs\n M src/card.mjs\n?? card-test.tap\n?? handoff.json\n?? host-records.json\n",
+      "stderr": ""
+    },
+    "diff": {
+      "command": [
+        "git",
+        "diff"
+      ],
+      "exitCode": 0,
+      "stdout": "diff --git a/notes.txt b/notes.txt\nindex b947d20..99ea245 100644\n--- a/notes.txt\n+++ b/notes.txt\n@@ -1 +1 @@\n-Lead is preparing a changelog.\n+Lead added release notes.\ndiff --git a/src/banner.mjs b/src/banner.mjs\nindex 7fb8fe8..f2643b8 100644\n--- a/src/banner.mjs\n+++ b/src/banner.mjs\n@@ -1 +1 @@\n-export const banner = 'Records';\n+export const banner = 'Records'\ndiff --git a/src/card.mjs b/src/card.mjs\nindex dc300df..bc2a537 100644\n--- a/src/card.mjs\n+++ b/src/card.mjs\n@@ -1,5 +1,5 @@\n import { loadRecord } from './store.mjs';\n export async function card(id, load = loadRecord) {\n   const result = await load(id);\n-  return result.kind === 'missing' ? 'No record' : `Record ${result.record.id}`;\n+  return result.kind === 'missing' ? 'No record' : `Record: ${result.record.id}`;\n }\n",
+      "stderr": ""
+    },
+    "staged": {
+      "command": [
+        "git",
+        "diff",
+        "--cached"
+      ],
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  },
+  "cardEvidenceComparison": {
+    "src/card.mjs": {
+      "reported": "616f8d52f1351f491b96764641522c8f31a953154b8d22017c5e2e33e82ed665",
+      "current": "38483d8d9c174992b557cfca281b0a6f1588960bf0c384d79d3866cb2d561bfc",
+      "matches": false
+    },
+    "src/store.mjs": {
+      "reported": "e44d738323ca040dc2194450960c0cf837f37d876947fa1e3073886c3dd6d691",
+      "current": "e44d738323ca040dc2194450960c0cf837f37d876947fa1e3073886c3dd6d691",
+      "matches": true
+    },
+    "tests/card.test.mjs": {
+      "reported": "06d7cd891845dee81d6a15c08537f836f4a5e3fa45de828265f920dcfe79f674",
+      "current": "06d7cd891845dee81d6a15c08537f836f4a5e3fa45de828265f920dcfe79f674",
+      "matches": true
+    },
+    "package.json": {
+      "reported": "218fcf1bd7a2c52f0db5d5388910d7ae2603cdd7be7e2d1e6aca56ba386396fc",
+      "current": "218fcf1bd7a2c52f0db5d5388910d7ae2603cdd7be7e2d1e6aca56ba386396fc",
+      "matches": true
+    }
+  }
+}

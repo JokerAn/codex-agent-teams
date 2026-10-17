@@ -1,0 +1,21 @@
+{
+  "provenance": "Observed command output in this chat, not reconstructed IPC telemetry",
+  "command": "node run.mjs first",
+  "orchestratorExitCode": 1,
+  "failure": "AssertionError: undefined !== 1 at run.mjs:103 (TAP totals.tests parser)",
+  "failedRunnerSha256": "ff4ac7c62ee69506cbb9984370a4e6d0bca113a10df254927001d6c879ce1c66",
+  "reason": "Initial direct node:test invocation did not provide the requested TAP totals; explicit test runner/reporter flags were missing.",
+  "validatorExitCode": {
+    "value": 0,
+    "source": "Control flow: the validator exit assertion immediately before totals parsing passed; original raw child output was not retained."
+  },
+  "executedCaseCount": "unverified: original child output was not retained",
+  "handshakeTimeline": "unverified: original in-memory events were not saved",
+  "observedInputAfterAttempt": {
+    "record": {
+      "id": "b"
+    },
+    "expected": "Record: b"
+  },
+  "disposition": "Not accepted as completed evidence. A separate runner-mode setup attempt also failed (setup-ipc-attempt.json); the same scenario then succeeded with direct node:test and native-output totals parsing. These are setup retries, not additional scenarios."
+}

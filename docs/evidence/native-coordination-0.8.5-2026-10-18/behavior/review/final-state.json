@@ -1,0 +1,77 @@
+{
+  "observedAt": "2026-10-17T16:16:51.546Z",
+  "cwd": "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/exercise",
+  "realpath": "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/exercise",
+  "runtime": "v24.21.0",
+  "decision": "HOLD final integration; takeover coordination accepted",
+  "allWrites": [
+    "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/exercise/tests/integration.test.mjs",
+    "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/exercise/review/available-integration.log",
+    "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/exercise/review/handoff-review.md",
+    "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/exercise/review/initial-state.json",
+    "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/exercise/review/local-tests.log",
+    "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/exercise/review/member-notifications.md",
+    "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/exercise/review/retrospective.md",
+    "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/exercise/review/syntax.log",
+    "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/exercise/review/verification.json",
+    "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/codex-teams-0.8.5-8tn0amkb/exercise/review/final-state.json"
+  ],
+  "filesOutsideReviewChanged": [
+    "tests/integration.test.mjs"
+  ],
+  "hashesOutsideReview": {
+    "card-test.tap": "7b0241c3f066183d242419004ab7945211c9a6fe47cd8856bb45e31ae3dfd66a",
+    "contract.json": "ba996b4e52687b41cab7304ca2607d7378bf070a2d2a548926148bd4d296a448",
+    "handoff.json": "e045506f383dda5112207b07da421ff29c01f1ab5412d47336d8d63c0ac926f1",
+    "host-records.json": "3a3538a50980d189f7e7b844205fff61a9b4e4363c19b2c4abe4b8640611c22a",
+    "notes.txt": "d0ff20e0adf7171b45c68297cd835f86b4818592a72e1cfd0205dc711f47b654",
+    "package.json": "218fcf1bd7a2c52f0db5d5388910d7ae2603cdd7be7e2d1e6aca56ba386396fc",
+    "src/banner.mjs": "40e42685104a98ecb1656ef668aa1ceae05fca5682fd53d0b017f0f3868231bc",
+    "src/card.mjs": "38483d8d9c174992b557cfca281b0a6f1588960bf0c384d79d3866cb2d561bfc",
+    "src/list.mjs": "304275bc16988a97ccad940fbf3695b43c72e027bfb55c1a58cee6a0f4122720",
+    "src/store.mjs": "e44d738323ca040dc2194450960c0cf837f37d876947fa1e3073886c3dd6d691",
+    "tests/card.test.mjs": "06d7cd891845dee81d6a15c08537f836f4a5e3fa45de828265f920dcfe79f674",
+    "tests/integration.test.mjs": "dc886af45e1e6baceca615105a6c80b86535311bf58b7702f7088c7c42576e12",
+    "tests/list.test.mjs": "2ab002147120c70b2c03361fc4a98d0efbe489ea76bddc34bbba7f47d36f86fc",
+    "tests/store.test.mjs": "e0698dbee090c3ea4d64934a2ce1745c0a8ddea4385a5e5d449955905b1c230d"
+  },
+  "reportHashes": {
+    "review/available-integration.log": "7cb1b547c6dd2b7f53888311e74bd6a8381802c2a6397476edfeaa8d87198b4f",
+    "review/handoff-review.md": "eec14c9435b2d01058660a5d8b90b52282168776f5a9bb4e9849cafdf993e2cb",
+    "review/initial-state.json": "c373cf8a75d4ab68379c4a6e7e82ccaa28fccdb9d5d613700ab3da7d48404ae1",
+    "review/local-tests.log": "cefed908e8150ed28a32ff78e7a9222a3eefe92c4484ab2dc066bae70eff1ed4",
+    "review/member-notifications.md": "9aa93f4da6ead10d24ed1f2c02ef8fa2f48b31a08c9be0110816108a8af25a85",
+    "review/retrospective.md": "c294a1622b257c2df1d3e5aa2b3288674f1b68b9ff2dbd68db7992fa14a8a12e",
+    "review/syntax.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "review/verification.json": "839330d8e471b02ac4922163a7745ac47bac51611ae5205aa2e6121cfcdc0480"
+  },
+  "headUnchanged": true,
+  "indexUnchanged": true,
+  "verificationInputsStillMatch": true,
+  "endpointHashLimit": "Before/after sampling cannot detect transient edits restored during a run; no member freeze receipt.",
+  "diffCheck": {
+    "command": "git diff --check",
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "status": {
+    "command": "git status --short",
+    "exitCode": 0,
+    "stdout": " M notes.txt\n M src/banner.mjs\n M src/card.mjs\n M tests/integration.test.mjs\n?? card-test.tap\n?? handoff.json\n?? host-records.json\n?? review/\n",
+    "stderr": ""
+  },
+  "staged": {
+    "command": "git diff --cached --stat",
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "sourceDiff": {
+    "command": "git diff -- tests/integration.test.mjs",
+    "exitCode": 0,
+    "stdout": "diff --git a/tests/integration.test.mjs b/tests/integration.test.mjs\nindex 0e34370..fef8183 100644\n--- a/tests/integration.test.mjs\n+++ b/tests/integration.test.mjs\n@@ -4,3 +4,33 @@ import { card } from '../src/card.mjs';\n import { list } from '../src/list.mjs';\n test('card with store', async () => assert.equal(await card('missing'), 'No record'));\n test('list with store', async () => assert.deepEqual(await list(['a','missing']), ['a']));\n+\n+// These checks use only currently inspectable paths. The two original missing\n+// checks above remain pending until the provider hands off contract revision 2.\n+test('available: store found tagged result', async () => {\n+  const { loadRecord } = await import('../src/store.mjs');\n+  assert.deepEqual(await loadRecord('a'), { kind: 'found', record: { id: 'a' } });\n+});\n+test('available: card found with real store', async () => {\n+  // Current presentation only; acceptance of the colon change needs card owner confirmation.\n+  assert.equal(await card('a'), 'Record: a');\n+});\n+test('available: list found with real store', async () => {\n+  assert.deepEqual(await list(['a', 'b']), ['a', 'b']);\n+});\n+test('available: empty id rejects through real store and consumers', async () => {\n+  const { loadRecord } = await import('../src/store.mjs');\n+  await assert.rejects(loadRecord(''), TypeError);\n+  await assert.rejects(card(''), TypeError);\n+  await assert.rejects(list(['']), TypeError);\n+});\n+test('available: non-string id rejects under revision 2', async () => {\n+  const { loadRecord } = await import('../src/store.mjs');\n+  await assert.rejects(loadRecord(42));\n+});\n+test('available: consumers preserve injected I/O rejection', async () => {\n+  const failure = new Error('controlled I/O rejection');\n+  const reject = async () => { throw failure; };\n+  await assert.rejects(card('a', reject), error => error === failure);\n+  await assert.rejects(list(['a'], reject), error => error === failure);\n+});\n",
+    "stderr": ""
+  },
+  "finalStateSelfHash": "not included"
+}

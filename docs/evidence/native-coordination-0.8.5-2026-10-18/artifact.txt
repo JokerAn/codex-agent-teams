@@ -1,0 +1,41 @@
+{
+  "versions": {
+    "package.json": "0.8.5",
+    "package-lock.json": "0.8.5",
+    "plugin.json": "0.8.5",
+    ".codex-plugin/plugin.json": "0.8.5",
+    "package-lock.json packages[\"\"]": "0.8.5"
+  },
+  "identity": {
+    "mode": "native",
+    "version": "0.8.5",
+    "sourceDigest": "b1e5bbdca1ff32e660f8c6fa24500f25519d31538754ca22a9d61328e86b0cd9"
+  },
+  "pluginFiles": {
+    ".codex-plugin/plugin.json": {
+      "bytes": 178,
+      "sha256": "aaa0d9fe729dd08ef872b4b0a26be40ae2b60e24ab85c03932ac180af68c0cc6"
+    },
+    "build-info.json": {
+      "bytes": 174,
+      "sha256": "f75c56f501257607c2f42807771b7be298eed22450286e8191e9326813ed139b"
+    },
+    "package.json": {
+      "bytes": 166,
+      "sha256": "cc36b2751bb3fb11d54aac37c7b5d65d0ff6de29858cbfd9d9eac5b908e8f67b"
+    },
+    "skills/team/SKILL.md": {
+      "bytes": 7244,
+      "sha256": "cccee7a9e766b14ba6118ce3c581ec0ce84c71d6cbd39d2ac295245297248952"
+    }
+  },
+  "pluginFileCount": 4,
+  "pluginBytes": 7762,
+  "asset": "/Users/anshunli/单纯回话/codex-agent-teams/dist/releases/0.8.5/codex-agent-teams-native-0.8.5.tar.gz",
+  "sha256": "e5c36f1a65686399720c5708281411bbbe0f69d86a90de9d7bbe735b6aada36d",
+  "archiveExtractedFilesMatch": true,
+  "negativeControl": "modified extracted skill rejected by sourceDigest",
+  "runtimeDependencies": [],
+  "userConfigurationChanged": false,
+  "inferenceStarted": false
+}

@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -14,6 +14,64 @@ const contained = (root, path) => {
   const suffix = relative(root, path);
   return suffix === '' || (!isAbsolute(suffix) && suffix !== '..' && !suffix.startsWith(`..${sep}`));
 };
+
+const nativeInventory = {
+  '': ['.codex-plugin', 'build-info.json', 'package.json', 'skills'],
+  '.codex-plugin': ['plugin.json'], skills: ['team'], 'skills/team': ['SKILL.md'],
+};
+
+/** Prepared packages are untrusted again at installation time; no npm imports. */
+export function validatePreparedPlugin(pluginRoot) {
+  const regular = (file, directory = false) => {
+    const parts = file ? file.split('/') : [];
+    for (let i = 0; i <= parts.length; i++) {
+      const path = join(pluginRoot, ...parts.slice(0, i));
+      const stat = lstatSync(path);
+      if (stat.isSymbolicLink() || (i < parts.length || directory ? !stat.isDirectory() : !stat.isFile())) {
+        throw new Error(`候选包关键路径必须为普通文件或目录：${file || '.'}`);
+      }
+    }
+    return file && !directory ? json(join(pluginRoot, file)) : undefined;
+  };
+  const build = regular('build-info.json');
+  if (!['native', 'strict'].includes(build.mode)) throw new Error(`候选包模式 mode 无效：${build.mode}`);
+  if (build.mode === 'native') {
+    for (const [directory, expected] of Object.entries(nativeInventory)) {
+      regular(directory, true);
+      const actual = readdirSync(join(pluginRoot, directory)).sort();
+      if (JSON.stringify(actual) !== JSON.stringify(expected)) throw new Error(`原生skill包目录清单不符：${directory || '.'}`);
+      for (const entry of expected) {
+        const file = directory ? `${directory}/${entry}` : entry;
+        // Validate path types before reading any candidate content.
+        const parts = file.split('/');
+        for (let i = 0; i <= parts.length; i++) {
+          const stat = lstatSync(join(pluginRoot, ...parts.slice(0, i)));
+          const isDirectory = i < parts.length || Object.hasOwn(nativeInventory, file);
+          if (stat.isSymbolicLink() || (isDirectory ? !stat.isDirectory() : !stat.isFile())) throw new Error(`原生skill包目录清单不符：关键路径类型不符 ${file}`);
+        }
+      }
+    }
+  }
+  const pkg = regular('package.json'), manifest = regular('.codex-plugin/plugin.json');
+  if (typeof build.version !== 'string' || build.version !== build.version.trim() || !releaseVersion.test(build.version) || build.version !== pkg.version || build.version !== manifest.version) {
+    throw new Error('候选包版本不一致或不符合 SemVer');
+  }
+  if (manifest.name !== name || pkg.name !== 'codex-agent-teams-local' || [pkg.description, manifest.description].some(value => typeof value !== 'string' || !value.trim())) {
+    throw new Error('候选包 manifest/name/description 不符');
+  }
+  if (!/^[a-f0-9]{64}$/.test(build.sourceDigest ?? '')) throw new Error('候选包摘要 sourceDigest 无效');
+  if (build.mode === 'native') {
+    if (Object.keys(manifest).some(key => !['name', 'version', 'description', 'skills'].includes(key)) || manifest.skills !== './skills/') {
+      throw new Error('候选包 native manifest 资源字段不符');
+    }
+    const hash = createHash('sha256');
+    for (const file of ['.codex-plugin/plugin.json', 'package.json', 'skills/team/SKILL.md']) { hash.update(file + '\0'); hash.update(readFileSync(join(pluginRoot, file))); }
+    if (hash.digest('hex') !== build.sourceDigest) throw new Error('候选包内容摘要与 sourceDigest 不一致');
+  } else {
+    regular('src', true);
+  }
+  return { mode: build.mode, version: build.version, sourceDigest: build.sourceDigest };
+}
 
 /** Native default: only instructions and metadata, no config, deps or subprocess. */
 export function packNativePlugin({ out = resolve('dist/local-marketplace') } = {}) {
@@ -57,6 +115,7 @@ export function packNativePlugin({ out = resolve('dist/local-marketplace') } = {
     const fingerprint = createHash('sha256');
     for (const file of ['.codex-plugin/plugin.json', 'package.json', 'skills/team/SKILL.md']) { fingerprint.update(file + '\0'); fingerprint.update(readFileSync(join(pluginRoot, file))); }
     writeJson(join(pluginRoot, 'build-info.json'), { version: pkg.version, mode: 'native', createdAt: new Date().toISOString(), sourceDigest: fingerprint.digest('hex') });
+    validatePreparedPlugin(pluginRoot);
     mkdirSync(join(stage, '.agents', 'plugins'), { recursive: true });
     writeJson(join(stage, '.agents/plugins/marketplace.json'), {
       name: marketplaceName, interface: { displayName: 'Codex Agent Teams (Native)' },

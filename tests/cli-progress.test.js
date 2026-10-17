@@ -1,3 +1,4 @@
+import { writeFixtureExecutable } from './fixtures/coverage.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
@@ -64,7 +65,7 @@ async function cliFixture(t, mode = 'normal', { saved = true, interactive = fals
   const dir = mkdtempSync(join(tmpdir(), 'teams-cli-progress-'));
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   const binary = join(dir, 'fake-codex');
-  writeFileSync(binary, `#!/usr/bin/env node\nprocess.argv[2]=${JSON.stringify(mode)};await import(${JSON.stringify(new URL('./fixtures/fake-app-server.js', import.meta.url).href)});\n`, { mode: 0o755 });
+  writeFixtureExecutable(binary, `#!/usr/bin/env node\nprocess.argv[2]=${JSON.stringify(mode)};await import(${JSON.stringify(new URL('./fixtures/fake-app-server.js', import.meta.url).href)});\n`, { mode: 0o755 });
   const settings = { ...config, workspace: dir, codexBin: binary, taskTimeoutMs: 30000, profiles: { expert: { model: 'test-model', effort: 'high' } } };
   const configPath = join(dir, 'config.json');
   writeFileSync(configPath, JSON.stringify(settings));

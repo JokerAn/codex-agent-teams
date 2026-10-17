@@ -1,0 +1,89 @@
+// Reproduces known 0.8.3 defects. Exit 0 means the defect was observed. Uses only temporary Codex homes; no model inference.
+import { tmpdir } from 'node:os';
+import { fileURLToPath } from 'node:url';
+import assert from 'node:assert/strict';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { packNativePlugin } from '../../../src/plugin-package.js';
+import { installPreparedPlugin } from '../../../scripts/update.js';
+const base = mkdtempSync(join(tmpdir(), 'teams-readiness-update-repro-'));
+const self = fileURLToPath(import.meta.url);
+const binary = process.env.TEAMS_AUDIT_CODEX_BIN ?? execFileSync('which', ['codex'], { encoding: 'utf8' }).trim();
+const selector = 'codex-agent-teams@codex-agent-teams-local';
+const json = path => JSON.parse(readFileSync(path, 'utf8'));
+const save = (path, value) => writeFileSync(path, JSON.stringify(value, null, 2) + '\n');
+function commandFor(root, label, hook = () => {}) {
+  return args => {
+    hook(args);
+    const stdout = execFileSync(binary, args, { cwd: join(root, 'workspace'), env: { ...process.env, CODEX_HOME: join(root, 'home') }, encoding: 'utf8', timeout: 30000, stdio: ['ignore', 'pipe', 'pipe'] });
+    writeFileSync(join(root, 'commands.jsonl'), JSON.stringify({ label, args, stdout }) + '\n', { flag: 'a' });
+    return JSON.parse(stdout);
+  };
+}
+function adjust(packed, version) {
+  for (const file of ['package.json', '.codex-plugin/plugin.json', 'build-info.json']) {
+    const path = join(packed.pluginRoot, file); save(path, { ...json(path), version });
+  }
+  const hash = createHash('sha256');
+  for (const file of ['.codex-plugin/plugin.json', 'package.json', 'skills/team/SKILL.md']) { hash.update(file + '\0'); hash.update(readFileSync(join(packed.pluginRoot, file))); }
+  const build = join(packed.pluginRoot, 'build-info.json'); save(build, { ...json(build), sourceDigest: hash.digest('hex') });
+}
+const update = (root, marketplaceRoot, command) => installPreparedPlugin({ binary, marketplaceRoot, workspace: join(root, 'workspace'), codexHome: join(root, 'home'), command });
+if (process.argv[2] === 'child-b') {
+  const root = process.argv[3], result = await update(root, join(root, 'other'), commandFor(root, 'B'));
+  save(join(root, 'successful-b.json'), result); console.log(JSON.stringify(result));
+} else {
+  const run = mkdtempSync(join(base, 'official-races-'));
+  const results = [];
+  for (const scenario of ['concurrent-updates', 'rollback-source-drift']) {
+    const root = join(run, scenario); mkdirSync(root); mkdirSync(join(root, 'home')); mkdirSync(join(root, 'workspace'));
+    const old = packNativePlugin({ out: join(root, 'old') }); adjust(old, '0.8.2');
+    const next = packNativePlugin({ out: join(root, 'next') });
+    const setup = commandFor(root, 'setup');
+    setup(['plugin', 'marketplace', 'add', old.marketplaceRoot, '--json']);
+    const oldReceipt = setup(['plugin', 'add', selector, '--json']);
+    const oldSkill = readFileSync(join(oldReceipt.installedPath, 'skills/team/SKILL.md'), 'utf8');
+    let errorA;
+    if (scenario === 'concurrent-updates') {
+      const other = packNativePlugin({ out: join(root, 'other') }); adjust(other, '0.8.4');
+      let installingA = false, completedB = false;
+      const command = commandFor(root, 'A', args => {
+        if (args[1] === 'add') installingA = true;
+        if (installingA && !completedB && args[1] === 'marketplace' && args[2] === 'list') {
+          completedB = true;
+          const child = spawnSync(process.execPath, [self, 'child-b', root], { encoding: 'utf8', timeout: 30000 });
+          writeFileSync(join(root, 'b.stdout'), child.stdout); writeFileSync(join(root, 'b.stderr'), child.stderr);
+          assert.equal(child.status, 0, child.stderr);
+          const successB = json(join(root, 'successful-b.json')); assert.equal(successB.version, '0.8.4');
+          assert.equal(existsSync(successB.installedPath), true);
+        }
+      });
+      try { await update(root, next.marketplaceRoot, command); } catch (error) { errorA = error.message; }
+      assert.equal(completedB, true); assert.match(errorA, /实际 marketplace 来源不符/);
+      const final = setup(['plugin', 'list', '--marketplace', 'codex-agent-teams-local', '--json']).installed;
+      const successfulB = json(join(root, 'successful-b.json'));
+      assert.equal(final[0].version, '0.8.2'); assert.equal(existsSync(successfulB.installedPath), false);
+      results.push({ scenario, root, successfulB, errorA, final, bCacheDeleted: true });
+    } else {
+      let injected = false;
+      const command = commandFor(root, 'A', args => {
+        if (args[1] === 'add' && !injected) {
+          injected = true;
+          assert.equal(existsSync(oldReceipt.installedPath), false, 'actual CLI must have removed the old cache');
+          writeFileSync(join(old.pluginRoot, 'skills/team/SKILL.md'), oldSkill + '\nconcurrent source drift\n');
+          throw new Error('controlled failed install after actual old-cache removal');
+        }
+      });
+      try { await update(root, next.marketplaceRoot, command); } catch (error) { errorA = error.message; }
+      assert.match(errorA, /恢复未完成[\s\S]*旧缓存内容未恢复/);
+      const restoredSkill = readFileSync(join(oldReceipt.installedPath, 'skills/team/SKILL.md'), 'utf8');
+      assert.equal(restoredSkill, oldSkill + '\nconcurrent source drift\n');
+      results.push({ scenario, root, errorA, actualOldBytesLost: true, restoredSourceDriftInstalled: true });
+    }
+  }
+  save(join(run, 'results.json'), results);
+  for (const result of results) console.log(JSON.stringify(result));
+  console.log(JSON.stringify({ evidence: join(run, 'results.json') }));
+}

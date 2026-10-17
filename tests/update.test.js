@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -71,7 +71,7 @@ function fixture(t, { fresh = false, fail, corrupt = false, onRestore, onInstall
       return {};
     }
     if (args[1] === 'add') {
-      const restoring = current.root === previous.root;
+      const restoring = current.root !== packed.marketplaceRoot;
       const source = pluginTarget(current.root).pluginRoot;
       const version = json(join(source, 'package.json')).version;
       const installedPath = cacheFor(version);
@@ -89,7 +89,8 @@ function fixture(t, { fresh = false, fail, corrupt = false, onRestore, onInstall
     }
     throw new Error(`Unexpected fixture command ${args}`);
   };
-  return { root, workspace, packed, calls, previous, previousRoot, previousPlugin, state: () => ({ current, installed }),
+  return { root, workspace, codexHome, packed, calls, previous, previousRoot, previousPlugin, command,
+    setState: value => { current = value.current; installed = value.installed; }, state: () => ({ current, installed }),
     cache, nextCache: cacheFor(nextVersion),
     update: () => installPreparedPlugin({ binary: process.execPath, marketplaceRoot: packed.marketplaceRoot, workspace, codexHome, command }) };
 }
@@ -424,4 +425,104 @@ test('build failure stops the update before marketplace mutation', () => {
   assert.equal(failed.status, 1);
   assert.match(failed.stderr, /未切换插件来源或缓存|请先关闭|尚未交接/);
   assert.doesNotMatch(failed.stdout, /更新完成/);
+});
+
+
+test('a second process sharing Codex home is rejected before observing or mutating installation', async t => {
+  let checked = false;
+  const f = fixture(t, { native: true, onInstall: () => {
+    const script = `import {installPreparedPlugin} from ${JSON.stringify(new URL('../scripts/update.js', import.meta.url).href)};
+try { await installPreparedPlugin({binary:process.execPath,marketplaceRoot:process.argv[1],codexHome:process.argv[2],command:()=>{throw new Error('SECOND_COMMAND_REACHED')}});process.exitCode=9; }
+catch(error) { console.error(error.message);process.exitCode=/更新锁|另一个更新/.test(error.message)?7:8; }`;
+    const child = spawnSync(process.execPath, ['--input-type=module', '-e', script, f.packed.marketplaceRoot, f.codexHome], { encoding: 'utf8', timeout: 10000 });
+    assert.equal(child.status, 7, child.stderr);
+    assert.doesNotMatch(child.stderr, /SECOND_COMMAND_REACHED/);
+    checked = true;
+  } });
+  assert.equal((await f.update()).version, json('package.json').version);
+  assert.equal(checked, true);
+});
+
+test('rollback preserves a foreign installation even when a non-cooperating CLI bypasses the update lock', async t => {
+  let foreign;
+  const f = fixture(t, { native: true, onInstall: () => {
+    const market = join(f.root, 'external-marketplace');
+    cpSync(f.packed.marketplaceRoot, market, { recursive: true });
+    const cache = join(f.codexHome, 'plugins/cache', marketplaceName, 'codex-agent-teams', '99.0.0');
+    cpSync(f.packed.pluginRoot, cache, { recursive: true });
+    foreign = {current:{name:marketplaceName,root:market,marketplaceSource:{sourceType:'local',source:market}},
+      installed:{pluginId:selector,version:'99.0.0',enabled:true,installedPath:cache}};
+    f.setState(foreign);
+  } });
+  await assert.rejects(f.update(), /所有权|其他更新|外部.*变化/);
+  assert.deepEqual(f.state(), foreign);
+  assert.equal(existsSync(foreign.installed.installedPath), true);
+});
+
+test('late recovery-source drift restores original cache bytes from an independent backup', async t => {
+  const f = fixture(t, { native: true, fail: args => {
+    if (args[1] !== 'add') return false;
+    assert.equal(existsSync(f.cache), false);
+    writeFileSync(join(f.previousRoot, 'skills/team/SKILL.md'), 'source changed after old cache removal');
+    return true;
+  } });
+  const before = nativeBytes(f.cache);
+  await assert.rejects(f.update(), /安装状态已恢复/);
+  assert.deepEqual(nativeBytes(f.cache), before);
+  assert.deepEqual(f.state(), {current:f.previous, installed:f.previousPlugin});
+});
+
+for (const defect of ['manifest-version', 'unknown-mode', 'digest-drift', 'manifest-resources', 'invalid-version']) {
+  test(`candidate semantic preflight rejects ${defect} without installation commands`, async t => {
+    const f = fixture(t, { native: true });
+    const manifestPath = join(f.packed.pluginRoot, '.codex-plugin/plugin.json');
+    const buildPath = join(f.packed.pluginRoot, 'build-info.json');
+    if (defect === 'manifest-version') writeFileSync(manifestPath, JSON.stringify({...json(manifestPath), version:'99.0.0'}));
+    if (defect === 'unknown-mode') {
+      writeFileSync(buildPath, JSON.stringify({...json(buildPath),mode:'native-typo'}));
+      mkdirSync(join(f.packed.pluginRoot,'src'));
+      writeFileSync(join(f.packed.pluginRoot,'extra-runtime.js'),'// unexpected');
+    }
+    if (defect === 'digest-drift') writeFileSync(join(f.packed.pluginRoot,'skills/team/SKILL.md'),'modified after build');
+    if (defect === 'manifest-resources') writeFileSync(manifestPath,JSON.stringify({...json(manifestPath),skills:'./other/',hooks:'./hooks.json'}));
+    if (defect === 'invalid-version') for (const file of [manifestPath,buildPath,join(f.packed.pluginRoot,'package.json')]) writeFileSync(file,JSON.stringify({...json(file),version:'v1-bad'}));
+    await assert.rejects(f.update(), /候选|模式|版本|摘要|manifest|SemVer|metadata|mode/);
+    assert.equal(mutations(f.calls).length,0);
+    assert.deepEqual(f.state(),{current:f.previous,installed:f.previousPlugin});
+  });
+}
+
+
+test('damaged recovery backup is rejected before any restore installation', async t => {
+  const f = fixture(t, { native: true, fail: args => {
+    if (args[1] !== 'add') return false;
+    const directory = readdirSync(f.codexHome).find(name => name.startsWith('.codex-agent-teams-recovery-'));
+    assert.ok(directory, 'backup exists before old cache removal');
+    writeFileSync(join(f.codexHome, directory, 'plugins/codex-agent-teams/skills/team/SKILL.md'), 'damaged backup');
+    return true;
+  } });
+  await assert.rejects(f.update(), /恢复未完成[\s\S]*恢复副本与旧缓存不符/);
+  assert.equal(f.calls.filter(args => args[1] === 'add').length, 1, 'only the failed new install was attempted');
+  assert.equal(existsSync(f.cache), false);
+  assert.ok(readdirSync(f.codexHome).some(name => name.startsWith('.codex-agent-teams-recovery-')));
+});
+
+test('successful update cleans its backup and releases the lock; rollback retains the referenced backup', async t => {
+  const clean = fixture(t, { native: true });
+  await clean.update();
+  assert.ok(!readdirSync(clean.codexHome).some(name => /^\.codex-agent-teams-(?:update\.lock|recovery-)/.test(name)));
+  const failed = fixture(t, { native: true, fail: args => args[1] === 'add' });
+  await assert.rejects(failed.update(), /恢复副本保留/);
+  assert.equal(existsSync(join(failed.codexHome,'.codex-agent-teams-update.lock')),false);
+  assert.ok(readdirSync(failed.codexHome).some(name => name.startsWith('.codex-agent-teams-recovery-')));
+});
+
+test('default CLI adapter uses the same explicit Codex home as the update lock', async t => {
+  const f = fixture(t, { native: true });
+  const marker = join(f.root,'observed-home.txt'), binary = join(f.root,'safe-cli');
+  writeFileSync(binary, `#!${process.execPath}\nrequire('node:fs').writeFileSync(${JSON.stringify(marker)},process.env.CODEX_HOME??'');console.error('safe fake CLI stopped');process.exit(1);\n`);
+  chmodSync(binary,0o755);
+  await assert.rejects(installPreparedPlugin({binary,marketplaceRoot:f.packed.marketplaceRoot,workspace:f.workspace,codexHome:f.codexHome}),/safe fake CLI stopped/);
+  assert.equal(readFileSync(marker,'utf8'),f.codexHome);
+  assert.equal(existsSync(join(f.codexHome,'.codex-agent-teams-update.lock')),false);
 });

@@ -1,0 +1,67 @@
+{
+  "archivedFixtureSyntax": [
+    {
+      "path": "docs/evidence/native-coordination-0.8.5-2026-10-18/behavior/review/concurrent/card.mjs",
+      "sha256": "3abd0114ef3f9ee1f60703941e5e1aa779b4c7fd86d30a39179ee4a17b1f89be",
+      "exitCode": 0
+    },
+    {
+      "path": "docs/evidence/native-coordination-0.8.5-2026-10-18/behavior/review/concurrent/mutate.mjs",
+      "sha256": "07160e5baac03020a2962044f8ebbd705dbc6040d1a1ba1321713f99ef98123d",
+      "exitCode": 0
+    },
+    {
+      "path": "docs/evidence/native-coordination-0.8.5-2026-10-18/behavior/review/concurrent/run.mjs",
+      "sha256": "c829ab8bf84901471666b221e9c40c67b263b280753db600dd5153c933e3944f",
+      "exitCode": 0
+    },
+    {
+      "path": "docs/evidence/native-coordination-0.8.5-2026-10-18/behavior/review/concurrent/validate.mjs",
+      "sha256": "2629a6aec0de3b7cac0aa95203819406a43d05270881a07491d71126e0d4fe24",
+      "exitCode": 0
+    },
+    {
+      "path": "docs/evidence/native-coordination-0.8.5-2026-10-18/behavior/src/banner.mjs",
+      "sha256": "40e42685104a98ecb1656ef668aa1ceae05fca5682fd53d0b017f0f3868231bc",
+      "exitCode": 0
+    },
+    {
+      "path": "docs/evidence/native-coordination-0.8.5-2026-10-18/behavior/src/card.mjs",
+      "sha256": "38483d8d9c174992b557cfca281b0a6f1588960bf0c384d79d3866cb2d561bfc",
+      "exitCode": 0
+    },
+    {
+      "path": "docs/evidence/native-coordination-0.8.5-2026-10-18/behavior/src/list.mjs",
+      "sha256": "304275bc16988a97ccad940fbf3695b43c72e027bfb55c1a58cee6a0f4122720",
+      "exitCode": 0
+    },
+    {
+      "path": "docs/evidence/native-coordination-0.8.5-2026-10-18/behavior/src/store.mjs",
+      "sha256": "e44d738323ca040dc2194450960c0cf837f37d876947fa1e3073886c3dd6d691",
+      "exitCode": 0
+    },
+    {
+      "path": "docs/evidence/native-coordination-0.8.5-2026-10-18/behavior/tests/card.test.mjs",
+      "sha256": "06d7cd891845dee81d6a15c08537f836f4a5e3fa45de828265f920dcfe79f674",
+      "exitCode": 0
+    },
+    {
+      "path": "docs/evidence/native-coordination-0.8.5-2026-10-18/behavior/tests/integration.test.mjs",
+      "sha256": "dc886af45e1e6baceca615105a6c80b86535311bf58b7702f7088c7c42576e12",
+      "exitCode": 0
+    },
+    {
+      "path": "docs/evidence/native-coordination-0.8.5-2026-10-18/behavior/tests/list.test.mjs",
+      "sha256": "2ab002147120c70b2c03361fc4a98d0efbe489ea76bddc34bbba7f47d36f86fc",
+      "exitCode": 0
+    },
+    {
+      "path": "docs/evidence/native-coordination-0.8.5-2026-10-18/behavior/tests/store.test.mjs",
+      "sha256": "e0698dbee090c3ea4d64934a2ce1745c0a8ddea4385a5e5d449955905b1c230d",
+      "exitCode": 0
+    }
+  ],
+  "jsonFilesParsed": 32,
+  "gitDiffCheckExitCode": 0,
+  "scope": "Syntax/serialization and final working diff only; no rerun or acceptance of intentionally failing scenario assertions."
+}

@@ -1,0 +1,60 @@
+[
+  {
+    "anomaly": "manifest-version-mismatch",
+    "result": {
+      "installedPath": "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-update-repro-CZyx3g/official-anomalies-0eLdL5/manifest-version-mismatch/home/plugins/cache/codex-agent-teams-local/codex-agent-teams/99.0.0",
+      "version": "0.8.3",
+      "sourceDigest": "3fc5e3e1ba457034e70f95489092a112fdbeb36128f997bb24d09185ac86b91e",
+      "marketplaceRoot": "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-update-repro-CZyx3g/official-anomalies-0eLdL5/manifest-version-mismatch/candidate"
+    },
+    "installed": [
+      {
+        "pluginId": "codex-agent-teams@codex-agent-teams-local",
+        "name": "codex-agent-teams",
+        "marketplaceName": "codex-agent-teams-local",
+        "version": "99.0.0",
+        "installed": true,
+        "enabled": true,
+        "source": {
+          "source": "local",
+          "path": "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-update-repro-CZyx3g/official-anomalies-0eLdL5/manifest-version-mismatch/candidate/plugins/codex-agent-teams"
+        },
+        "marketplaceSource": {
+          "sourceType": "local",
+          "source": "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-update-repro-CZyx3g/official-anomalies-0eLdL5/manifest-version-mismatch/candidate"
+        },
+        "installPolicy": "AVAILABLE",
+        "authPolicy": "ON_USE"
+      }
+    ]
+  },
+  {
+    "anomaly": "unknown-mode",
+    "result": {
+      "installedPath": "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-update-repro-CZyx3g/official-anomalies-0eLdL5/unknown-mode/home/plugins/cache/codex-agent-teams-local/codex-agent-teams/0.8.3",
+      "version": "0.8.3",
+      "sourceDigest": "3fc5e3e1ba457034e70f95489092a112fdbeb36128f997bb24d09185ac86b91e",
+      "marketplaceRoot": "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-update-repro-CZyx3g/official-anomalies-0eLdL5/unknown-mode/candidate"
+    },
+    "installed": [
+      {
+        "pluginId": "codex-agent-teams@codex-agent-teams-local",
+        "name": "codex-agent-teams",
+        "marketplaceName": "codex-agent-teams-local",
+        "version": "0.8.3",
+        "installed": true,
+        "enabled": true,
+        "source": {
+          "source": "local",
+          "path": "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-update-repro-CZyx3g/official-anomalies-0eLdL5/unknown-mode/candidate/plugins/codex-agent-teams"
+        },
+        "marketplaceSource": {
+          "sourceType": "local",
+          "source": "/private/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-update-repro-CZyx3g/official-anomalies-0eLdL5/unknown-mode/candidate"
+        },
+        "installPolicy": "AVAILABLE",
+        "authPolicy": "ON_USE"
+      }
+    ]
+  }
+]

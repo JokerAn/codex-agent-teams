@@ -1,0 +1,9 @@
+{
+  "revision": 2,
+  "owner": "lead",
+  "interface": "loadRecord(id)",
+  "input": "nonempty string id",
+  "output": "Promise<{kind:'found', record:{id:string}} | {kind:'missing'}>",
+  "failure": "invalid id or I/O errors reject",
+  "compatibility": "existing found-record behavior preserved; consumers and doubles must use the tagged result"
+}

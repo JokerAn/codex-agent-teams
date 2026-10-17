@@ -1,0 +1,7 @@
+{
+  "command": "npm run test:coverage",
+  "exitCode": 1,
+  "signal": null,
+  "durationMs": 188283,
+  "log": "/var/folders/fd/kdxbtp2s18g8glq2l7mj82pr0000gn/T/teams-readiness-20261016-BSbVr2/full-coverage.tap"
+}

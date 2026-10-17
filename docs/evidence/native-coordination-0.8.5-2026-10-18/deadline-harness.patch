@@ -1,0 +1,42 @@
+--- before-this-task/tests/attempt.test.js
++++ after-this-task/tests/attempt.test.js
+@@ -186,9 +186,26 @@
+ });
+ 
+ test('the task deadline also covers its bound command and failed receipts cannot unlock a task', async t => {
+-  const f = setup(t, undefined, { taskTimeoutMs: 3000 });
+-  const input = contract('setInterval(()=>{},1000)'); input.executionPlan.verification.timeoutMs = 10000;
+-  const task = await runTask(f, input);
++  // Preparation can consume several seconds under full-suite load. Control the task's
++  // deadline callback so this case always exercises an already running bound command.
++  const f = setup(t, undefined, { taskTimeoutMs: 60000 });
++  const schedule = globalThis.setTimeout;
++  let expireTask;
++  t.mock.method(globalThis, 'setTimeout', (callback, timeoutMs, ...args) => {
++    if (timeoutMs === f.config.taskTimeoutMs) expireTask = callback;
++    return schedule(callback, timeoutMs, ...args);
++  });
++  const input = contract('setInterval(()=>{},1000)'); input.executionPlan.verification.timeoutMs = 120000;
++  const started = f.runtime.create(input); f.runtime.start(started.id);
++  await until(() => {
++    const attempt = f.runtime.status(started.id).attempts[0];
++    if (!attempt.verificationId) return false;
++    const check = f.runtime.workspaceStatus(attempt.workspaceId).verifications?.[0];
++    return check?.childPid && processAlive(check.childPid, true);
++  });
++  assert.equal(typeof expireTask, 'function');
++  expireTask();
++  const task = await f.runtime.wait(started.id, 10000);
+   assert.equal(task.status, 'timed_out'); assert.match(task.error, /Task deadline exceeded/);
+   assert.equal(task.failure.code, 'task_deadline_exceeded');
+   // The deadline text must not claim anything about residual processes: it is written before the exit
+@@ -196,7 +213,9 @@
+   assert.ok(!/无残留|未检测到需确认的残留进程/.test(task.failure.nextAction));
+   assert.match(task.failure.nextAction, /确认成员进程已退出/);
+   const workspace = f.runtime.workspaceStatus(task.attempts[0].workspaceId);
++  assert.equal(workspace.verifications[0].id, task.attempts[0].verificationId);
+   assert.equal(workspace.verifications[0].status, 'cancelled'); assert.equal(workspace.verifications[0].cleanupConfirmed, true);
++  assert.equal(processAlive(workspace.verifications[0].childPid, true), false);
+   f.runtime.removeWorkspace(workspace.id);
+ });
+ 

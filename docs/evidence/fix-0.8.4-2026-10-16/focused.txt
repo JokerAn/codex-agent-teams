@@ -1,0 +1,826 @@
+TAP version 13
+# Subtest: one attempt binds a fresh worktree, real command and review evidence without changing the source
+ok 1 - one attempt binds a fresh worktree, real command and review evidence without changing the source
+  ---
+  duration_ms: 4373.948416
+  type: 'test'
+  ...
+# Subtest: worktree command uses the current attempt snapshot including explicit dirty baseline content
+ok 2 - worktree command uses the current attempt snapshot including explicit dirty baseline content
+  ---
+  duration_ms: 4028.634625
+  type: 'test'
+  ...
+# Subtest: default dirty rejection fails the attempt before spawning the member and retains its bound failure
+ok 3 - default dirty rejection fails the attempt before spawning the member and retains its bound failure
+  ---
+  duration_ms: 631.692917
+  type: 'test'
+  ...
+# Subtest: member blockers preserve their worktree and do not execute the verification command
+ok 4 - member blockers preserve their worktree and do not execute the verification command
+  ---
+  duration_ms: 1965.320458
+  type: 'test'
+  ...
+# Subtest: verification failure preserves the member report but cannot pass review or unlock dependents
+ok 5 - verification failure preserves the member report but cannot pass review or unlock dependents
+  ---
+  duration_ms: 3122.44875
+  type: 'test'
+  ...
+# Subtest: read-only member changes stop verification before any command runs
+ok 6 - read-only member changes stop verification before any command runs
+  ---
+  duration_ms: 2339.200875
+  type: 'test'
+  ...
+# Subtest: an exit-zero command that changes task inputs does not make the attempt reviewable
+ok 7 - an exit-zero command that changes task inputs does not make the attempt reviewable
+  ---
+  duration_ms: 3104.049333
+  type: 'test'
+  ...
+# Subtest: review refuses source edits after validation and cleanup remains blocked until explicit cancel
+ok 8 - review refuses source edits after validation and cleanup remains blocked until explicit cancel
+  ---
+  duration_ms: 3546.610167
+  type: 'test'
+  ...
+# Subtest: review refuses modified command log evidence
+ok 9 - review refuses modified command log evidence
+  ---
+  duration_ms: 3375.510875
+  type: 'test'
+  ...
+# Subtest: review refuses missing command log evidence
+ok 10 - review refuses missing command log evidence
+  ---
+  duration_ms: 3553.983875
+  type: 'test'
+  ...
+# Subtest: retry creates a new worktree and verification id; old review and old workspace cannot satisfy it
+ok 11 - retry creates a new worktree and verification id; old review and old workspace cannot satisfy it
+  ---
+  duration_ms: 6213.318959
+  type: 'test'
+  ...
+# Subtest: mismatched current-attempt verification receipt cannot pass review
+ok 12 - mismatched current-attempt verification receipt cannot pass review
+  ---
+  duration_ms: 3063.704417
+  type: 'test'
+  ...
+# Subtest: cancelling a task during its command keeps it active until the bound process exits
+ok 13 - cancelling a task during its command keeps it active until the bound process exits
+  ---
+  duration_ms: 3567.894792
+  type: 'test'
+  ...
+# Subtest: the task deadline also covers its bound command and failed receipts cannot unlock a task
+ok 14 - the task deadline also covers its bound command and failed receipts cannot unlock a task
+  ---
+  duration_ms: 4041.805292
+  type: 'test'
+  ...
+# Subtest: verified-worktree tasks are exclusive; ordinary read-only tasks retain their existing execution path
+ok 15 - verified-worktree tasks are exclusive; ordinary read-only tasks retain their existing execution path
+  ---
+  duration_ms: 2308.630958
+  type: 'test'
+  ...
+# Subtest: controlled App Server protocol fixture and CLI complete a bound attempt without calling a model
+ok 16 - controlled App Server protocol fixture and CLI complete a bound attempt without calling a model
+  ---
+  duration_ms: 8869.52825
+  type: 'test'
+  ...
+# Subtest: task packet includes the explicit verification contract but not runtime ids or old logs
+ok 17 - task packet includes the explicit verification contract but not runtime ids or old logs
+  ---
+  duration_ms: 0.268625
+  type: 'test'
+  ...
+# Subtest: workspace binding transaction rolls back the task pointer when SQLite refuses the workspace row
+ok 18 - workspace binding transaction rolls back the task pointer when SQLite refuses the workspace row
+  ---
+  duration_ms: 365.776709
+  type: 'test'
+  ...
+# Subtest: a live member group blocks verification, retry and workspace deletion even after a backend report
+ok 19 - a live member group blocks verification, retry and workspace deletion even after a backend report
+  ---
+  duration_ms: 2391.718167
+  type: 'test'
+  ...
+# Subtest: crash during a bound command preserves the atomic binding and refuses live orphan recovery
+ok 20 - crash during a bound command preserves the atomic binding and refuses live orphan recovery
+  ---
+  duration_ms: 3130.181792
+  type: 'test'
+  ...
+# Subtest: cancelled before preparation creates no workspace and never launches a member
+ok 21 - cancelled before preparation creates no workspace and never launches a member
+  ---
+  duration_ms: 209.19275
+  type: 'test'
+  ...
+# Subtest: timed_out before preparation creates no workspace and never launches a member
+ok 22 - timed_out before preparation creates no workspace and never launches a member
+  ---
+  duration_ms: 198.165375
+  type: 'test'
+  ...
+# Subtest: a synchronous preparation that exhausts the deadline never launches a member
+ok 23 - a synchronous preparation that exhausts the deadline never launches a member
+  ---
+  duration_ms: 2826.253167
+  type: 'test'
+  ...
+# Subtest: verification-generated ignored output can pass unchanged-input review and requires explicit cleanup
+ok 24 - verification-generated ignored output can pass unchanged-input review and requires explicit cleanup
+  ---
+  duration_ms: 3940.18
+  type: 'test'
+  ...
+# Subtest: strict CLI honors explicit absolute binary without rewriting config
+ok 25 - strict CLI honors explicit absolute binary without rewriting config
+  ---
+  duration_ms: 891.054833
+  type: 'test'
+  ...
+# Subtest: strict CLI honors explicit relative with spaces binary without rewriting config
+ok 26 - strict CLI honors explicit relative with spaces binary without rewriting config
+  ---
+  duration_ms: 474.217709
+  type: 'test'
+  ...
+# Subtest: strict CLI honors explicit PATH command binary without rewriting config
+ok 27 - strict CLI honors explicit PATH command binary without rewriting config
+  ---
+  duration_ms: 429.253958
+  type: 'test'
+  ...
+# Subtest: strict CLI rejects an explicit missing binary instead of using valid config
+ok 28 - strict CLI rejects an explicit missing binary instead of using valid config
+  ---
+  duration_ms: 94.041292
+  type: 'test'
+  ...
+# Subtest: strict CLI preserves configured binary when no override is supplied
+ok 29 - strict CLI preserves configured binary when no override is supplied
+  ---
+  duration_ms: 437.487375
+  type: 'test'
+  ...
+# Subtest: CLI help and native pack need neither strict dependencies nor binary resolver
+ok 30 - CLI help and native pack need neither strict dependencies nor binary resolver
+  ---
+  duration_ms: 99.335208
+  type: 'test'
+  ...
+# Subtest: CLI rejects unknown commands before loading strict dependencies
+ok 31 - CLI rejects unknown commands before loading strict dependencies
+  ---
+  duration_ms: 52.888583
+  type: 'test'
+  ...
+# Subtest: global config needs no project, CLI selects its cwd or override, and old fixed configs stay fixed
+ok 32 - global config needs no project, CLI selects its cwd or override, and old fixed configs stay fixed
+  ---
+  duration_ms: 11.959625
+  type: 'test'
+  ...
+# Subtest: the same global config observes either CLI cwd without creating a workspace owner
+ok 33 - the same global config observes either CLI cwd without creating a workspace owner
+  ---
+  duration_ms: 556.009542
+  type: 'test'
+  ...
+# Subtest: CLI status works from a copied Unicode and space checkout without creating project state
+ok 34 - CLI status works from a copied Unicode and space checkout without creating project state
+  ---
+  duration_ms: 164.684042
+  type: 'test'
+  ...
+# Subtest: native packaging rejects missing or invalid release versions before creating output
+ok 35 - native packaging rejects missing or invalid release versions before creating output
+  ---
+  duration_ms: 69.551416
+  type: 'test'
+  ...
+# Subtest: native packaging requires nonempty package and plugin metadata
+ok 36 - native packaging requires nonempty package and plugin metadata
+  ---
+  duration_ms: 23.781834
+  type: 'test'
+  ...
+# Subtest: native packaging rejects additional manifest resources and unknown fields
+ok 37 - native packaging rejects additional manifest resources and unknown fields
+  ---
+  duration_ms: 41.935833
+  type: 'test'
+  ...
+# Subtest: native packaging accepts a release with prerelease and build identifiers
+ok 38 - native packaging accepts a release with prerelease and build identifiers
+  ---
+  duration_ms: 34.9915
+  type: 'test'
+  ...
+# Subtest: default package contains only one native skill and metadata; relocation needs no local config or runtime
+ok 39 - default package contains only one native skill and metadata; relocation needs no local config or runtime
+  ---
+  duration_ms: 21.684625
+  type: 'test'
+  ...
+# Subtest: native packaging rejects a linked source path before creating output: skills
+ok 40 - native packaging rejects a linked source path before creating output: skills
+  ---
+  duration_ms: 6.275917
+  type: 'test'
+  ...
+# Subtest: native packaging rejects a linked source path before creating output: skills/team
+ok 41 - native packaging rejects a linked source path before creating output: skills/team
+  ---
+  duration_ms: 5.244666
+  type: 'test'
+  ...
+# Subtest: native packaging rejects a linked source path before creating output: skills/team/SKILL.md
+ok 42 - native packaging rejects a linked source path before creating output: skills/team/SKILL.md
+  ---
+  duration_ms: 6.308083
+  type: 'test'
+  ...
+# Subtest: native package remains readable after removing its source checkout
+ok 43 - native package remains readable after removing its source checkout
+  ---
+  duration_ms: 13.567375
+  type: 'test'
+  ...
+# Subtest: native build succeeds from a dependency-free checkout with no Codex or npm executable
+ok 44 - native build succeeds from a dependency-free checkout with no Codex or npm executable
+  ---
+  duration_ms: 185.041833
+  type: 'test'
+  ...
+# Subtest: native output preserves existing files and refuses recursive/symlinked source destinations
+ok 45 - native output preserves existing files and refuses recursive/symlinked source destinations
+  ---
+  duration_ms: 4.746583
+  type: 'test'
+  ...
+# Subtest: native installation and rollback verify a dependency-free cache without requiring src
+ok 46 - native installation and rollback verify a dependency-free cache without requiring src
+  ---
+  duration_ms: 155.644959
+  type: 'test'
+  ...
+# Subtest: native installation rejects an extra skill and restores the old cache
+ok 47 - native installation rejects an extra skill and restores the old cache
+  ---
+  duration_ms: 43.422417
+  type: 'test'
+  ...
+# Subtest: native update copies genuinely different bytes; sameVersion=false
+ok 48 - native update copies genuinely different bytes; sameVersion=false
+  ---
+  duration_ms: 43.101916
+  type: 'test'
+  ...
+# Subtest: native failure restores genuinely old bytes; sameVersion=false
+ok 49 - native failure restores genuinely old bytes; sameVersion=false
+  ---
+  duration_ms: 57.983917
+  type: 'test'
+  ...
+# Subtest: native update copies genuinely different bytes; sameVersion=true
+ok 50 - native update copies genuinely different bytes; sameVersion=true
+  ---
+  duration_ms: 44.715459
+  type: 'test'
+  ...
+# Subtest: native failure restores genuinely old bytes; sameVersion=true
+ok 51 - native failure restores genuinely old bytes; sameVersion=true
+  ---
+  duration_ms: 57.759208
+  type: 'test'
+  ...
+# Subtest: rollback rejects old metadata accompanied by new cache bytes
+ok 52 - rollback rejects old metadata accompanied by new cache bytes
+  ---
+  duration_ms: 39.667875
+  type: 'test'
+  ...
+# Subtest: strict to native copies the selected mode and preserves rollback; failure=false
+ok 53 - strict to native copies the selected mode and preserves rollback; failure=false
+  ---
+  duration_ms: 1042.348167
+  type: 'test'
+  ...
+# Subtest: strict to native copies the selected mode and preserves rollback; failure=true
+ok 54 - strict to native copies the selected mode and preserves rollback; failure=true
+  ---
+  duration_ms: 1176.831625
+  type: 'test'
+  ...
+# Subtest: native inventory rejects extra skill in candidate before any mutation
+ok 55 - native inventory rejects extra skill in candidate before any mutation
+  ---
+  duration_ms: 12.314625
+  type: 'test'
+  ...
+# Subtest: native inventory rejects extra skill in old cache before any mutation
+ok 56 - native inventory rejects extra skill in old cache before any mutation
+  ---
+  duration_ms: 22.083708
+  type: 'test'
+  ...
+# Subtest: native inventory rejects extra skill in recovery source before any mutation
+ok 57 - native inventory rejects extra skill in recovery source before any mutation
+  ---
+  duration_ms: 23.872625
+  type: 'test'
+  ...
+# Subtest: native inventory rejects extra skill in identical pollution before any mutation
+ok 58 - native inventory rejects extra skill in identical pollution before any mutation
+  ---
+  duration_ms: 11.413916
+  type: 'test'
+  ...
+# Subtest: native inventory rejects installed extra skill and restores old bytes
+ok 59 - native inventory rejects installed extra skill and restores old bytes
+  ---
+  duration_ms: 35.468041
+  type: 'test'
+  ...
+# Subtest: native inventory rejects extra skill during rollback instead of reporting recovery
+ok 60 - native inventory rejects extra skill during rollback instead of reporting recovery
+  ---
+  duration_ms: 27.940375
+  type: 'test'
+  ...
+# Subtest: native inventory rejects root runtime file in candidate before any mutation
+ok 61 - native inventory rejects root runtime file in candidate before any mutation
+  ---
+  duration_ms: 12.102208
+  type: 'test'
+  ...
+# Subtest: native inventory rejects root runtime file in old cache before any mutation
+ok 62 - native inventory rejects root runtime file in old cache before any mutation
+  ---
+  duration_ms: 18.109792
+  type: 'test'
+  ...
+# Subtest: native inventory rejects root runtime file in recovery source before any mutation
+ok 63 - native inventory rejects root runtime file in recovery source before any mutation
+  ---
+  duration_ms: 17.428875
+  type: 'test'
+  ...
+# Subtest: native inventory rejects root runtime file in identical pollution before any mutation
+ok 64 - native inventory rejects root runtime file in identical pollution before any mutation
+  ---
+  duration_ms: 11.37125
+  type: 'test'
+  ...
+# Subtest: native inventory rejects installed root runtime file and restores old bytes
+ok 65 - native inventory rejects installed root runtime file and restores old bytes
+  ---
+  duration_ms: 30.832333
+  type: 'test'
+  ...
+# Subtest: native inventory rejects root runtime file during rollback instead of reporting recovery
+ok 66 - native inventory rejects root runtime file during rollback instead of reporting recovery
+  ---
+  duration_ms: 26.056625
+  type: 'test'
+  ...
+# Subtest: native inventory rejects team helper in candidate before any mutation
+ok 67 - native inventory rejects team helper in candidate before any mutation
+  ---
+  duration_ms: 12.4895
+  type: 'test'
+  ...
+# Subtest: native inventory rejects team helper in old cache before any mutation
+ok 68 - native inventory rejects team helper in old cache before any mutation
+  ---
+  duration_ms: 17.711417
+  type: 'test'
+  ...
+# Subtest: native inventory rejects team helper in recovery source before any mutation
+ok 69 - native inventory rejects team helper in recovery source before any mutation
+  ---
+  duration_ms: 18.54575
+  type: 'test'
+  ...
+# Subtest: native inventory rejects team helper in identical pollution before any mutation
+ok 70 - native inventory rejects team helper in identical pollution before any mutation
+  ---
+  duration_ms: 10.615791
+  type: 'test'
+  ...
+# Subtest: native inventory rejects installed team helper and restores old bytes
+ok 71 - native inventory rejects installed team helper and restores old bytes
+  ---
+  duration_ms: 30.091958
+  type: 'test'
+  ...
+# Subtest: native inventory rejects team helper during rollback instead of reporting recovery
+ok 72 - native inventory rejects team helper during rollback instead of reporting recovery
+  ---
+  duration_ms: 26.698709
+  type: 'test'
+  ...
+# Subtest: native inventory rejects empty directory in candidate before any mutation
+ok 73 - native inventory rejects empty directory in candidate before any mutation
+  ---
+  duration_ms: 10.031458
+  type: 'test'
+  ...
+# Subtest: native inventory rejects empty directory in old cache before any mutation
+ok 74 - native inventory rejects empty directory in old cache before any mutation
+  ---
+  duration_ms: 16.629292
+  type: 'test'
+  ...
+# Subtest: native inventory rejects empty directory in recovery source before any mutation
+ok 75 - native inventory rejects empty directory in recovery source before any mutation
+  ---
+  duration_ms: 18.912916
+  type: 'test'
+  ...
+# Subtest: native inventory rejects empty directory in identical pollution before any mutation
+ok 76 - native inventory rejects empty directory in identical pollution before any mutation
+  ---
+  duration_ms: 11.437
+  type: 'test'
+  ...
+# Subtest: native inventory rejects installed empty directory and restores old bytes
+ok 77 - native inventory rejects installed empty directory and restores old bytes
+  ---
+  duration_ms: 29.954625
+  type: 'test'
+  ...
+# Subtest: native inventory rejects empty directory during rollback instead of reporting recovery
+ok 78 - native inventory rejects empty directory during rollback instead of reporting recovery
+  ---
+  duration_ms: 27.353125
+  type: 'test'
+  ...
+# Subtest: native inventory rejects unlisted symlink in candidate before any mutation
+ok 79 - native inventory rejects unlisted symlink in candidate before any mutation
+  ---
+  duration_ms: 10.569583
+  type: 'test'
+  ...
+# Subtest: native inventory rejects unlisted symlink in old cache before any mutation
+ok 80 - native inventory rejects unlisted symlink in old cache before any mutation
+  ---
+  duration_ms: 16.984417
+  type: 'test'
+  ...
+# Subtest: native inventory rejects unlisted symlink in recovery source before any mutation
+ok 81 - native inventory rejects unlisted symlink in recovery source before any mutation
+  ---
+  duration_ms: 16.873584
+  type: 'test'
+  ...
+# Subtest: native inventory rejects unlisted symlink in identical pollution before any mutation
+ok 82 - native inventory rejects unlisted symlink in identical pollution before any mutation
+  ---
+  duration_ms: 12.062458
+  type: 'test'
+  ...
+# Subtest: native inventory rejects installed unlisted symlink and restores old bytes
+ok 83 - native inventory rejects installed unlisted symlink and restores old bytes
+  ---
+  duration_ms: 29.742125
+  type: 'test'
+  ...
+# Subtest: native inventory rejects unlisted symlink during rollback instead of reporting recovery
+ok 84 - native inventory rejects unlisted symlink during rollback instead of reporting recovery
+  ---
+  duration_ms: 25.423917
+  type: 'test'
+  ...
+# Subtest: native inventory rejects missing required file in candidate before any mutation
+ok 85 - native inventory rejects missing required file in candidate before any mutation
+  ---
+  duration_ms: 11.357625
+  type: 'test'
+  ...
+# Subtest: native inventory rejects missing required file in old cache before any mutation
+ok 86 - native inventory rejects missing required file in old cache before any mutation
+  ---
+  duration_ms: 18.184125
+  type: 'test'
+  ...
+# Subtest: native inventory rejects missing required file in recovery source before any mutation
+ok 87 - native inventory rejects missing required file in recovery source before any mutation
+  ---
+  duration_ms: 17.171125
+  type: 'test'
+  ...
+# Subtest: native inventory rejects missing required file in identical pollution before any mutation
+ok 88 - native inventory rejects missing required file in identical pollution before any mutation
+  ---
+  duration_ms: 10.231541
+  type: 'test'
+  ...
+# Subtest: native inventory rejects installed missing required file and restores old bytes
+ok 89 - native inventory rejects installed missing required file and restores old bytes
+  ---
+  duration_ms: 31.627625
+  type: 'test'
+  ...
+# Subtest: native inventory rejects missing required file during rollback instead of reporting recovery
+ok 90 - native inventory rejects missing required file during rollback instead of reporting recovery
+  ---
+  duration_ms: 27.428834
+  type: 'test'
+  ...
+# Subtest: native update rejects leftover runtime source instead of reporting a lightweight installation
+ok 91 - native update rejects leftover runtime source instead of reporting a lightweight installation
+  ---
+  duration_ms: 31.4595
+  type: 'test'
+  ...
+# Subtest: official list without installedPath uses exact home/version cache identity; drift=false
+ok 92 - official list without installedPath uses exact home/version cache identity; drift=false
+  ---
+  duration_ms: 1485.233417
+  type: 'test'
+  ...
+# Subtest: official list without installedPath uses exact home/version cache identity; drift=true
+ok 93 - official list without installedPath uses exact home/version cache identity; drift=true
+  ---
+  duration_ms: 1445.085959
+  type: 'test'
+  ...
+# Subtest: update rejects modified installed mcp-launch and verifies restored original bytes
+ok 94 - update rejects modified installed mcp-launch and verifies restored original bytes
+  ---
+  duration_ms: 1688.94325
+  type: 'test'
+  ...
+# Subtest: update rejects missing installed mcp-launch and verifies restored original bytes
+ok 95 - update rejects missing installed mcp-launch and verifies restored original bytes
+  ---
+  duration_ms: 1651.890875
+  type: 'test'
+  ...
+# Subtest: update rejects modified installed mcp-launch.js and verifies restored original bytes
+ok 96 - update rejects modified installed mcp-launch.js and verifies restored original bytes
+  ---
+  duration_ms: 1617.925334
+  type: 'test'
+  ...
+# Subtest: update rejects missing installed mcp-launch.js and verifies restored original bytes
+ok 97 - update rejects missing installed mcp-launch.js and verifies restored original bytes
+  ---
+  duration_ms: 1535.202959
+  type: 'test'
+  ...
+# Subtest: update rejects modified installed mcp.json and verifies restored original bytes
+ok 98 - update rejects modified installed mcp.json and verifies restored original bytes
+  ---
+  duration_ms: 1496.90225
+  type: 'test'
+  ...
+# Subtest: update rejects missing installed mcp.json and verifies restored original bytes
+ok 99 - update rejects missing installed mcp.json and verifies restored original bytes
+  ---
+  duration_ms: 1570.58375
+  type: 'test'
+  ...
+# Subtest: update rejects modified installed .mcp.json and verifies restored original bytes
+ok 100 - update rejects modified installed .mcp.json and verifies restored original bytes
+  ---
+  duration_ms: 1616.911083
+  type: 'test'
+  ...
+# Subtest: update rejects missing installed .mcp.json and verifies restored original bytes
+ok 101 - update rejects missing installed .mcp.json and verifies restored original bytes
+  ---
+  duration_ms: 1490.773917
+  type: 'test'
+  ...
+# Subtest: update rejects modified installed teams.config.json and verifies restored original bytes
+ok 102 - update rejects modified installed teams.config.json and verifies restored original bytes
+  ---
+  duration_ms: 1500.105791
+  type: 'test'
+  ...
+# Subtest: update rejects missing installed teams.config.json and verifies restored original bytes
+ok 103 - update rejects missing installed teams.config.json and verifies restored original bytes
+  ---
+  duration_ms: 1644.979167
+  type: 'test'
+  ...
+# Subtest: critical cache identity rejects executable replacement and preserves rollback checks
+ok 104 - critical cache identity rejects executable replacement and preserves rollback checks
+  ---
+  duration_ms: 1773.126334
+  type: 'test'
+  ...
+# Subtest: critical cache identity rejects owner-executable replacement and preserves rollback checks
+ok 105 - critical cache identity rejects owner-executable replacement and preserves rollback checks
+  ---
+  duration_ms: 1733.992125
+  type: 'test'
+  ...
+# Subtest: critical cache identity rejects symlink replacement and preserves rollback checks
+ok 106 - critical cache identity rejects symlink replacement and preserves rollback checks
+  ---
+  duration_ms: 1731.437
+  type: 'test'
+  ...
+# Subtest: critical cache identity rejects parent-symlink replacement and preserves rollback checks
+ok 107 - critical cache identity rejects parent-symlink replacement and preserves rollback checks
+  ---
+  duration_ms: 1775.403542
+  type: 'test'
+  ...
+# Subtest: update replaces only its own source/cache and verifies actual files, including paths with quotes
+ok 108 - update replaces only its own source/cache and verifies actual files, including paths with quotes
+  ---
+  duration_ms: 1377.664334
+  type: 'test'
+  ...
+# Subtest: update also supports first installation without removing an absent source/plugin
+ok 109 - update also supports first installation without removing an absent source/plugin
+  ---
+  duration_ms: 778.675375
+  type: 'test'
+  ...
+# Subtest: update restores the previous source and installation after source failure
+ok 110 - update restores the previous source and installation after source failure
+  ---
+  duration_ms: 980.822209
+  type: 'test'
+  ...
+# Subtest: update restores the previous source and installation after install failure
+ok 111 - update restores the previous source and installation after install failure
+  ---
+  duration_ms: 1228.057417
+  type: 'test'
+  ...
+# Subtest: update restores the previous source and installation after cache failure
+ok 112 - update restores the previous source and installation after cache failure
+  ---
+  duration_ms: 1464.002584
+  type: 'test'
+  ...
+# Subtest: a failed fresh installation removes its partial registration instead of inventing an old source
+ok 113 - a failed fresh installation removes its partial registration instead of inventing an old source
+  ---
+  duration_ms: 518.937208
+  type: 'test'
+  ...
+# Subtest: rollback failure is reported together with the original failure
+ok 114 - rollback failure is reported together with the original failure
+  ---
+  duration_ms: 896.564
+  type: 'test'
+  ...
+# Subtest: rollback rejects same-version content drift in build-info.json
+ok 115 - rollback rejects same-version content drift in build-info.json
+  ---
+  duration_ms: 1260.112375
+  type: 'test'
+  ...
+# Subtest: rollback rejects same-version content drift in src/contracts.js
+ok 116 - rollback rejects same-version content drift in src/contracts.js
+  ---
+  duration_ms: 1307.379584
+  type: 'test'
+  ...
+# Subtest: update preserves the existing installation before mutation when recovery source is missing-marketplace
+ok 117 - update preserves the existing installation before mutation when recovery source is missing-marketplace
+  ---
+  duration_ms: 22.286042
+  type: 'test'
+  ...
+# Subtest: update preserves the existing installation before mutation when recovery source is missing-plugin
+ok 118 - update preserves the existing installation before mutation when recovery source is missing-plugin
+  ---
+  duration_ms: 17.786542
+  type: 'test'
+  ...
+# Subtest: update preserves the existing installation before mutation when recovery source is malformed-catalog
+ok 119 - update preserves the existing installation before mutation when recovery source is malformed-catalog
+  ---
+  duration_ms: 19.435625
+  type: 'test'
+  ...
+# Subtest: update preserves the existing installation before mutation when recovery source is changed-skill
+ok 120 - update preserves the existing installation before mutation when recovery source is changed-skill
+  ---
+  duration_ms: 18.669541
+  type: 'test'
+  ...
+# Subtest: update preserves the existing installation before mutation when recovery source is changed-build
+ok 121 - update preserves the existing installation before mutation when recovery source is changed-build
+  ---
+  duration_ms: 18.289
+  type: 'test'
+  ...
+# Subtest: recovery source missing during registration preserves old cache and never uninstalls the plugin
+ok 122 - recovery source missing during registration preserves old cache and never uninstalls the plugin
+  ---
+  duration_ms: 21.321292
+  type: 'test'
+  ...
+# Subtest: recovery source changed during registration preserves old cache and never uninstalls the plugin
+ok 123 - recovery source changed during registration preserves old cache and never uninstalls the plugin
+  ---
+  duration_ms: 21.451209
+  type: 'test'
+  ...
+# Subtest: legacy installation without a verifiable identity is preserved before mutation
+ok 124 - legacy installation without a verifiable identity is preserved before mutation
+  ---
+  duration_ms: 760.411875
+  type: 'test'
+  ...
+# Subtest: update rejects a leftover portable manifest that would shadow the installed stop hooks
+ok 125 - update rejects a leftover portable manifest that would shadow the installed stop hooks
+  ---
+  duration_ms: 1610.150541
+  type: 'test'
+  ...
+# Subtest: idle precheck is read-only, blocks owners and unfinished receipts, and permits an unused project
+ok 126 - idle precheck is read-only, blocks owners and unfinished receipts, and permits an unused project
+  ---
+  duration_ms: 6.351833
+  type: 'test'
+  ...
+# Subtest: CLI help and invalid binary never invoke build or installation
+ok 127 - CLI help and invalid binary never invoke build or installation
+  ---
+  duration_ms: 98.636625
+  type: 'test'
+  ...
+# Subtest: build failure stops the update before marketplace mutation
+ok 128 - build failure stops the update before marketplace mutation
+  ---
+  duration_ms: 95.828958
+  type: 'test'
+  ...
+# Subtest: a second process sharing Codex home is rejected before observing or mutating installation
+ok 129 - a second process sharing Codex home is rejected before observing or mutating installation
+  ---
+  duration_ms: 159.565333
+  type: 'test'
+  ...
+# Subtest: rollback preserves a foreign installation even when a non-cooperating CLI bypasses the update lock
+ok 130 - rollback preserves a foreign installation even when a non-cooperating CLI bypasses the update lock
+  ---
+  duration_ms: 147.499125
+  type: 'test'
+  ...
+# Subtest: late recovery-source drift restores original cache bytes from an independent backup
+ok 131 - late recovery-source drift restores original cache bytes from an independent backup
+  ---
+  duration_ms: 53.220791
+  type: 'test'
+  ...
+# Subtest: candidate semantic preflight rejects manifest-version without installation commands
+ok 132 - candidate semantic preflight rejects manifest-version without installation commands
+  ---
+  duration_ms: 40.072334
+  type: 'test'
+  ...
+# Subtest: candidate semantic preflight rejects unknown-mode without installation commands
+ok 133 - candidate semantic preflight rejects unknown-mode without installation commands
+  ---
+  duration_ms: 146.005125
+  type: 'test'
+  ...
+# Subtest: candidate semantic preflight rejects digest-drift without installation commands
+ok 134 - candidate semantic preflight rejects digest-drift without installation commands
+  ---
+  duration_ms: 40.914417
+  type: 'test'
+  ...
+# Subtest: candidate semantic preflight rejects manifest-resources without installation commands
+ok 135 - candidate semantic preflight rejects manifest-resources without installation commands
+  ---
+  duration_ms: 21.450708
+  type: 'test'
+  ...
+# Subtest: candidate semantic preflight rejects invalid-version without installation commands
+ok 136 - candidate semantic preflight rejects invalid-version without installation commands
+  ---
+  duration_ms: 23.832458
+  type: 'test'
+  ...
+1..136
+# tests 136
+# suites 0
+# pass 136
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 71339.478

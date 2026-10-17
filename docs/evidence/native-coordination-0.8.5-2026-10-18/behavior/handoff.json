@@ -1,0 +1,86 @@
+{
+  "members": [
+    {
+      "name": "provider",
+      "owns": [
+        "src/store.mjs",
+        "tests/store.test.mjs"
+      ],
+      "acknowledgedContractRevision": 2,
+      "state": "found path ready; missing path pending"
+    },
+    {
+      "name": "card",
+      "owns": [
+        "src/card.mjs",
+        "tests/card.test.mjs"
+      ],
+      "acknowledgedContractRevision": 1,
+      "report": {
+        "command": "node --test tests/card.test.mjs",
+        "exitCode": 0,
+        "cases": 1,
+        "scope": "local double",
+        "runtime": "v24.21.0",
+        "dependency": "provider missing path pending",
+        "before": {
+          "src/card.mjs": "616f8d52f1351f491b96764641522c8f31a953154b8d22017c5e2e33e82ed665",
+          "src/store.mjs": "e44d738323ca040dc2194450960c0cf837f37d876947fa1e3073886c3dd6d691",
+          "tests/card.test.mjs": "06d7cd891845dee81d6a15c08537f836f4a5e3fa45de828265f920dcfe79f674",
+          "package.json": "218fcf1bd7a2c52f0db5d5388910d7ae2603cdd7be7e2d1e6aca56ba386396fc"
+        },
+        "after": {
+          "src/card.mjs": "616f8d52f1351f491b96764641522c8f31a953154b8d22017c5e2e33e82ed665",
+          "src/store.mjs": "e44d738323ca040dc2194450960c0cf837f37d876947fa1e3073886c3dd6d691",
+          "tests/card.test.mjs": "06d7cd891845dee81d6a15c08537f836f4a5e3fa45de828265f920dcfe79f674",
+          "package.json": "218fcf1bd7a2c52f0db5d5388910d7ae2603cdd7be7e2d1e6aca56ba386396fc"
+        },
+        "log": "card-test.tap"
+      }
+    },
+    {
+      "name": "list",
+      "owns": [
+        "src/list.mjs",
+        "tests/list.test.mjs"
+      ],
+      "acknowledgedContractRevision": 1,
+      "state": "local implementation ready; no command evidence supplied"
+    }
+  ],
+  "leadOwns": [
+    "notes.txt",
+    "contract.json",
+    "tests/integration.test.mjs"
+  ],
+  "verificationOwner": {
+    "fullSuite": "lead after provider handoff",
+    "finalBuild": "lead",
+    "buildOutput": "dist"
+  },
+  "operations": [
+    {
+      "member": "card",
+      "operation": "edit",
+      "paths": [
+        "src/card.mjs"
+      ],
+      "when": "after card-test.tap"
+    },
+    {
+      "member": "provider",
+      "operation": "format",
+      "paths": [
+        "src/store.mjs",
+        "src/banner.mjs"
+      ]
+    },
+    {
+      "member": "lead",
+      "operation": "edit",
+      "paths": [
+        "notes.txt"
+      ]
+    }
+  ]
+}

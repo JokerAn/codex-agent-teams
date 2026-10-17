@@ -1,0 +1,14 @@
+{
+  "version": "0.8.4",
+  "mode": "native",
+  "cachedSkillDiscovered": true,
+  "sourceRemoved": true,
+  "externalMcpServers": 0,
+  "pluginHooks": 0,
+  "projectStateCreated": false,
+  "packageFiles": 4,
+  "packageBytes": 4211,
+  "inferenceStarted": false,
+  "userConfigChanged": false,
+  "appServerExited": true
+}

@@ -1,0 +1,511 @@
+TAP version 13
+# (node:108967) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: protocol race, isolation overrides, structured output, usage and cleanup
+ok 1 - protocol race, isolation overrides, structured output, usage and cleanup
+  ---
+  duration_ms: 129.283283
+  type: 'test'
+  ...
+# Subtest: production backend passes exact effort or omits the property without forcing a default
+    # Subtest: low
+    ok 1 - low
+      ---
+      duration_ms: 131.750795
+      type: 'test'
+      ...
+    # Subtest: high
+    ok 2 - high
+      ---
+      duration_ms: 122.81968
+      type: 'test'
+      ...
+    # Subtest: max
+    ok 3 - max
+      ---
+      duration_ms: 119.644314
+      type: 'test'
+      ...
+    # Subtest: omitted
+    ok 4 - omitted
+      ---
+      duration_ms: 121.088022
+      type: 'test'
+      ...
+    1..4
+ok 2 - production backend passes exact effort or omits the property without forcing a default
+  ---
+  duration_ms: 622.650399
+  type: 'test'
+  ...
+# Subtest: concurrent runs on one production backend keep each turn effort isolated
+ok 3 - concurrent runs on one production backend keep each turn effort isolated
+  ---
+  duration_ms: 525.280939
+  type: 'test'
+  ...
+# Subtest: protocol fixture rejects missing strict required fields at top level and inside criteria
+ok 4 - protocol fixture rejects missing strict required fields at top level and inside criteria
+  ---
+  duration_ms: 271.568065
+  type: 'test'
+  ...
+# Subtest: invalid acceptance refuses schema generation before any member process launch
+ok 5 - invalid acceptance refuses schema generation before any member process launch
+  ---
+  duration_ms: 2.671923
+  type: 'test'
+  ...
+# Subtest: bad-request preserves the original error and classifies by official code, with exit confirmed
+ok 6 - bad-request preserves the original error and classifies by official code, with exit confirmed
+  ---
+  duration_ms: 221.518229
+  type: 'test'
+  ...
+# Subtest: unclassified-turn-error preserves the original error and classifies by official code, with exit confirmed
+ok 7 - unclassified-turn-error preserves the original error and classifies by official code, with exit confirmed
+  ---
+  duration_ms: 171.538639
+  type: 'test'
+  ...
+# Subtest: backend records bounded official action metadata into the owning attempt without command payloads
+ok 8 - backend records bounded official action metadata into the owning attempt without command payloads
+  ---
+  duration_ms: 265.148668
+  type: 'test'
+  ...
+# Subtest: oversized pre-reply action records truncation without poisoning turn execution or losing per-item limits
+ok 9 - oversized pre-reply action records truncation without poisoning turn execution or losing per-item limits
+  ---
+  duration_ms: 130.815656
+  type: 'test'
+  ...
+# Subtest: TERM send failure still escalates to KILL and confirms exit, preserving cleanup error
+ok 10 - TERM send failure still escalates to KILL and confirms exit, preserving cleanup error
+  ---
+  duration_ms: 428.004852
+  type: 'test'
+  ...
+# Subtest: launch with no persisted PID and no exit receipt stays unconfirmed within the same runtime
+ok 11 - launch with no persisted PID and no exit receipt stays unconfirmed within the same runtime
+  ---
+  duration_ms: 36.409567
+  type: 'test'
+  ...
+# Subtest: actual child plus injected PID persistence and signal failures cannot be redispatched as exited
+ok 12 - actual child plus injected PID persistence and signal failures cannot be redispatched as exited
+  ---
+  duration_ms: 2362.539888
+  type: 'test'
+  ...
+# Subtest: diagnostic handshake enumerates models without starting inference
+ok 13 - diagnostic handshake enumerates models without starting inference
+  ---
+  duration_ms: 143.257337
+  type: 'test'
+  ...
+# Subtest: approval fails without reporting successful execution and reaps child
+ok 14 - approval fails without reporting successful execution and reaps child
+  ---
+  duration_ms: 113.69553
+  type: 'test'
+  ...
+# Subtest: crash fails without reporting successful execution and reaps child
+ok 15 - crash fails without reporting successful execution and reaps child
+  ---
+  duration_ms: 116.69011
+  type: 'test'
+  ...
+# Subtest: bad-json fails without reporting successful execution and reaps child
+ok 16 - bad-json fails without reporting successful execution and reaps child
+  ---
+  duration_ms: 113.100506
+  type: 'test'
+  ...
+# Subtest: timeout fails without reporting successful execution and reaps child
+ok 17 - timeout fails without reporting successful execution and reaps child
+  ---
+  duration_ms: 1046.895668
+  type: 'test'
+  ...
+# Subtest: unsafe fails without reporting successful execution and reaps child
+ok 18 - unsafe fails without reporting successful execution and reaps child
+  ---
+  duration_ms: 142.611732
+  type: 'test'
+  ...
+# Subtest: abort interrupts and reaps a hanging member
+ok 19 - abort interrupts and reaps a hanging member
+  ---
+  duration_ms: 117.303925
+  type: 'test'
+  ...
+# Subtest: already aborted signal does not leave a spawned process
+ok 20 - already aborted signal does not leave a spawned process
+  ---
+  duration_ms: 18.321301
+  type: 'test'
+  ...
+# Subtest: real-host regression: MCP override keys are plain dotted paths, unusual keys fail closed
+ok 21 - real-host regression: MCP override keys are plain dotted paths, unusual keys fail closed
+  ---
+  duration_ms: 1.262338
+  type: 'test'
+  ...
+# Subtest: doctor can verify real permission response without a model turn
+ok 22 - doctor can verify real permission response without a model turn
+  ---
+  duration_ms: 119.743063
+  type: 'test'
+  ...
+# Subtest: doctor checks configured profiles and rejects unavailable models or efforts
+ok 23 - doctor checks configured profiles and rejects unavailable models or efforts
+  ---
+  duration_ms: 391.022641
+  type: 'test'
+  ...
+# Subtest: doctor only reports plugin discovery when both skill and MCP server are visible
+ok 24 - doctor only reports plugin discovery when both skill and MCP server are visible
+  ---
+  duration_ms: 286.466721
+  type: 'test'
+  ...
+# Subtest: real backend persists launch phase before spawning and reports exit only after cleanup
+ok 25 - real backend persists launch phase before spawning and reports exit only after cleanup
+  ---
+  duration_ms: 135.748973
+  type: 'test'
+  ...
+# Subtest: wrong-cwd rejects read-only before inference and confirms exit
+ok 26 - wrong-cwd rejects read-only before inference and confirms exit
+  ---
+  duration_ms: 258.453659
+  type: 'test'
+  ...
+# Subtest: wrong-cwd rejects review before inference and confirms exit
+ok 27 - wrong-cwd rejects review before inference and confirms exit
+  ---
+  duration_ms: 120.159384
+  type: 'test'
+  ...
+# Subtest: wrong-cwd rejects workspace-write before inference and confirms exit
+ok 28 - wrong-cwd rejects workspace-write before inference and confirms exit
+  ---
+  duration_ms: 168.766598
+  type: 'test'
+  ...
+# Subtest: missing-cwd rejects read-only before inference and confirms exit
+ok 29 - missing-cwd rejects read-only before inference and confirms exit
+  ---
+  duration_ms: 255.630909
+  type: 'test'
+  ...
+# Subtest: missing-cwd rejects review before inference and confirms exit
+ok 30 - missing-cwd rejects review before inference and confirms exit
+  ---
+  duration_ms: 365.526842
+  type: 'test'
+  ...
+# Subtest: missing-cwd rejects workspace-write before inference and confirms exit
+ok 31 - missing-cwd rejects workspace-write before inference and confirms exit
+  ---
+  duration_ms: 139.432325
+  type: 'test'
+  ...
+# Subtest: invalid-cwd rejects read-only before inference and confirms exit
+ok 32 - invalid-cwd rejects read-only before inference and confirms exit
+  ---
+  duration_ms: 137.075144
+  type: 'test'
+  ...
+# Subtest: invalid-cwd rejects review before inference and confirms exit
+ok 33 - invalid-cwd rejects review before inference and confirms exit
+  ---
+  duration_ms: 210.838335
+  type: 'test'
+  ...
+# Subtest: invalid-cwd rejects workspace-write before inference and confirms exit
+ok 34 - invalid-cwd rejects workspace-write before inference and confirms exit
+  ---
+  duration_ms: 139.106085
+  type: 'test'
+  ...
+# Subtest: read-only accepts canonical host cwd for a symlinked request
+ok 35 - read-only accepts canonical host cwd for a symlinked request
+  ---
+  duration_ms: 132.657814
+  type: 'test'
+  ...
+# Subtest: workspace-write accepts canonical host cwd for a symlinked request
+ok 36 - workspace-write accepts canonical host cwd for a symlinked request
+  ---
+  duration_ms: 137.032771
+  type: 'test'
+  ...
+# Subtest: doctor refuses an unexpected cwd without starting inference
+ok 37 - doctor refuses an unexpected cwd without starting inference
+  ---
+  duration_ms: 131.610595
+  type: 'test'
+  ...
+# Subtest: invalid-json releases protocol buffer, rejects pending requests and discards later output
+ok 38 - invalid-json releases protocol buffer, rejects pending requests and discards later output
+  ---
+  duration_ms: 210.278435
+  type: 'test'
+  ...
+# Subtest: oversized-frame releases protocol buffer, rejects pending requests and discards later output
+ok 39 - oversized-frame releases protocol buffer, rejects pending requests and discards later output
+  ---
+  duration_ms: 196.543917
+  type: 'test'
+  ...
+# Subtest: protocol byte accounting handles partial unicode frames and multiple notifications
+ok 40 - protocol byte accounting handles partial unicode frames and multiple notifications
+  ---
+  duration_ms: 250.635597
+  type: 'test'
+  ...
+# Subtest: continuous oversized output ignoring TERM fails and is reaped before backend exit
+ok 41 - continuous oversized output ignoring TERM fails and is reaped before backend exit
+  ---
+  duration_ms: 524.77647
+  type: 'test'
+  ...
+# Subtest: a legal boundary-sized frame followed by another frame in the same chunk is accepted
+ok 42 - a legal boundary-sized frame followed by another frame in the same chunk is accepted
+  ---
+  duration_ms: 179.819196
+  type: 'test'
+  ...
+# Subtest: run preserves both execution and cleanup failures without reporting exit
+ok 43 - run preserves both execution and cleanup failures without reporting exit
+  ---
+  duration_ms: 120.048265
+  type: 'test'
+  ...
+# Subtest: run preserves cleanup-only failure without reporting exit
+ok 44 - run preserves cleanup-only failure without reporting exit
+  ---
+  duration_ms: 116.46316
+  type: 'test'
+  ...
+# Subtest: probe preserves both execution and cleanup failures without reporting exit
+ok 45 - probe preserves both execution and cleanup failures without reporting exit
+  ---
+  duration_ms: 114.781875
+  type: 'test'
+  ...
+# Subtest: probe preserves cleanup-only failure without reporting exit
+ok 46 - probe preserves cleanup-only failure without reporting exit
+  ---
+  duration_ms: 113.267044
+  type: 'test'
+  ...
+# Subtest: runtime persists both failure messages and refuses retries while cleanup is unconfirmed
+ok 47 - runtime persists both failure messages and refuses retries while cleanup is unconfirmed
+  ---
+  duration_ms: 145.121744
+  type: 'test'
+  ...
+# Subtest: importing fixture helpers preserves caller coverage and exact output
+ok 48 - importing fixture helpers preserves caller coverage and exact output
+  ---
+  duration_ms: 59.783514
+  type: 'test'
+  ...
+# Subtest: fixtureEnv clones custom and default environments and preserves binary output
+ok 49 - fixtureEnv clones custom and default environments and preserves binary output
+  ---
+  duration_ms: 51.060684
+  type: 'test'
+  ...
+# Subtest: fixtureNode isolates before startup and leaves explicit exits byte-for-byte clean
+ok 50 - fixtureNode isolates before startup and leaves explicit exits byte-for-byte clean
+  ---
+  duration_ms: 102.911054
+  type: 'test'
+  ...
+# Subtest: fixtureNode keeps pure CJS children and grandchildren out of coverage
+ok 51 - fixtureNode keeps pure CJS children and grandchildren out of coverage
+  ---
+  duration_ms: 153.042391
+  type: 'test'
+  ...
+# Subtest: fixtureAppServer preserves normal fake protocol and crash output without profiles
+ok 52 - fixtureAppServer preserves normal fake protocol and crash output without profiles
+  ---
+  duration_ms: 114.386721
+  type: 'test'
+  ...
+# Subtest: AppServerClient retains real outer guard coverage while its fake server is isolated
+ok 53 - AppServerClient retains real outer guard coverage while its fake server is isolated
+  ---
+  duration_ms: 557.7606
+  type: 'test'
+  ...
+# Subtest: generated executable strips a shebang, quotes its path and forwards argv unchanged
+ok 54 - generated executable strips a shebang, quotes its path and forwards argv unchanged
+  ---
+  duration_ms: 69.629188
+  type: 'test'
+  ...
+# Subtest: generated executable quotes an absolute Node path containing spaces and a single quote
+ok 55 - generated executable quotes an absolute Node path containing spaces and a single quote
+  ---
+  duration_ms: 115.536396
+  type: 'test'
+  ...
+# Subtest: generated executable clears coverage before Node starts and descendants inherit isolation
+ok 56 - generated executable clears coverage before Node starts and descendants inherit isolation
+  ---
+  duration_ms: 151.951839
+  type: 'test'
+  ...
+# (node:110490) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: SIGKILL runtime reaps guarded member and its TERM-ignoring descendant
+ok 57 - SIGKILL runtime reaps guarded member and its TERM-ignoring descendant
+  ---
+  duration_ms: 531.824396
+  type: 'test'
+  ...
+# Subtest: SIGKILL runtime reaps guarded verification and its TERM-ignoring descendant
+ok 58 - SIGKILL runtime reaps guarded verification and its TERM-ignoring descendant
+  ---
+  duration_ms: 619.799385
+  type: 'test'
+  ...
+# (node:110573) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: real command preserves literal arguments, binary stdout/stderr and exit metadata without a shell
+ok 59 - real command preserves literal arguments, binary stdout/stderr and exit metadata without a shell
+  ---
+  duration_ms: 117.886495
+  type: 'test'
+  ...
+# Subtest: nonzero exit and missing executable are recorded as failures rather than successful checks
+ok 60 - nonzero exit and missing executable are recorded as failures rather than successful checks
+  ---
+  duration_ms: 161.79343
+  type: 'test'
+  ...
+# Subtest: timeout escalates to SIGKILL for a child that ignores SIGTERM
+ok 61 - timeout escalates to SIGKILL for a child that ignores SIGTERM
+  ---
+  duration_ms: 1334.120865
+  type: 'test'
+  ...
+# Subtest: pre-aborted execution launches no child and active abort retains logs until confirmed exit
+ok 62 - pre-aborted execution launches no child and active abort retains logs until confirmed exit
+  ---
+  duration_ms: 53.254246
+  type: 'test'
+  ...
+# Subtest: combined output limit bounds on-disk bytes, marks truncation and terminates the producer
+ok 63 - combined output limit bounds on-disk bytes, marks truncation and terminates the producer
+  ---
+  duration_ms: 113.020887
+  type: 'test'
+  ...
+# Subtest: descendants keeping pipes open are killed even after the command parent exited with zero
+ok 64 - descendants keeping pipes open are killed even after the command parent exited with zero
+  ---
+  duration_ms: 255.157053
+  type: 'test'
+  ...
+# Subtest: descendant receipt installs bounded cleanup even when group visibility briefly outlives guard close
+ok 65 - descendant receipt installs bounded cleanup even when group visibility briefly outlives guard close
+  ---
+  duration_ms: 427.334475
+  type: 'test'
+  ...
+# Subtest: command contract refuses shell fields, invalid deadlines, null bytes and implicit argv strings
+ok 66 - command contract refuses shell fields, invalid deadlines, null bytes and implicit argv strings
+  ---
+  duration_ms: 6.242569
+  type: 'test'
+  ...
+# Subtest: verification runs in the managed worktree and persists log receipt without changing the source
+ok 67 - verification runs in the managed worktree and persists log receipt without changing the source
+  ---
+  duration_ms: 295.566715
+  type: 'test'
+  ...
+# Subtest: command mutations are audited; exit-zero does not conceal source changes or accept an agent task
+ok 68 - command mutations are audited; exit-zero does not conceal source changes or accept an agent task
+  ---
+  duration_ms: 262.49255
+  type: 'test'
+  ...
+# Subtest: active verification blocks cleanup, another check and members until cancellation completes
+ok 69 - active verification blocks cleanup, another check and members until cancellation completes
+  ---
+  duration_ms: 159.977983
+  type: 'test'
+  ...
+# Subtest: runtime shutdown cancels verification before releasing the SQLite owner
+ok 70 - runtime shutdown cancels verification before releasing the SQLite owner
+  ---
+  duration_ms: 174.17928
+  type: 'test'
+  ...
+# Subtest: log root symlink and replaced worktree identity are refused before command execution
+ok 71 - log root symlink and replaced worktree identity are refused before command execution
+  ---
+  duration_ms: 166.302425
+  type: 'test'
+  ...
+# Subtest: recovery refuses a live orphan group; once exited it records interruption and never reruns the command
+ok 72 - recovery refuses a live orphan group; once exited it records interruption and never reruns the command
+  ---
+  duration_ms: 126.018719
+  type: 'test'
+  ...
+# Subtest: CLI reports failed command with exit status one and handles SIGTERM while retaining the result
+ok 73 - CLI reports failed command with exit status one and handles SIGTERM while retaining the result
+  ---
+  duration_ms: 709.143134
+  type: 'test'
+  ...
+# Subtest: unconfirmed cleanup retains a blocking receipt and recovery never kills an old process group
+ok 74 - unconfirmed cleanup retains a blocking receipt and recovery never kills an old process group
+  ---
+  duration_ms: 2515.249831
+  type: 'test'
+  ...
+1..74
+# tests 78
+# suites 0
+# pass 78
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 22361.743459
+# start of coverage report
+# ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# file                | line % | branch % | funcs % | uncovered lines
+# ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# src                 |        |          |         |
+#  actions.js         |  93.22 |    88.41 |  100.00 | 26-29
+#  app-server.js      |  97.81 |    82.71 |   84.44 | 86-87 251 260 293-295
+#  cli-progress.js    |  14.81 |   100.00 |    0.00 | 5-27
+#  cli.js             |  36.32 |    12.00 |   28.57 | 21-52 54-66 69-70 83-85 87-93 95-105 113-114 118-121 152-216 221-223
+#  config.js          | 100.00 |    25.00 |  100.00 |
+#  contracts.js       |  79.10 |    53.33 |   66.67 | 48-51 54-59 63 65-66 68-72 94-95 122-123 125-126 128-129 131-132
+#  managed-process.js | 100.00 |    57.14 |   66.67 |
+#  models.js          |  24.73 |   100.00 |    0.00 | 10-13 16-20 23-29 33-43 46-57 60-65 69-93
+#  policy.js          |  80.26 |    40.00 |   75.00 | 4-8 11-13 16 18-19 21-23 43
+#  preflight.js       |  58.23 |    77.78 |   33.33 | 13-16 51-79
+#  process-group.js   | 100.00 |   100.00 |   83.33 |
+#  process-guard.js   | 100.00 |    66.67 |  100.00 |
+#  runtime.js         |  66.40 |    54.92 |   70.91 | 24-33 35-39 41-44 83 96-98 160-164 173-176 178-214 260-261 270-285 287-329 340-353 371-374 378-386 395-398 424-427 430-431 462-465
+#  status.js          |  18.95 |    70.00 |   12.50 | 33-55 66 71-78 81-143 146-156 158-197 202-251 253-259 262-306
+#  store.js           |  67.95 |    78.95 |   85.00 | 33-61 72-73 79-82 98-100 102-107 141-146
+#  verification.js    |  91.82 |    86.67 |   91.30 | 13-21
+#  workspace.js       |  76.15 |    56.31 |   84.62 | 40-41 47 80-82 90-92 145-146 194-203 205-217 219-224 226-239 245-252
+# ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# all files           |  65.33 |    68.21 |   72.87 |
+# ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# end of coverage report

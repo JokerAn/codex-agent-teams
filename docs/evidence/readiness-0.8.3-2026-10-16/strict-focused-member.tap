@@ -1,0 +1,21 @@
+✔ read-only member changes stop verification before any command runs (1964.948417ms)
+✔ cancelling a task during its command keeps it active until the bound process exits (2566.710166ms)
+✔ crash during a bound command preserves the atomic binding and refuses live orphan recovery (2499.716042ms)
+✔ deadline cancels backend and records failure honestly (89.214875ms)
+✔ state has one owner and survives reopening (38.2775ms)
+✔ unclean exit marks running task interrupted, never replays it (72.544167ms)
+✔ candidate patch tampering is rejected before review or integration (4261.837916ms)
+✔ post-integration verification failure retains applied changes and blocks false success (6669.240291ms)
+✔ crash after patch application becomes integration_failed and never automatically reapplies (6597.448375ms)
+✔ App Server enforces write permission echo and reviewer receives read-only permission (343.615625ms)
+✔ failed but live reviewer blocks every new task until its exit is confirmed on reopen (3433.477542ms)
+✔ integration cancellation waits for source verification exit and retains the applied patch (6409.872167ms)
+✔ crash before member PID persistence remains blocked rather than silently replaying an unknown launch (136.154458ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 35336.445333

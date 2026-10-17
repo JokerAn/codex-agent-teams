@@ -1,0 +1,70 @@
+[
+  {
+    "path": "preflight.json",
+    "sha256": "9b87452972f6651ffed879291826373a4d1b0d97ae10bb34aba5190370dc7a65"
+  },
+  {
+    "path": "full-coverage-result.json",
+    "sha256": "ddfb2c71564ad23fa9a5dffe376e2c043fb646d838d552b8a4e6e783e53c8bc6"
+  },
+  {
+    "path": "full-coverage-summary.json",
+    "sha256": "df41e011447a1677a9cff793da1ccb8e211446dd9ef80eea2f5031e64f27d84a"
+  },
+  {
+    "path": "host-smoke-results.json",
+    "sha256": "8061bdcde6372b66484621831eaa4ea608fa29d68795204083de2aca5ccd85c3"
+  },
+  {
+    "path": "native-host-smoke.log",
+    "sha256": "ec3c711d0181ac0ad937d7c436ce8e6d28f4103eb8699715f9c302c8e43b7aca"
+  },
+  {
+    "path": "strict-host-smoke.log",
+    "sha256": "7b5aed3329d0d9862e530e95878ca5d4ccfdb0c96434492c17ca9931f7ca5924"
+  },
+  {
+    "path": "npm-audit.json",
+    "sha256": "b84f06995c2d90efd284b2696979cdfb2c20abdbf376e6d6fea92382bf43a58c"
+  },
+  {
+    "path": "npm-ls.json",
+    "sha256": "4eeb6cfcd6ae7f52dcb3d2678b0bb55dbcfdd617cf24aad6d58f5e67c09e6745"
+  },
+  {
+    "path": "syntax.json",
+    "sha256": "e0b7442158d227277fb8dc47c189e4e4324c4fe48e75846c61c6d123d2609d79"
+  },
+  {
+    "path": "consumer-result.json",
+    "sha256": "c8eb0b67645f155cc5186d8d4d3614a436ebd86f1ede1f0a1cff419088a15cd0"
+  },
+  {
+    "path": "clean-native-test.log",
+    "sha256": "f42864eec8faa2d5365dc0c99736b67b60cdb199ae8883b6746419a0f766ad45"
+  },
+  {
+    "path": "config-path-reproduction.json",
+    "sha256": "ccd44e2b4655e541faab649e7d65a8b0d58daa46cff72bcbebd48b937389080e"
+  },
+  {
+    "path": "config-unicode-original.log",
+    "sha256": "59efe967d5176ddee37e8cb339b158b9ae39d56755684fd6b2d7de636ba31d2d"
+  },
+  {
+    "path": "config-ascii-control.log",
+    "sha256": "43423cefeb07e7bca0cc72b68483d4d17674629f341b93b2a788c562bf0b3fdc"
+  },
+  {
+    "path": "current-head-ci.json",
+    "sha256": "f370c242686966adcaf11ef0e8dbd8e97f808dbedc0f2e9e69ee865ac83e3ae7"
+  },
+  {
+    "path": "current-head-ci-details.json",
+    "sha256": "77a835174b0c8baa2777bf6a6a1790aa5fb58ea6ec610885cede0f303e472b4f"
+  },
+  {
+    "path": "independent-update-rechecks.json",
+    "sha256": "68fe35e7a4850094c9fc600bb72b35fbe4583fbc6dd5f2fd6a6071dc8132e389"
+  }
+]

@@ -1,0 +1,73 @@
+{
+  "provenance": "controlled exercise records, not real account usage",
+  "events": [
+    {
+      "type": "dispatch",
+      "member": "provider",
+      "time": "2026-10-18T10:00:00+08:00",
+      "requestedEffort": "high",
+      "toolArguments": {
+        "reasoning_effort": "high"
+      },
+      "receipt": {
+        "id": "provider"
+      }
+    },
+    {
+      "type": "dispatch",
+      "member": "card",
+      "time": "2026-10-18T10:00:05+08:00",
+      "toolArguments": {
+        "reasoning_effort": "high"
+      },
+      "receipt": {
+        "id": "card"
+      }
+    },
+    {
+      "type": "dispatch",
+      "member": "list",
+      "time": "2026-10-18T10:00:10+08:00",
+      "toolArguments": {
+        "reasoning_effort": "high"
+      },
+      "receipt": {
+        "id": "list"
+      }
+    },
+    {
+      "type": "usage",
+      "session": "parent",
+      "time": "2026-10-18T10:01:00+08:00",
+      "total_token_usage": {
+        "total_tokens": 1000
+      }
+    },
+    {
+      "type": "usage",
+      "session": "parent",
+      "time": "2026-10-18T10:02:00+08:00",
+      "total_token_usage": {
+        "total_tokens": 1500
+      }
+    },
+    {
+      "type": "usage",
+      "session": "card",
+      "time": "2026-10-18T10:02:00+08:00",
+      "total_token_usage": {
+        "total_tokens": 600
+      }
+    },
+    {
+      "type": "report",
+      "member": "card",
+      "time": "2026-10-18T10:03:00+08:00"
+    },
+    {
+      "type": "report",
+      "member": "list",
+      "time": "2026-10-18T10:04:00+08:00"
+    }
+  ]
+}

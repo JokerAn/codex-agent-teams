@@ -1,6 +1,6 @@
 {
   "name": "codex-agent-teams-local",
-  "version": "0.8.3",
+  "version": "0.8.5",
   "private": true,
   "description": "Native Codex collaboration; strict delivery available explicitly",
   "type": "module",

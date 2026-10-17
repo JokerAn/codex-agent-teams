@@ -1,0 +1,204 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { DatabaseSync } from 'node:sqlite';
+import { execFileSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync, realpathSync, renameSync, symlinkSync, unlinkSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { TaskStore, processAlive } from '/Users/anshunli/单纯回话/codex-agent-teams/src/store.js';
+import { TaskRuntime } from '/Users/anshunli/单纯回话/codex-agent-teams/src/runtime.js';
+import { GitWorkspace } from '/Users/anshunli/单纯回话/codex-agent-teams/src/workspace.js';
+import { AppServerClient, CodexBackend } from '/Users/anshunli/单纯回话/codex-agent-teams/src/app-server.js';
+const auditRoot = dirname(fileURLToPath(import.meta.url));
+const criterion = 'sum returns 5 for 2 and 3';
+const contract = { objective: 'Verify sum implementation', acceptance: [criterion] };
+const report = () => ({ summary: 'Controlled backend report', criteria: [{ criterion, satisfied: true, evidence: 'sum.js:1; local node assertion validates 2+3=5' }], findings: [], blockers: [] });
+const tick = () => new Promise(resolve => setImmediate(resolve));
+const deferred = () => { let resolve; const promise = new Promise(r => { resolve = r; }); return { promise, resolve }; };
+const note = (name, data) => console.log('EVIDENCE', name, JSON.stringify(data));
+function fixture(t, backendFactory) {
+  const root = realpathSync(mkdtempSync(join(auditRoot, 'case-'))), repo = join(root, 'repo'); mkdirSync(repo);
+  const git = args => execFileSync('git', ['-C', repo, ...args], { encoding: 'utf8', stdio: 'pipe' });
+  git(['init', '-b', 'main']); git(['config', 'user.name', 'Audit']); git(['config', 'user.email', 'audit@localhost']);
+  writeFileSync(join(repo, '.gitignore'), '.codex-teams/\n');
+  writeFileSync(join(repo, 'package.json'), '{"type":"module"}\n');
+  writeFileSync(join(repo, 'sum.js'), 'export const sum = (a,b) => a-b;\n');
+  writeFileSync(join(repo, 'user.txt'), 'user baseline\n');
+  git(['add', '.']); git(['commit', '-m', 'audit fixture']);
+  const cfg = { workspace: repo, maxConcurrency: 2, taskTimeoutMs: 10000, profiles: { expert: { model: 'test-model', effort: 'high' } } };
+  const path = join(repo, '.codex-teams', 'state.sqlite');
+  let runtime;
+  const f = { root, repo, git, cfg, path, get runtime() { return runtime; } };
+  const backend = backendFactory ? backendFactory(f) : { run: async req => ({ result: report(), actualModel: req.selection.model }) };
+  f.backend = backend;
+  f.open = () => runtime = new TaskRuntime(new TaskStore(path), backend, cfg);
+  f.open();
+  t.after(async () => { if (!runtime.store.closed) await runtime.close(); });
+  return f;
+}
+const writeContract = () => ({ ...contract, kind: 'implementation', mode: 'workspace-write', executionPlan: { allowedPaths: ['sum.js'], verification: { command: process.execPath, args: ['--input-type=module', '-e', "import assert from 'node:assert/strict'; import {sum} from './sum.js'; assert.equal(sum(2,3),5); console.log('verified sum');"], timeoutMs: 3000 } } });
+const writerBackend = f => ({ run: async req => {
+  if (req.role !== 'review') writeFileSync(join(req.cwd, 'sum.js'), 'export const sum = (a,b) => a+b;\n');
+  req.onProgress({ memberLaunch: 'exited' });
+  return { result: report(), actualModel: req.selection.model, threadId: req.role === 'review' ? 'controlled-review' : 'controlled-writer' };
+} });
+const approve = (runtime, taskId, attemptId, verdict = 'pass') => runtime.review({ taskId, attemptId, verdict, evidence: [{ criterion, evidence: 'Audit checked actual fixture diff and bound command receipt' }] });
+async function executeWrite(f) {
+  const task = f.runtime.create(writeContract()); const dispatch = f.runtime.start(task.id);
+  const done = await f.runtime.wait(task.id, 15000);
+  assert.equal(done.status, 'awaiting_review', done.error); return { task: done, dispatch };
+}
+
+test('NEW stale member progress, stale finish and stale review cannot contaminate a running retry', async t => {
+  const calls = [], gates = [];
+  const f = fixture(t, () => ({ run: req => { calls.push(req); const gate = deferred(); gates.push(gate); return gate.promise; } }));
+  const task = f.runtime.create(contract), first = f.runtime.start(task.id); await tick();
+  calls[0].onProgress({ memberLaunch: 'exited', actualModel: 'test-model', threadId: 'first-thread' });
+  gates[0].resolve({ result: report(), actualModel: 'test-model' }); await f.runtime.wait(task.id);
+  approve(f.runtime, task.id, first.attemptId, 'reject');
+  const second = f.runtime.start(task.id, { retry: true, reason: 'Independent replay isolation probe' }); await tick();
+  const before = f.runtime.status(task.id);
+  calls[0].onProgress({ childPid: process.pid, memberLaunch: 'active', machineReview: { status: 'passed', actualModel: 'poison' }, threadId: 'STALE_POISON', usage: { poison: true } });
+  assert.equal(f.runtime.finish(task.id, first.attemptId, 'succeeded', { result: { poison: true } }), false);
+  assert.throws(() => approve(f.runtime, task.id, first.attemptId), /Stale/);
+  const after = f.runtime.status(task.id);
+  assert.deepEqual(after.attempts, before.attempts); assert.equal(after.status, 'running'); assert.equal(after.result, undefined);
+  const events = f.runtime.store.db.prepare('SELECT kind FROM events WHERE task_id=? ORDER BY seq DESC LIMIT 2').all(task.id).map(r => r.kind);
+  assert.deepEqual(events, ['finish-dropped', 'progress-dropped']);
+  calls[1].onProgress({ memberLaunch: 'exited' }); gates[1].resolve({ result: report(), actualModel: 'test-model' });
+  assert.equal((await f.runtime.wait(task.id)).status, 'awaiting_review');
+  note('stale-callback', { first: first.attemptId, current: second.attemptId, events, poisoned: false });
+});
+
+test('NEW task+event transaction rolls back the task when durable event insertion fails', t => {
+  const root = mkdtempSync(join(auditRoot, 'event-rollback-')), path = join(root, 'state.sqlite');
+  const store = new TaskStore(path); t.after(() => store.close());
+  store.save({ id: 'probe', status: 'pending', attempts: [] }, 'seed');
+  const before = store.get('probe'), count = store.db.prepare('SELECT count(*) AS n FROM events').get().n;
+  store.db.exec("CREATE TRIGGER fail_audit_event BEFORE INSERT ON events WHEN NEW.kind='probe-fail' BEGIN SELECT RAISE(ABORT,'controlled durable event failure'); END;");
+  assert.throws(() => store.save({ ...before, status: 'succeeded' }, 'probe-fail'), /controlled durable event failure/);
+  assert.deepEqual(store.get('probe'), before); assert.equal(store.db.prepare('SELECT count(*) AS n FROM events').get().n, count);
+  note('event-rollback', { db: path, status: store.get('probe').status, eventCount: count });
+});
+
+test('NEW recovery refuses an unknown later launch and rolls back earlier task recovery atomically', () => {
+  const root = mkdtempSync(join(auditRoot, 'recovery-rollback-')), path = join(root, 'state.sqlite');
+  const store = new TaskStore(path);
+  store.save({ id: 'first', status: 'running', attempts: [{ id: 'a', status: 'running' }] }, 'seed');
+  store.save({ id: 'second', status: 'failed', attempts: [{ id: 'b', status: 'failed', memberLaunch: 'starting', cleanupConfirmed: false }] }, 'seed');
+  store.close();
+  assert.throws(() => new TaskStore(path), /unknown member\/reviewer launch identity/);
+  const db = new DatabaseSync(path); try {
+    const first = JSON.parse(db.prepare('SELECT data FROM tasks WHERE id=?').get('first').data);
+    assert.equal(first.status, 'running'); assert.equal(first.attempts[0].recoveryObservedAt, undefined);
+    assert.equal(db.prepare("SELECT count(*) AS n FROM events WHERE kind='recovered-interruption'").get().n, 0);
+    assert.equal(db.prepare("SELECT value FROM meta WHERE key='owner'").get(), undefined);
+    note('recovery-rollback', { db: path, earlierStatus: first.status, recoveredEvents: 0, ownerWritten: false });
+  } finally { db.close(); }
+});
+
+test('NEW live unknown member launch blocks retry, unrelated execution and restart without replay', async t => {
+  let calls = 0;
+  const f = fixture(t, () => ({ run: async req => { calls++; req.onProgress({ memberLaunch: 'starting' }); throw Error('Controlled launch identity loss; no OS process was spawned'); } }));
+  const task = f.runtime.create(contract); f.runtime.start(task.id);
+  const failed = await f.runtime.wait(task.id); assert.equal(failed.status, 'failed'); assert.equal(failed.attempts[0].cleanupConfirmed, false);
+  assert.throws(() => f.runtime.start(task.id, { retry: true, reason: 'must refuse' }), /exit is unconfirmed/);
+  const other = f.runtime.create(contract); assert.throws(() => f.runtime.start(other.id), /exit is unconfirmed/);
+  assert.throws(() => f.runtime.prepareWorkspace(), /exit is unconfirmed/);
+  await f.runtime.close(); assert.throws(() => new TaskStore(f.path), /unknown member\/reviewer launch identity/); assert.equal(calls, 1);
+  note('unknown-member', { db: f.path, attempts: failed.attempts.length, cleanupConfirmed: false, backendCalls: calls, reopenRefused: true });
+});
+
+test('NEW unknown reviewer launch also blocks unrelated tasks and restart after a passed writer command', async t => {
+  let calls = 0;
+  const f = fixture(t, f => ({ run: async req => {
+    calls++;
+    if (req.role === 'review') { req.onProgress({ memberLaunch: 'starting' }); throw Error('Controlled reviewer identity loss; no reviewer process spawned'); }
+    return writerBackend(f).run(req);
+  } }));
+  const task = f.runtime.create(writeContract()); f.runtime.start(task.id);
+  const failed = await f.runtime.wait(task.id, 15000), attempt = failed.attempts[0];
+  assert.equal(failed.status, 'failed'); assert.equal(attempt.cleanupConfirmed, false); assert.equal(attempt.machineReview.memberLaunch, 'starting');
+  const verification = f.runtime.workspaceStatus(attempt.workspaceId).verifications[0]; assert.equal(verification.status, 'passed');
+  const other = f.runtime.create(contract); assert.throws(() => f.runtime.start(other.id), /exit is unconfirmed/);
+  assert.throws(() => f.runtime.removeWorkspace(attempt.workspaceId, { discard: true }), /exit is unconfirmed/);
+  await f.runtime.close(); assert.throws(() => new TaskStore(f.path), /unknown member\/reviewer launch identity/); assert.equal(calls, 2);
+  note('unknown-reviewer', { db: f.path, command: verification.status, reviewerLaunch: attempt.machineReview.memberLaunch, cleanupConfirmed: false, calls, reopenRefused: true });
+});
+
+test('NEW shutdown keeps state ownership until a delayed backend confirms cancellation and reopen does not replay', async t => {
+  const entered = deferred(), release = deferred(); let calls = 0, aborted = false;
+  const f = fixture(t, () => ({ run: async req => {
+    calls++; entered.resolve(); await release.promise; aborted = req.signal.aborted;
+    req.onProgress({ memberLaunch: 'exited' }); throw req.signal.reason;
+  } }));
+  const task = f.runtime.create(contract); f.runtime.start(task.id); await entered.promise;
+  let closed = false; const closing = f.runtime.close().then(() => { closed = true; }); await tick();
+  assert.equal(closed, false); assert.equal(f.runtime.status(task.id).status, 'running');
+  assert.throws(() => new TaskStore(f.path), /Another runtime owns/); assert.throws(() => f.runtime.create(contract), /closing/);
+  release.resolve(); await closing; assert.equal(aborted, true);
+  f.open(); const reopened = f.runtime.status(task.id);
+  assert.equal(reopened.status, 'cancelled'); assert.equal(reopened.attempts.length, 1); assert.equal(reopened.attempts[0].cleanupConfirmed, true); assert.equal(calls, 1);
+  note('shutdown', { db: f.path, ownerHeldUntilRelease: true, reopenedStatus: reopened.status, cleanupConfirmed: true, backendCalls: calls });
+});
+
+test('NEW restart preserves awaiting_integration; identical-byte symlink logs reject integration; restored log allows explicit integration only', async t => {
+  const f = fixture(t, writerBackend);
+  writeFileSync(join(f.repo, 'user.txt'), 'staged user content\n'); f.git(['add', 'user.txt']);
+  const head = f.git(['rev-parse', 'HEAD']), index = readFileSync(join(f.repo, '.git', 'index'));
+  const spec = writeContract(); spec.executionPlan.dirtyPolicy = 'snapshot';
+  const task = f.runtime.create(spec), dispatch = f.runtime.start(task.id);
+  const ready = await f.runtime.wait(task.id, 15000); assert.equal(ready.status, 'awaiting_review', ready.error);
+  approve(f.runtime, task.id, dispatch.attemptId);
+  const dependent = f.runtime.create({ ...contract, dependencies: [task.id] }); assert.throws(() => f.runtime.start(dependent.id), /Dependencies/);
+  await f.runtime.close(); f.open(); assert.equal(f.runtime.status(task.id).status, 'awaiting_integration');
+  assert.match(readFileSync(join(f.repo, 'sum.js'), 'utf8'), /a-b/);
+  const attempt = f.runtime.status(task.id).attempts[0], workspace = f.runtime.workspaceStatus(attempt.workspaceId);
+  const check = workspace.verifications.find(v => v.id === attempt.verificationId), savedLog = check.stdoutPath + '.saved';
+  renameSync(check.stdoutPath, savedLog); symlinkSync(savedLog, check.stdoutPath);
+  assert.throws(() => f.runtime.integrate(task.id, dispatch.attemptId), /log evidence is missing or changed/);
+  assert.equal(f.runtime.status(task.id).status, 'awaiting_integration'); assert.match(readFileSync(join(f.repo, 'sum.js'), 'utf8'), /a-b/);
+  unlinkSync(check.stdoutPath); renameSync(savedLog, check.stdoutPath);
+  f.runtime.integrate(task.id, dispatch.attemptId); const integrated = await f.runtime.wait(task.id, 15000);
+  assert.equal(integrated.status, 'succeeded', integrated.error);
+  assert.match(readFileSync(join(f.repo, 'sum.js'), 'utf8'), /a\+b/); assert.equal(f.git(['rev-parse', 'HEAD']), head);
+  assert.deepEqual(readFileSync(join(f.repo, '.git', 'index')), index);
+  f.runtime.start(dependent.id); assert.equal((await f.runtime.wait(dependent.id)).status, 'awaiting_review');
+  note('persisted-integration', { db: f.path, symlinkRejected: true, status: integrated.status, headPreserved: true, indexBytesPreserved: true, dependentUnlockedAfterSourceVerification: true });
+});
+
+test('NEW patch drift between outer evidence check and apply is rechecked, retaining source and a failed integration', async t => {
+  const f = fixture(t, writerBackend), { task, dispatch } = await executeWrite(f);
+  approve(f.runtime, task.id, dispatch.attemptId); const candidate = f.runtime.status(task.id).attempts[0].candidate;
+  const original = GitWorkspace.prototype.applyCandidate;
+  t.mock.method(GitWorkspace.prototype, 'applyCandidate', function (...args) {
+    writeFileSync(candidate.patchPath, readFileSync(candidate.patchPath, 'utf8') + '\ncontrolled drift\n');
+    return original.apply(this, args);
+  });
+  f.runtime.integrate(task.id, dispatch.attemptId); const done = await f.runtime.wait(task.id, 15000);
+  assert.equal(done.status, 'integration_failed'); assert.match(done.error, /Candidate or patch evidence changed/);
+  assert.match(readFileSync(join(f.repo, 'sum.js'), 'utf8'), /a-b/);
+  note('integration-toctou', { db: f.path, status: done.status, sourceUnchanged: true, error: done.error });
+});
+
+const permissionMutations = [
+  ['network-true', result => { result.sandbox.networkAccess = true; }],
+  ['network-missing', result => { delete result.sandbox.networkAccess; }],
+  ['approval-on-request', result => { result.approvalPolicy = 'on-request'; }],
+  ['approval-missing', result => { delete result.approvalPolicy; }],
+  ['write-sandbox-on-readonly', result => { result.sandbox.type = 'workspaceWrite'; }],
+];
+for (const [name, mutate] of permissionMutations) {
+  test(`NEW read-only permission echo ${name} must fail before turn/start`, async t => {
+    const original = AppServerClient.prototype.request; let turns = 0, pid; const updates = [];
+    t.mock.method(AppServerClient.prototype, 'request', async function (method, ...args) {
+      if (method === 'turn/start') turns++;
+      const result = await original.call(this, method, ...args); if (method === 'thread/start') mutate(result); return result;
+    });
+    const backend = new CodexBackend({ binary: process.execPath, args: ['/Users/anshunli/单纯回话/codex-agent-teams/tests/fixtures/fake-app-server.js', 'normal'], requestTimeoutMs: 1000 });
+    await assert.rejects(backend.run({ cwd: auditRoot, selection: { model: 'test-model', effort: 'high' }, acceptance: [criterion], prompt: JSON.stringify({ acceptance: [criterion] }), signal: new AbortController().signal,
+      onProgress: update => { updates.push(update); pid ??= update.childPid; } }), e => e.hostCode === 'host_permissions_unconfirmed');
+    assert.equal(turns, 0); assert.equal(processAlive(pid, true), false); assert.equal(updates.at(-1).memberLaunch, 'exited');
+    note('permission-' + name, { turnStarts: turns, groupExitConfirmed: true, pid });
+  });
+}

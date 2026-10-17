@@ -1,3 +1,4 @@
+import { fixtureAppServer, writeFixtureExecutable } from './fixtures/coverage.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync, rmSync, existsSync } from 'node:fs';
@@ -153,7 +154,7 @@ test('confirmed runtime records selection per attempt, retries on expert and rej
 });
 
 test('host discovery paginates, excludes hidden choices and returns only model settings', async () => {
-  const backend = new CodexBackend({ binary: process.execPath, args: [resolve('tests/fixtures/fake-app-server.js'), 'catalog-paged'] });
+  const backend = new CodexBackend({ ...fixtureAppServer([resolve('tests/fixtures/fake-app-server.js'), 'catalog-paged']) });
   const result = await backend.probe(process.cwd(), { modelSettings: true });
   assert.deepEqual(result.models.map(model => model.model), ['test-model', 'configured-model']);
   assert.equal(result.configuredModel, 'test-model'); assert.equal(result.configuredEffort, 'high');
@@ -165,7 +166,7 @@ test('host discovery paginates, excludes hidden choices and returns only model s
 async function mcpFixture(t, handler, mode = 'catalog-paged') {
   const dir = mkdtempSync(join(tmpdir(), 'teams-models-'));
   const binary = join(dir, 'fake-codex');
-  writeFileSync(binary, `#!/usr/bin/env node\nprocess.argv[2]=${JSON.stringify(mode)};await import(${JSON.stringify(new URL('./fixtures/fake-app-server.js', import.meta.url).href)});\n`, { mode: 0o755 });
+  writeFixtureExecutable(binary, `#!/usr/bin/env node\nprocess.argv[2]=${JSON.stringify(mode)};await import(${JSON.stringify(new URL('./fixtures/fake-app-server.js', import.meta.url).href)});\n`, { mode: 0o755 });
   const configPath = join(dir, 'config.json');
   // The CLI path spawns a full Node process plus the fake App Server, and execution now yields once
   // before preparing. A 1s task deadline could expire mid-launch, turning this fixture into a flake.
