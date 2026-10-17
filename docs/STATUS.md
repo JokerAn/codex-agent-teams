@@ -1,5 +1,21 @@
 # 当前状态
 
+## 本机严格构建CLI路径修复（2026-10-18）
+
+用户执行build:strict因`teams.local.json`显式配置旧路径`/Applications/ChatGPT.app/Contents/Resources/codex`失败。核对PATH后，仅将本机配置codexBin更新为`/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex`，其他字段保持；解析器仍尊重显式路径，未加入静默回退。
+
+- 实际执行 `npm run build:strict` **exit0**：锁定依赖安装成功、npm审计0漏洞、严格打包及官方宿主插件/模型/只读线程检查通过，未启动模型推理。模型配置保持gpt-6-astra/high，不把无推理探测当实际模型执行验收。
+- 产物 `/Users/anshunli/单纯回话/codex-agent-teams/dist/marketplace-v0.8.5-strict`；尚未正式安装。需要安装严格包时执行 `npm run update:strict`，完成后重启Codex并开新聊天。
+- 实际交付当前主目录，HEAD f6a4e3a；原README/package/STATUS暂存内容保留，本轮STATUS新增未暂存；teams.local.json为忽略的本机配置，未修改版本或运行时代码，无跨worktree未同步内容，未commit/push。未重跑完整测试，本轮由实际严格构建闭环验收。
+
+## 严格包命令入口修复（2026-10-18）
+
+修复 `package.json` 既有未提交 `build:strict` 中多余的 `--`，命令改为 `node scripts/build.js --strict`；新增 `update:strict` → `node scripts/update.js --strict`。普通 build/update 入口保持，README 同步严格包快捷命令与追加参数方式，版本仍0.8.5。
+
+- 修前临时副本实测：build:strict 因位置参数退出1，update:strict 未定义而退出1。修后通过真实npm调用、受控参数探针的6/6检查：普通/严格两种入口以及带空格out/config透传均符合预期；探针未执行真实打包或安装。
+- `npm run update:strict -- --help` exit0，真实更新入口正确接受strict和help；`node --test tests/native-plugin.test.js tests/build.test.js` **14/14通过**，零fail/cancelled/skipped；`git diff --check`通过。未进行正式安装、完整strict构建或完整回归，实际宿主安装链路不在本轮新增验收范围。
+- 实际交付 `/Users/anshunli/单纯回话/codex-agent-teams`；开工HEAD `f6a4e3a`，保留package.json其他既有内容，本轮改动未暂存，无跨worktree未同步内容，未commit/push。下一步需要严格安装时执行 `npm run update:strict`，完成后重启Codex并开启新聊天。
+
 ## 0.8.5 原生协作规则升级与本地验收（2026-10-18，源码及候选，未发布）
 
 用户指定依据 `/Users/anshunli/gitHub/pre-page-error/CODEX_AGENT_TEAMS_IMPROVEMENTS.md` 升级。报告针对0.8.3安装的短skill；开工0.8.4源码skill与该报告哈希一致。本轮补齐T01–T06，版本统一0.8.5；详见[升级记录](NATIVE-COORDINATION-0.8.5-2026-10-18.md)与[本轮证据](evidence/native-coordination-0.8.5-2026-10-18)。

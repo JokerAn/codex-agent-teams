@@ -102,11 +102,13 @@ node src/cli.js pack --strict --config ./teams.local.json --binary /absolute/pat
 只有明确需要以下能力时选择严格包：不可变任务合同、持久attempt、独立worktree、文件/日志指纹、命令验证、独立expert reviewer、队长复核、显式集成和源复验。
 
 ```sh
-npm run build -- --strict
-npm run update -- --strict
+npm run build:strict       # 只构建严格包
+npm run update:strict      # 构建并安装严格包
 # 直接指定已准备的配置：
-npm run build -- --strict --config ./teams.local.json --out ./dist/strict-candidate
+npm run build:strict -- --config ./teams.local.json --out ./dist/strict-candidate
 ```
+
+`build:strict` 和 `update:strict` 已在脚本内部传入 `--strict`；追加参数时使用 npm 的 `--` 分隔符。原有 `npm run build -- --strict`、`npm run update -- --strict` 写法仍可使用。默认 `npm run update` 始终构建并安装原生包，不继承上一次构建或安装的模式。
 
 严格构建保留 macOS/Linux、Node.js 24+、锁定依赖安装、Codex可执行文件及模型/只读权限预检。可用 `--binary /absolute/path/to/codex` 指定本机CLI；首次缺配置时准备本机配置，已有配置保持。这些要求不应用于默认原生包。
 

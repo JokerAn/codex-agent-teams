@@ -12,7 +12,9 @@
   },
   "scripts": {
     "build": "node scripts/build.js",
+    "build:strict": "node scripts/build.js --strict",
     "update": "node scripts/update.js",
+    "update:strict": "node scripts/update.js --strict",
     "test": "node --test --test-concurrency=4 tests/*.test.js",
     "test:native": "node --test tests/native-plugin.test.js",
     "doctor": "node src/cli.js doctor",
